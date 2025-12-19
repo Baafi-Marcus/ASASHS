@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
-import { Home, Users, BookOpen, Settings } from "lucide-react";
+import { Home, Users, BookOpen, Settings, Calendar } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard", icon: <Home size={18} />, path: "/admin" },
   { name: "User Management", icon: <Users size={18} />, path: "/admin/users" },
   { name: "Courses & Classes", icon: <BookOpen size={18} />, path: "/admin/courses" },
+  { name: "Timetable Management", icon: <Calendar size={18} />, path: "/admin/timetable" },
   { name: "System Oversight", icon: <Settings size={18} />, path: "/admin/system" },
 ];
 

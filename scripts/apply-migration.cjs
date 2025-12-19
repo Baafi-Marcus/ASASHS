@@ -1,0 +1,45 @@
+const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+// Get database URL from environment
+const databaseUrl = process.env.DATABASE_URL || process.env.VITE_DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error('DATABASE_URL or VITE_DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
+
+// Read the migration file
+const migrationPath = path.join(__dirname, '..', 'migrations', 'complete-semester-migration.sql');
+const migrationSql = fs.readFileSync(migrationPath, 'utf8');
+
+// Create a client
+const client = new Client({
+  connectionString: databaseUrl,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+async function applyMigration() {
+  try {
+    // Connect to the database
+    await client.connect();
+    console.log('Connected to database');
+    
+    // Apply the migration
+    await client.query(migrationSql);
+    console.log('Migration applied successfully!');
+    
+    // Close the connection
+    await client.end();
+    console.log('Disconnected from database');
+  } catch (err) {
+    console.error('Error applying migration:', err);
+    await client.end();
+    process.exit(1);
+  }
+}
+
+applyMigration();
