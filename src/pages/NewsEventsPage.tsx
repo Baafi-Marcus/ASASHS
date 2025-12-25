@@ -110,16 +110,16 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) 
                         alt="ASASHS Students"
                         className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-school-green-900/90 via-school-green-800/80 to-black/70"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-school-green-900/70 via-school-green-800/60 to-black/50"></div>
                 </div>
                 <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
-                    <span className="inline-block py-2 px-4 rounded-full bg-white/20 text-white text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-sm border border-white/30">
+                    <span className="inline-block py-2 px-4 rounded-full bg-white/20 text-white text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-sm border border-white/30 animate-fade-in">
                         Latest Updates & Achievements
                     </span>
-                    <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+                    <h1 className="text-4xl md:text-7xl font-extrabold text-white mb-6 leading-tight animate-slide-up">
                         News & Events
                     </h1>
-                    <p className="text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
+                    <p className="text-lg md:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed animate-slide-up [animation-delay:200ms]">
                         Celebrating excellence, achievements, and milestones from the ASASHS community
                     </p>
                 </div>
@@ -206,12 +206,12 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) 
                                         {article.category}
                                     </div>
                                 </div>
-                                <div className="p-6 flex flex-col flex-grow">
-                                    <span className="text-gray-500 text-xs font-medium mb-2">{article.date}</span>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-school-green-600 transition-colors line-clamp-2">
+                                <div className="p-5 md:p-6 flex flex-col flex-grow">
+                                    <span className="text-gray-500 text-[10px] md:text-xs font-medium mb-2">{article.date}</span>
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 group-hover:text-school-green-600 transition-colors line-clamp-2">
                                         {article.title}
                                     </h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
+                                    <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
                                         {article.excerpt}
                                     </p>
                                     {article.externalLink ? (
@@ -219,7 +219,7 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) 
                                             href={article.externalLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center text-school-green-600 font-bold text-sm hover:text-school-green-800 group/link mt-auto"
+                                            className="inline-flex items-center text-school-green-600 font-bold text-xs md:text-sm hover:text-school-green-800 group/link mt-auto"
                                         >
                                             Read More
                                             <svg className="w-4 h-4 ml-1 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) 
                                             </svg>
                                         </a>
                                     ) : (
-                                        <span className="text-gray-400 text-xs italic mt-auto">Coming soon</span>
+                                        <span className="text-gray-400 text-[10px] italic mt-auto">Coming soon</span>
                                     )}
                                 </div>
                             </div>

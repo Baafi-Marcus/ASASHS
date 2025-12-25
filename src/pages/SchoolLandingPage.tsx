@@ -16,7 +16,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
             <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">
                 {/* Background Overlay with Slideshow Effect */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30 z-10" />
                     <img
                         src="/hero_school_building.jpg"
                         alt="Akim Asafo Senior High School"
@@ -25,20 +25,20 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                 </div>
 
                 {/* Hero Content */}
-                <div className="relative z-20 text-center text-white px-4 max-w-5xl mx-auto mt-[-50px]">
-                    <span className="inline-block py-1 px-3 rounded-full bg-school-green-500/80 text-xs font-bold tracking-widest uppercase mb-4 backdrop-blur-sm border border-white/20">
+                <div className="relative z-20 text-center text-white px-4 max-w-5xl mx-auto pt-20 md:pt-0 md:mt-[-50px]">
+                    <span className="inline-block py-1 px-3 rounded-full bg-school-green-500/80 text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 backdrop-blur-sm border border-white/20 animate-fade-in">
                         Est. 1991 • Center of Excellence
                     </span>
-                    <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                    <h1 className="text-3xl md:text-7xl font-extrabold mb-6 leading-tight animate-slide-up">
                         Welcome to <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-school-green-400 to-yellow-400">
                             Akim Asafo Senior High
                         </span>
                     </h1>
-                    <p className="text-xl md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-light">
+                    <p className="text-base md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-light animate-slide-up [animation-delay:200ms]">
                         Providing holistic quality education, inculcating Godliness and moral uprightness for over three decades.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up [animation-delay:400ms]">
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
                             className="px-8 py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
@@ -88,17 +88,17 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                         <div
                             key={idx}
                             onClick={card.action}
-                            className={`${card.color} rounded-xl p-8 text-white shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+                            className={`${card.color} rounded-xl p-6 md:p-8 text-white shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
                         >
-                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                            <svg className="w-10 h-10 mb-4 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 md:w-24 md:h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                            <svg className="w-8 h-8 md:w-10 md:h-10 mb-4 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
                             </svg>
-                            <h3 className="text-xl font-bold mb-2">{card.title}</h3>
-                            <p className="text-white/80 text-sm leading-relaxed">{card.desc}</p>
-                            <div className="mt-6 flex items-center text-sm font-bold uppercase tracking-wide">
+                            <h3 className="text-lg md:text-xl font-bold mb-2">{card.title}</h3>
+                            <p className="text-white/85 text-xs md:text-sm leading-relaxed">{card.desc}</p>
+                            <div className="mt-5 md:mt-6 flex items-center text-[10px] md:text-sm font-bold uppercase tracking-wide">
                                 <span>Access Now</span>
-                                <svg className="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 md:w-4 md:h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                 </svg>
                             </div>
@@ -116,7 +116,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                         <img
                             src="/headmistress.jpg"
                             alt="Headmistress"
-                            className="relative z-10 rounded-3xl shadow-2xl w-full h-[500px] object-cover hover:grayscale-0 transition-all duration-500"
+                            className="relative z-10 rounded-3xl shadow-2xl w-full h-72 md:h-[500px] object-cover hover:grayscale-0 transition-all duration-500"
                         />
                         <div className="absolute -bottom-6 -right-6 z-20 bg-white p-6 rounded-xl shadow-xl max-w-xs border-l-4 border-school-green-600">
                             <p className="text-gray-900 font-serif italic text-lg leading-relaxed">
@@ -161,11 +161,11 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                 </div>
 
                 {/* Mission Section */}
-                <div className="max-w-7xl mx-auto mt-20 bg-school-cream-50 p-10 rounded-3xl border border-school-cream-200">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
-                        <div className="md:col-span-2">
+                <div className="max-w-7xl mx-auto mt-20 bg-school-cream-50 p-6 md:p-10 rounded-3xl border border-school-cream-200">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
+                        <div className="lg:col-span-2">
                             <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Our Purpose</span>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-4 font-serif">Mission Statement</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-serif">Mission Statement</h2>
                             <blockquote className="text-xl text-gray-700 italic leading-relaxed mb-6 border-l-4 border-school-green-500 pl-4">
                                 "To ensure that every student who has passed through the walls of the school is given a holistic quality education. We seek to inculcate in students Godliness and moral uprightness as well as help bring out the potentials in them for a lifelong personal responsibility..."
                             </blockquote>
@@ -313,7 +313,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
             {/* Stats - User Provided */}
             <section className="py-16 bg-school-green-800 text-white">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
                         <div>
                             <p className="text-4xl font-bold mb-1">1991</p>
                             <p className="text-xs uppercase tracking-widest text-school-green-200">Year Founded</p>
