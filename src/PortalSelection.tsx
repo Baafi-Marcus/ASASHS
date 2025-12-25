@@ -2,9 +2,10 @@ import React from 'react';
 
 interface PortalSelectionProps {
   onSelectPortal: (portal: 'admin' | 'student' | 'teacher') => void;
+  onBackToHome?: () => void;
 }
 
-export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal }) => {
+export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal, onBackToHome }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-school-cream-50 via-white to-school-green-50">
       {/* Header */}
@@ -12,10 +13,21 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
+              {onBackToHome && (
+                <button
+                  onClick={onBackToHome}
+                  className="mr-2 text-gray-500 hover:text-school-green-600 transition-colors"
+                  title="Back to Website"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                </button>
+              )}
               <div className="bg-school-green-600 p-2 rounded-xl shadow-lg">
-                <img 
-                  src="/asashs-logo.png" 
-                  alt="ASASHS Logo" 
+                <img
+                  src="/asashs-logo.png"
+                  alt="ASASHS Logo"
                   className="w-12 h-12 rounded-lg"
                 />
               </div>
@@ -37,9 +49,9 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
         <div className="text-center mb-16 mt-8">
           <div className="flex justify-center mb-8">
             <div className="bg-gradient-to-br from-school-green-500 to-school-green-700 p-6 rounded-3xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
-              <img 
-                src="/asashs-logo.png" 
-                alt="ASASHS Logo" 
+              <img
+                src="/asashs-logo.png"
+                alt="ASASHS Logo"
                 className="w-32 h-32 rounded-2xl shadow-lg"
               />
             </div>
@@ -48,7 +60,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
             Welcome to <span className="text-school-green-600">ASASHS</span>
           </h1>
           <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-            Access your personalized dashboard to manage academics, track progress, and stay connected 
+            Access your personalized dashboard to manage academics, track progress, and stay connected
             with the school community.
           </p>
         </div>
@@ -56,7 +68,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
         {/* Portal Selection Grid - Professional Modern Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Admin Portal Card */}
-          <div 
+          <div
             onClick={() => onSelectPortal('admin')}
             className="bg-white rounded-2xl shadow-lg border border-school-cream-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2"
           >
@@ -82,7 +94,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                 </span>
               </div>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                System administration and comprehensive oversight tools for managing students, 
+                System administration and comprehensive oversight tools for managing students,
                 teachers, courses, and school operations.
               </p>
               <button className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-4 rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
@@ -92,7 +104,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
           </div>
 
           {/* Student Portal Card */}
-          <div 
+          <div
             onClick={() => onSelectPortal('student')}
             className="bg-white rounded-2xl shadow-lg border border-school-cream-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2"
           >
@@ -118,7 +130,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                 </span>
               </div>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                Access your academic information, grades, assignments, and school resources. 
+                Access your academic information, grades, assignments, and school resources.
                 Stay connected with your classes and teachers.
               </p>
               <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-4 rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
@@ -128,7 +140,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
           </div>
 
           {/* Teacher Portal Card */}
-          <div 
+          <div
             onClick={() => onSelectPortal('teacher')}
             className="bg-white rounded-2xl shadow-lg border border-school-cream-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2"
           >
@@ -154,7 +166,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                 </span>
               </div>
               <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                Manage your classes, grades, student assessments, and teaching materials. 
+                Manage your classes, grades, student assessments, and teaching materials.
                 Communicate with students and track their progress.
               </p>
               <button className="w-full bg-gradient-to-r from-school-green-500 to-school-green-600 hover:from-school-green-600 hover:to-school-green-700 text-white py-3 px-4 rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
@@ -175,7 +187,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
             <h3 className="text-lg font-semibold text-gray-900">Comprehensive Management</h3>
             <p className="text-gray-600 text-sm mt-1">All school operations in one place</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-sm border border-school-cream-200 p-6 text-center hover:shadow-md transition-shadow hover:border-school-green-300">
             <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +197,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
             <h3 className="text-lg font-semibold text-gray-900">Secure & Reliable</h3>
             <p className="text-gray-600 text-sm mt-1">Enterprise-grade security for your data</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-sm border border-school-cream-200 p-6 text-center hover:shadow-md transition-shadow hover:border-school-green-300">
             <div className="w-16 h-16 bg-school-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-school-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
