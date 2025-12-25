@@ -38,14 +38,14 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                     <p className="text-base md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-light animate-slide-up [animation-delay:200ms]">
                         Providing holistic quality education, inculcating Godliness and moral uprightness for over three decades.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up [animation-delay:400ms]">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 animate-slide-up [animation-delay:400ms]">
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
-                            className="px-8 py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
+                            className="px-6 py-3 md:px-8 md:py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
                         >
                             Explore Admissions
                         </button>
-                        <button className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-lg transition-all transform hover:-translate-y-1">
+                        <button className="px-6 py-3 md:px-8 md:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1">
                             Take a Tour
                         </button>
                     </div>
@@ -60,8 +60,8 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
             </section>
 
             {/* Quick Action Cards (Floating overlap) */}
-            <section className="relative z-30 mt-[-80px] px-4 mb-20">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <section className="relative z-30 mt-[-60px] md:mt-[-80px] px-4 mb-12 md:mb-20">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     {[
                         {
                             title: "Online Admission",
@@ -88,15 +88,19 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                         <div
                             key={idx}
                             onClick={card.action}
-                            className={`${card.color} rounded-xl p-6 md:p-8 text-white shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+                            className={`${card.color} rounded-xl p-4 md:p-8 text-white shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
                         >
-                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 md:w-24 md:h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                            <svg className="w-8 h-8 md:w-10 md:h-10 mb-4 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
-                            </svg>
-                            <h3 className="text-lg md:text-xl font-bold mb-2">{card.title}</h3>
-                            <p className="text-white/85 text-xs md:text-sm leading-relaxed">{card.desc}</p>
-                            <div className="mt-5 md:mt-6 flex items-center text-[10px] md:text-sm font-bold uppercase tracking-wide">
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-16 h-16 md:w-24 md:h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                            <div className="flex items-start space-x-4 md:block">
+                                <svg className="w-8 h-8 md:w-10 md:h-10 mb-0 md:mb-4 text-white/90 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
+                                </svg>
+                                <div>
+                                    <h3 className="text-base md:text-xl font-bold mb-1 md:mb-2 leading-tight">{card.title}</h3>
+                                    <p className="text-white/85 text-[11px] md:text-sm leading-snug line-clamp-2 md:line-clamp-none">{card.desc}</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 md:mt-6 flex items-center text-[10px] md:text-sm font-bold uppercase tracking-wide">
                                 <span>Access Now</span>
                                 <svg className="w-3 h-3 md:w-4 md:h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
