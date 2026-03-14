@@ -473,9 +473,17 @@ function ComprehensivePortalApp() {
   const [selectedPortal, setSelectedPortal] = useState<'admin' | 'student' | 'teacher' | null>(null);
 
   useEffect(() => {
-    // Check for saved portal selection
+    // Check for /admin in the URL
+    if (window.location.pathname === '/admin') {
+      setSelectedPortal('admin');
+      setShowLandingPage(false);
+      setShowNewsPage(false);
+      return;
+    }
+
+    // Check for saved portal selection (only for student or teacher)
     const savedPortal = localStorage.getItem('selectedPortal');
-    if (savedPortal && (savedPortal === 'admin' || savedPortal === 'student' || savedPortal === 'teacher')) {
+    if (savedPortal && (savedPortal === 'student' || savedPortal === 'teacher')) {
       setSelectedPortal(savedPortal);
       setShowLandingPage(false);
     }
@@ -484,18 +492,26 @@ function ComprehensivePortalApp() {
   const handlePortalSelection = (portal: 'admin' | 'student' | 'teacher') => {
     setSelectedPortal(portal);
     setShowLandingPage(false);
-    localStorage.setItem('selectedPortal', portal);
+    if (portal !== 'admin') {
+      localStorage.setItem('selectedPortal', portal);
+    }
   };
 
   const handleBackToSelection = () => {
     setSelectedPortal(null);
     localStorage.removeItem('selectedPortal');
+    if (window.location.pathname === '/admin') {
+      window.history.pushState({}, '', '/');
+    }
   };
 
   const handleBackToLanding = () => {
     setSelectedPortal(null);
     setShowLandingPage(true);
     localStorage.removeItem('selectedPortal');
+    if (window.location.pathname === '/admin') {
+      window.history.pushState({}, '', '/');
+    }
   };
 
   const goToPortalSelection = () => {

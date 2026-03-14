@@ -67,41 +67,6 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
 
         {/* Portal Selection Grid - Professional Modern Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Admin Portal Card */}
-          <div
-            onClick={() => onSelectPortal('admin')}
-            className="bg-white rounded-2xl shadow-lg border border-school-cream-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2"
-          >
-            <div className="h-40 bg-gradient-to-r from-red-500 to-red-600 relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full w-24 h-24 flex items-center justify-center shadow-lg">
-                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="absolute bottom-4 left-6">
-                <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  System Administration
-                </span>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-2xl font-bold text-gray-900">Admin Portal</h2>
-                <span className="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                  Staff Only
-                </span>
-              </div>
-              <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                System administration and comprehensive oversight tools for managing students,
-                teachers, courses, and school operations.
-              </p>
-              <button className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-4 rounded-xl transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02]">
-                Access Admin Portal
-              </button>
-            </div>
-          </div>
 
           {/* Student Portal Card */}
           <div

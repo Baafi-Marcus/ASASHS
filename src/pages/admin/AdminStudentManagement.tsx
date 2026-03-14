@@ -19,8 +19,10 @@ interface ClassItem {
   stream: string | null;
 }
 
+import { StudentBulkUpload } from './StudentBulkUpload';
+
 export function AdminStudentManagement() {
-  const [activeTab, setActiveTab] = useState<'list' | 'register'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'register' | 'bulk'>('list');
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +50,7 @@ export function AdminStudentManagement() {
   };
 
   const handleStudentRegistered = () => {
-    toast.success('Student registered successfully!');
+    toast.success('Student(s) processed successfully!');
     setActiveTab('list');
     // Refresh the student list
     window.location.reload();
@@ -81,7 +83,7 @@ export function AdminStudentManagement() {
               className="flex-1 justify-center rounded-none"
             >
               <span>📋</span>
-              <span className="ml-2">Student List</span>
+              <span className="ml-2 whitespace-nowrap">Student List</span>
             </PortalButton>
             <PortalButton
               onClick={() => setActiveTab('register')}
@@ -89,7 +91,15 @@ export function AdminStudentManagement() {
               className="flex-1 justify-center rounded-none"
             >
               <span>➕</span>
-              <span className="ml-2">Register Student</span>
+              <span className="ml-2 whitespace-nowrap">Register Student</span>
+            </PortalButton>
+            <PortalButton
+              onClick={() => setActiveTab('bulk')}
+              variant={activeTab === 'bulk' ? 'secondary' : 'primary'}
+              className="flex-1 justify-center rounded-none"
+            >
+              <span>📤</span>
+              <span className="ml-2 whitespace-nowrap">Bulk Upload</span>
             </PortalButton>
           </div>
         </div>
@@ -97,10 +107,16 @@ export function AdminStudentManagement() {
         <div className="p-6">
           {activeTab === 'list' ? (
             <StudentList />
-          ) : (
+          ) : activeTab === 'register' ? (
             <StudentForm 
               onSuccess={handleStudentRegistered}
               programmes={courses}
+              classes={classes}
+            />
+          ) : (
+            <StudentBulkUpload 
+              onSuccess={handleStudentRegistered}
+              courses={courses}
               classes={classes}
             />
           )}
@@ -108,4 +124,4 @@ export function AdminStudentManagement() {
       </PortalCard>
     </div>
   );
-}
+}
