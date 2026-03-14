@@ -76,9 +76,9 @@ export function AdminReports() {
       ];
 
       // Process teacher data by department
-      const departments = [...new Set(allTeachers.map((teacher: any) => teacher.department))];
-      const teachersByDepartment = departments.map((dept) => {
-        const deptTeachers = allTeachers.filter((teacher: any) => teacher.department === dept);
+      const departments: string[] = Array.from(new Set(allTeachers.map((teacher: any) => String(teacher.department || ''))));
+      const teachersByDepartment = departments.map((dept: string) => {
+        const deptTeachers = allTeachers.filter((teacher: any) => String(teacher.department || '') === dept);
         const activeDeptTeachers = deptTeachers.filter((t: any) => t.is_active);
         return {
           department: dept || 'Unassigned',

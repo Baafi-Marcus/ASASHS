@@ -56,7 +56,7 @@ export const TeacherAssignmentsByClass: React.FC<TeacherAssignmentsByClassProps>
       
       // Expand all classes by default
       const expandedState: Record<string, boolean> = {};
-      grouped.forEach(group => {
+      grouped.forEach((group: ClassGroup) => {
         expandedState[group.class_name] = true;
       });
       setExpandedClasses(expandedState);

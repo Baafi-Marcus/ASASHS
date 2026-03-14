@@ -1369,6 +1369,7 @@ export const db = {
 
   async getTimetableEntries(filters?: { 
     class_id?: number;
+    subject_id?: number;
     teacher_id?: number;
     academic_year?: string;
     day?: string;
@@ -1383,6 +1384,10 @@ export const db = {
       
       if (filters?.class_id) {
         query = sql`${query} AND te.class_id = ${filters.class_id}`;
+      }
+      
+      if (filters?.subject_id) {
+        query = sql`${query} AND te.subject_id = ${filters.subject_id}`;
       }
       
       if (filters?.teacher_id) {
@@ -2130,8 +2135,219 @@ export const db = {
       console.error('Error fetching student performance summary:', error);
       return [];
     }
-  }
+  },
 
+  // --- VOTING SYSTEM MODULE ---
+
+  async createElection(data: { name: string; description?: string; start_time: string; end_time: string }) {
+    const result = await sql`
+      INSERT INTO elections (name, description, start_time, end_time, status)
+      VALUES (${data.name}, ${data.description || null}, ${data.start_time}, ${data.end_time}, 'draft')
+      RETURNING *
+    `;
+    return result[0];
+  },
+
+  async getElections() {
+    return await sql`SELECT * FROM elections ORDER BY created_at DESC`;
+  },
+
+  async getElectionById(id: number) {
+    const election = await sql`SELECT * FROM elections WHERE id = ${id}`;
+    if (election.length === 0) return null;
+
+    const positions = await this.getPositions(id);
+    return { ...election[0], positions };
+  },
+
+  async updateElectionStatus(id: number, status: string) {
+    return await sql`UPDATE elections SET status = ${status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
+  },
+
+  async createPosition(data: { election_id: number; title: string; max_selections?: number }) {
+    const result = await sql`
+      INSERT INTO positions (election_id, title, max_selections)
+      VALUES (${data.election_id}, ${data.title}, ${data.max_selections || 1})
+      RETURNING *
+    `;
+    return result[0];
+  },
+
+  async getPositions(electionId: number) {
+    return await sql`SELECT * FROM positions WHERE election_id = ${electionId} ORDER BY sort_order ASC, id ASC`;
+  },
+
+  async createCandidate(data: { position_id: number; student_id?: number; display_name: string; manifesto?: string; image_url?: string }) {
+    const result = await sql`
+      INSERT INTO candidates (position_id, student_id, display_name, manifesto, image_url)
+      VALUES (${data.position_id}, ${data.student_id || null}, ${data.display_name}, ${data.manifesto || null}, ${data.image_url || null})
+      RETURNING *
+    `;
+    return result[0];
+  },
+
+  async getCandidates(positionId: number) {
+    return await sql`SELECT * FROM candidates WHERE position_id = ${positionId} ORDER BY display_name ASC`;
+  },
+
+  async submitVote(electionId: number, studentId: number, selections: { position_id: number; candidate_id: number }[]) {
+    try {
+      // Use a transaction wrap if possible, but with neon serverless we do sequential calls or a complex query
+      // 1. Check if already voted
+      const check = await sql`SELECT 1 FROM voter_status WHERE election_id = ${electionId} AND student_id = ${studentId}`;
+      if (check.length > 0) throw new Error('ALREADY_VOTED');
+
+      // 2. Record voter status
+      await sql`INSERT INTO voter_status (election_id, student_id) VALUES (${electionId}, ${studentId})`;
+
+      // 3. Insert votes
+      for (const selection of selections) {
+        await sql`
+          INSERT INTO votes (election_id, position_id, candidate_id)
+          VALUES (${electionId}, ${selection.position_id}, ${selection.candidate_id})
+        `;
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Vote submission error:', error);
+      throw error;
+    }
+  },
+
+  async getParticipationStats(electionId: number) {
+    const totalStudents = await sql`SELECT COUNT(*) FROM students WHERE is_active = true`;
+    const votedStudents = await sql`SELECT COUNT(*) FROM voter_status WHERE election_id = ${electionId}`;
+    
+    const total = parseInt(totalStudents[0].count);
+    const voted = parseInt(votedStudents[0].count);
+    
+    return {
+      total,
+      voted,
+      remaining: total - voted,
+      percentage: total > 0 ? Math.round((voted / total) * 100) : 0
+    };
+  },
+
+  async getElectionResults(electionId: number) {
+    return await sql`
+      SELECT 
+        p.title as position_title,
+        c.display_name as candidate_name,
+        COUNT(v.id) as vote_count
+      FROM positions p
+      JOIN candidates c ON p.id = c.position_id
+      LEFT JOIN votes v ON c.id = v.candidate_id
+      WHERE p.election_id = ${electionId}
+      GROUP BY p.id, p.title, c.id, c.display_name
+      ORDER BY p.sort_order, p.id, vote_count DESC
+    `;
+  },
+
+  async createAuditLog(action: string, performedBy: string, details: any) {
+    await sql`
+      INSERT INTO audit_logs (action, performed_by, details)
+      VALUES (${action}, ${performedBy}, ${JSON.stringify(details)})
+    `;
+  },
+
+  async getAuditLogs() {
+    return await sql`SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100`;
+  },
+
+  // --- BULK STUDENT IMPORT ---
+
+  async bulkImportStudents(studentsList: { surname: string; other_names: string; class_id: number; course_id: number }[]) {
+    const year = new Date().getFullYear();
+    const results = [];
+    
+    // Get starting sequence for STU IDs
+    const lastStu = await sql`SELECT user_id FROM users WHERE user_id LIKE ${`STU${year}%`} ORDER BY user_id DESC LIMIT 1`;
+    let nextNum = 1;
+    if (lastStu.length > 0) {
+      const match = lastStu[0].user_id.match(/\d{3}$/);
+      if (match) nextNum = parseInt(match[0]) + 1;
+    }
+
+    // Get starting sequence for Admission numbers (ASA)
+    const lastAsa = await sql`SELECT admission_number FROM students WHERE admission_number LIKE ${`ASA${year}%`} ORDER BY admission_number DESC LIMIT 1`;
+    let nextAsaNum = 1;
+    if (lastAsa.length > 0) {
+      const match = lastAsa[0].admission_number.match(/\d{3}$/);
+      if (match) nextAsaNum = parseInt(match[0]) + 1;
+    }
+
+    for (const student of studentsList) {
+      const studentId = `STU${year}${nextNum.toString().padStart(3, '0')}`;
+      const admissionNum = `ASA${year}${nextAsaNum.toString().padStart(3, '0')}`;
+      const tempPassword = generateRandomPassword(8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      // 1. Create User
+      const userRes = await sql`
+        INSERT INTO users (user_id, user_type, password_hash, temp_password, must_change_password)
+        VALUES (${studentId}, 'student', ${hashedPassword}, ${tempPassword}, true)
+        RETURNING id
+      `;
+      
+      const userId = userRes[0].id;
+
+      // 2. Create Student (Minimal Info)
+      await sql`
+        INSERT INTO students (
+          user_id, student_id, admission_number, surname, other_names, 
+          current_class_id, course_id, registration_status, is_active
+        ) VALUES (
+          ${userId}, ${studentId}, ${admissionNum}, ${student.surname}, ${student.other_names},
+          ${student.class_id}, ${student.course_id}, 'voter_only', true
+        )
+      `;
+
+      results.push({
+        name: `${student.surname} ${student.other_names}`,
+        studentId,
+        admissionNum,
+        tempPassword
+      });
+
+      nextNum++;
+      nextAsaNum++;
+    }
+
+    return results;
+  },
+
+  async getStudentsByRegistrationStatus(status: string) {
+    return await sql`
+      SELECT s.*, c.class_name, co.name as course_name 
+      FROM students s
+      JOIN classes c ON s.current_class_id = c.id
+      JOIN courses co ON s.course_id = co.id
+      WHERE s.registration_status = ${status} AND s.is_active = true
+      ORDER BY s.surname ASC
+    `;
+  },
+
+  async updateStudentRegistration(id: number, data: any) {
+    return await sql`
+      UPDATE students 
+      SET 
+        date_of_birth = ${data.date_of_birth || null},
+        gender = ${data.gender || null},
+        address = ${data.address || null},
+        guardian_name = ${data.guardian_name || null},
+        guardian_phone = ${data.guardian_phone || null},
+        registration_status = 'complete',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `;
+  },
+
+  getLearningMaterials,
+  uploadLearningMaterial,
+  deleteLearningMaterial
 };
 
 // Learning Materials
@@ -2226,4 +2442,5 @@ async function deleteLearningMaterial(materialId: number) {
 
 
 export { uploadLearningMaterial, getLearningMaterials, deleteLearningMaterial };
+
 export default db;

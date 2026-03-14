@@ -8,18 +8,9 @@ import { StudentProfile } from './StudentProfile';
 import { StudentBehavior } from './StudentBehavior';
 import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
+import { StudentVoting } from './StudentVoting';
 
-// Updated Student interface to match what's provided by StudentAuthContext
-interface Student {
-  id: string;
-  studentId: string;
-  fullName: string;
-  className: string;
-  house: string;
-  form: number;
-  course: string;
-  profilePicture?: string;
-}
+import { Student } from '../../contexts/StudentAuthContext';
 
 interface Subject {
   id: number;
@@ -65,6 +56,7 @@ export const StudentDashboard: React.FC<{
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [activeElections, setActiveElections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear().toString());
   const [semester, setSemester] = useState(1);
@@ -107,6 +99,11 @@ export const StudentDashboard: React.FC<{
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     )},
+    { id: 'voting', label: 'Vote Now', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )},
   ];
 
   // Fetch data from database
@@ -139,6 +136,10 @@ export const StudentDashboard: React.FC<{
       // In a real implementation, we would get this from the student data
       const classAssignments = await db.getAssignmentsByClass(1); // Placeholder
       setAssignments(classAssignments);
+
+      // Fetch active elections for voter alerts
+      const allElections = await db.getElections();
+      setActiveElections(allElections.filter((e: any) => e.status === 'open'));
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to load dashboard data');
@@ -149,6 +150,44 @@ export const StudentDashboard: React.FC<{
 
   const renderOverview = () => (
     <div className="space-y-6">
+      {/* Registration Pending Alert */}
+      {student && student.registration_status !== 'complete' && (
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <svg className="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-amber-800">Registration Incomplete</h3>
+            <div className="mt-1 text-sm text-amber-700">
+              <p>Your official school registration is currently pending. Please visit the <strong>ICT Department</strong> with your documents to complete your full profile.</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Election Alert */}
+      {activeElections.length > 0 && (
+        <div className="bg-school-green-600 rounded-2xl p-4 text-white shadow-lg animate-pulse flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 p-2 rounded-xl">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-bold">Active Election: {activeElections[0].name}</p>
+              <p className="text-sm text-school-green-100">Cast your vote before the deadline!</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setActiveTab('voting')}
+            className="bg-white text-school-green-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-school-cream-50 transition-colors"
+          >
+            Vote Now
+          </button>
+        </div>
+      )}
       {/* Welcome Card */}
       <PortalCard>
         <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-6">
@@ -398,6 +437,8 @@ export const StudentDashboard: React.FC<{
         return <StudentDownloads />;
       case 'messages': 
         return <StudentMessages />;
+      case 'voting':
+        return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
       default: 
         return renderOverview();
     }
@@ -429,6 +470,7 @@ export const StudentDashboard: React.FC<{
                 {activeTab === 'behavior' && 'Behavior Records'}
                 {activeTab === 'downloads' && 'Downloads'}
                 {activeTab === 'messages' && 'Messages'}
+                {activeTab === 'voting' && 'School Voting System'}
               </h1>
               <p className="text-gray-600">
                 {activeTab === 'overview' && 'Your academic dashboard overview'}
@@ -438,6 +480,7 @@ export const StudentDashboard: React.FC<{
                 {activeTab === 'behavior' && 'View your behavior records and conduct'}
                 {activeTab === 'downloads' && 'Download learning materials and resources'}
                 {activeTab === 'messages' && 'Communicate with teachers and school administration'}
+                {activeTab === 'voting' && 'Participate in ongoing school elections'}
               </p>
             </div>
             

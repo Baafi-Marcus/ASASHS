@@ -48,7 +48,7 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacher, onLogou
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setPasswordData({
       ...passwordData,

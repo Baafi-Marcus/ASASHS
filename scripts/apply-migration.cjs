@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
@@ -10,8 +11,17 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-// Read the migration file
-const migrationPath = path.join(__dirname, '..', 'migrations', 'complete-semester-migration.sql');
+// Get the migration file from arguments or use default
+const migrationFile = process.argv[2] || 'complete-semester-migration.sql';
+const migrationPath = path.isAbsolute(migrationFile)
+  ? migrationFile
+  : path.join(__dirname, '..', 'migrations', migrationFile);
+
+if (!fs.existsSync(migrationPath)) {
+  console.error(`Migration file not found at: ${migrationPath}`);
+  process.exit(1);
+}
+
 const migrationSql = fs.readFileSync(migrationPath, 'utf8');
 
 // Create a client
@@ -27,11 +37,12 @@ async function applyMigration() {
     // Connect to the database
     await client.connect();
     console.log('Connected to database');
-    
+    console.log(`Applying migration: ${path.basename(migrationPath)}`);
+
     // Apply the migration
     await client.query(migrationSql);
     console.log('Migration applied successfully!');
-    
+
     // Close the connection
     await client.end();
     console.log('Disconnected from database');

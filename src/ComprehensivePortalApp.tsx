@@ -138,6 +138,9 @@ function TeacherPortalContent({ onBackToSelection }: { onBackToSelection: () => 
   );
 }
 
+import { AdminElectionManagement } from './pages/admin/AdminElectionManagement';
+import { ICTRegistrationPortal } from './pages/admin/ICTRegistrationPortal';
+
 function AdminPortal({ onBackToSelection }: { onBackToSelection: () => void }) {
   const { user, signIn, signOut, changePassword, loading } = React.useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -255,6 +258,10 @@ function AdminPortal({ onBackToSelection }: { onBackToSelection: () => void }) {
         return <AdminBehaviorRecords />;
       case 'performance':
         return <AdminStudentPerformance />;
+      case 'voting':
+        return <AdminElectionManagement />;
+      case 'ict':
+        return <ICTRegistrationPortal />;
       case 'profile':
         return <AdminProfile adminId={user.user_id} />;
       default:
@@ -362,6 +369,20 @@ function AdminPortal({ onBackToSelection }: { onBackToSelection: () => void }) {
               )
             },
             {
+              id: 'voting', label: 'Voting System', icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )
+            },
+            {
+              id: 'ict', label: 'ICT Portal (Reg)', icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              )
+            },
+            {
               id: 'profile', label: 'My Profile', icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -401,14 +422,16 @@ function AdminPortal({ onBackToSelection }: { onBackToSelection: () => void }) {
         <header className="bg-white shadow-sm border-b px-6 py-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-gray-900 capitalize">
-              {activeTab === 'dashboard' ? 'Dashboard Overview' :
-                activeTab === 'students' ? 'Student Management' :
-                  activeTab === 'teachers' ? 'Teacher Management' :
-                    activeTab === 'courses' ? 'Course & Academic Management' :
-                      activeTab === 'timetables' ? 'Timetable Management' :
-                        activeTab === 'performance' ? 'Student Performance Analytics' :
-                          activeTab === 'announcements' ? 'Announcements Management' :
-                            activeTab === 'behavior' ? 'Behavior Records' : 'Reports & Analytics'}
+              {activeTab === 'dashboard' ? 'Admin Dashboard' :
+                activeTab === 'students' ? 'Student Records' :
+                  activeTab === 'teachers' ? 'Teacher Directory' :
+                    activeTab === 'courses' ? 'Academics & Courses' :
+                      activeTab === 'timetables' ? 'Weekly Schedules' :
+                        activeTab === 'performance' ? 'Performance Analytics' :
+                          activeTab === 'announcements' ? 'School News' :
+                            activeTab === 'behavior' ? 'Conduct Records' :
+                              activeTab === 'voting' ? 'Election Management' :
+                                activeTab === 'ict' ? 'ICT Registration Portal' : 'Reports & Data'}
             </h2>
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2 bg-school-cream-100 px-3 py-1 rounded-full">

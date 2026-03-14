@@ -48,7 +48,7 @@ export const TeacherAssignmentsAnalytics: React.FC<TeacherAssignmentsAnalyticsPr
       
       // Calculate stats
       const totalAssignments = data.length;
-      const overdueAssignments = data.filter(a => new Date(a.due_date) < new Date()).length;
+      const overdueAssignments = (data as Assignment[]).filter((a: Assignment) => new Date(a.due_date) < new Date()).length;
       
       // Mock submission data (in a real app, this would come from the database)
       const pendingSubmissions = Math.floor(totalAssignments * 0.3);

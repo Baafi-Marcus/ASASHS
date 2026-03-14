@@ -62,7 +62,9 @@ interface ClassStudent {
 interface TeacherSubject {
   id: number;
   subject_name: string;
+  subject_id: number;
   class_name: string;
+  class_id: number;
   form: number;
   stream: string;
   teacher_surname: string;

@@ -1018,8 +1018,8 @@ export function AdminTeacherManagement() {
                 <div className="text-5xl mb-4">✅</div>
                 <p className="text-gray-700 mb-2">Teacher has been registered successfully.</p>
                 <div className="bg-school-cream-100 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-gray-600">Staff ID: <span className="font-mono font-bold">{registrationResult?.teacher_id || ''}</span></p>
-                  <p className="text-sm text-gray-600">Temporary Password: <span className="font-mono font-bold">{registrationResult?.password || ''}</span></p>
+                  <p className="text-sm text-gray-600">Staff ID: <span className="font-mono font-bold">{(registrationResult as any)?.teacher_id || ''}</span></p>
+                  <p className="text-sm text-gray-600">Temporary Password: <span className="font-mono font-bold">{(registrationResult as any)?.password || ''}</span></p>
                 </div>
                 <p className="text-sm text-gray-500">
                   Please provide these credentials to the teacher. They will be required to change their password on first login.

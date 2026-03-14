@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import db from '../../lib/neon';
 
-interface Student {
+export interface Student {
   id: string;
+  user_id: string;
   studentId: string;
+  full_name: string;
   fullName: string;
+  registration_status: string;
   className: string;
   house: string;
   form: number;
@@ -69,8 +72,11 @@ export const StudentAuthProvider: React.FC<StudentAuthProviderProps> = ({ childr
 
       return {
         id: studentData.id.toString(), // Student database ID
+        user_id: authenticatedUser.id.toString(),
         studentId: authenticatedUser.student_id,
+        full_name: `${studentData.surname}, ${studentData.other_names}`,
         fullName: `${studentData.surname}, ${studentData.other_names}`,
+        registration_status: studentData.registration_status || 'complete',
         className: className,
         house: studentData.house_preference && studentData.house_preference.trim() !== '' ? studentData.house_preference : 'Not assigned',
         form: form,

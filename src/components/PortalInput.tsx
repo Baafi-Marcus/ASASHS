@@ -5,6 +5,7 @@ interface PortalInputProps {
   type?: string;
   placeholder?: string;
   value?: string | number;
+  name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   required?: boolean;
   error?: string;
@@ -13,6 +14,9 @@ interface PortalInputProps {
   children?: React.ReactNode;
   as?: 'input' | 'textarea' | 'select';
   disabled?: boolean;
+  min?: string | number;
+  max?: string | number;
+  defaultValue?: string | number;
 }
 
 export const PortalInput: React.FC<PortalInputProps> = ({ 
@@ -27,7 +31,11 @@ export const PortalInput: React.FC<PortalInputProps> = ({
   rows = 3,
   children,
   as = 'input',
-  disabled = false
+  disabled = false,
+  name,
+  min,
+  max,
+  defaultValue
 }) => {
   const baseClasses = "block w-full rounded-xl border-gray-300 shadow-sm focus:border-school-green-500 focus:ring-school-green-500 focus:ring-2 sm:text-sm transition-all duration-200";
   const errorClasses = error ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "";
@@ -38,9 +46,11 @@ export const PortalInput: React.FC<PortalInputProps> = ({
       case 'textarea':
         return (
           <textarea
+            name={name}
             rows={rows}
             placeholder={placeholder}
             value={value}
+            defaultValue={defaultValue}
             onChange={onChange}
             required={required}
             disabled={disabled}
@@ -50,7 +60,9 @@ export const PortalInput: React.FC<PortalInputProps> = ({
       case 'select':
         return (
           <select
+            name={name}
             value={value}
+            defaultValue={defaultValue}
             onChange={onChange}
             required={required}
             disabled={disabled}
@@ -62,12 +74,16 @@ export const PortalInput: React.FC<PortalInputProps> = ({
       default:
         return (
           <input
+            name={name}
             type={type}
             placeholder={placeholder}
             value={value}
+            defaultValue={defaultValue}
             onChange={onChange}
             required={required}
             disabled={disabled}
+            min={min}
+            max={max}
             className={`${classes} py-3 px-4`}
           />
         );
