@@ -293,22 +293,14 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
   );
 
   return (
-    <div className="min-h-screen bg-school-cream-50 flex flex-col">
-      <PortalHeader 
-        portalName="Admin" 
-        userName={admin.fullName} 
-        onLogout={onLogout} 
-      />
-      
-      <main className="flex-1 p-6 overflow-auto">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
-          </div>
-        ) : (
-          renderOverview()
-        )}
-      </main>
+    <div className="space-y-6">
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+        </div>
+      ) : (
+        renderOverview()
+      )}
     </div>
   );
 }

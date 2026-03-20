@@ -8,3 +8,14 @@ node_modules/
 
 # Build output
 dist/
+
+# Temporary and test files
+*.txt
+*.json
+scripts/test-*.cjs
+scripts/find-*.cjs
+scripts/export-*.cjs
+scripts/inspect-*.cjs
+schema_results.json
+output.txt
+schema_output.txt
