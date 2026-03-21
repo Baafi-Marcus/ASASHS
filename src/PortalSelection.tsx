@@ -7,22 +7,22 @@ interface PortalSelectionProps {
 
 export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal, onBackToHome }) => {
   return (
-    <div className="min-h-screen bg-[#0a0f1a] relative overflow-hidden flex flex-col font-sans">
-      {/* Dynamic Animated Background */}
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden flex flex-col font-sans">
+      {/* Dynamic Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-school-green-600/20 blur-[120px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-school-green-100/40 blur-[130px] rounded-full animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-100/40 blur-[130px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 backdrop-blur-md bg-black/20">
+      <header className="relative z-10 border-b border-gray-100 backdrop-blur-md bg-white/70">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
               {onBackToHome && (
                 <button
                   onClick={onBackToHome}
-                  className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all group"
+                  className="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-all group border border-transparent hover:border-gray-200"
                   title="Back to Website"
                 >
                   <svg className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,7 +31,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                 </button>
               )}
               <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-br from-school-green-500 to-school-green-700 p-2 rounded-xl shadow-lg ring-1 ring-white/20">
+                <div className="bg-gradient-to-br from-school-green-600 to-school-green-800 p-2 rounded-xl shadow-lg ring-1 ring-white/20">
                   <img
                     src="/asashs-logo.png"
                     alt="ASASHS Logo"
@@ -39,31 +39,34 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white tracking-tight">ASASHS</h1>
-                  <p className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-semibold">Senior High School</p>
+                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">ASASHS</h1>
+                  <p className="text-[10px] text-school-green-600 uppercase tracking-[0.2em] font-bold">Portal Gateway</p>
                 </div>
               </div>
             </div>
             <div className="hidden md:block text-right">
-              <p className="text-sm font-medium text-white/70">Secure Portal Access</p>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-widest italic">Official Access Only</p>
               <div className="flex items-center justify-end space-x-2 mt-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">System Online</p>
+                <span className="text-[10px] font-black text-green-600 uppercase tracking-tighter">System Online</span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12">
+      {/* Main Content */}
+      <main className="relative z-10 flex-grow flex items-center justify-center p-6">
         <div className="max-w-4xl w-full">
-          {/* Welcome Text */}
-          <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight">
-              Select Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-school-green-400 to-blue-400">Portal</span>
+          <div className="text-center mb-16 animate-in fade-in slide-in-from-top-4 duration-1000">
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight uppercase leading-none mb-6">
+              Welcome to the <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-school-green-600 to-blue-600">
+                School Management System
+              </span>
             </h2>
-            <p className="text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
-              Experience the future of school management. A fast, secure, and beautiful interface designed for clarity and productivity.
+            <p className="text-lg text-gray-500 max-w-xl mx-auto font-medium leading-relaxed">
+              Select your designated portal identity to continue accessing school resources and management tools.
             </p>
           </div>
 
