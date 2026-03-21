@@ -56,50 +56,55 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-grow flex items-center justify-center p-6">
-        <div className="max-w-4xl w-full">
+      <main className="relative z-10 flex-grow flex items-center justify-center p-6 py-12">
+        <div className="max-w-5xl w-full">
           <div className="text-center mb-16 animate-in fade-in slide-in-from-top-4 duration-1000">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight uppercase leading-none mb-6">
-              Welcome to the <br />
+            <h2 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter uppercase leading-none mb-6">
+              Official Portal <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-school-green-600 to-blue-600">
-                School Management System
+                Identity Selection
               </span>
             </h2>
             <p className="text-lg text-gray-500 max-w-xl mx-auto font-medium leading-relaxed">
-              Select your designated portal identity to continue accessing school resources and management tools.
+              Please choose your official role to access the specialized management and learning tools designed for you.
             </p>
+            <div className="h-2 w-32 bg-gradient-to-r from-school-green-600 to-blue-600 mx-auto mt-8 rounded-full shadow-sm"></div>
           </div>
 
-          {/* Portal Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl mx-auto">
             {/* Student Portal Card */}
             <div
               onClick={() => onSelectPortal('student')}
               className="group relative cursor-pointer"
             >
-              <div className="absolute inset-0 bg-blue-500/20 blur-2xl group-hover:bg-blue-500/30 transition-all duration-500 rounded-3xl opacity-0 group-hover:opacity-100"></div>
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] hover:border-blue-500/50 transition-all duration-500 overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-32 h-32 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              {/* Animated Glow Effect */}
+              <div className="absolute inset-0 bg-school-green-200/40 blur-3xl group-hover:bg-school-green-400/30 transition-all duration-700 rounded-[3rem] opacity-0 group-hover:opacity-100 -z-10"></div>
+              
+              <div className="relative bg-white border-2 border-gray-100 p-10 rounded-[3rem] hover:border-school-green-500 transition-all duration-500 overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.04)] group-hover:shadow-[0_25px_60px_rgba(34,197,94,0.15)] group-hover:-translate-y-2">
+                <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
+                  <svg className="w-48 h-48 text-school-green-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L1 7l11 5 11-5-11-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                   </svg>
                 </div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 ring-1 ring-blue-500/30 group-hover:scale-110 transition-transform duration-500">
-                    <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <div className="relative z-10 h-full flex flex-col">
+                  <div className="w-20 h-20 bg-school-green-50 rounded-3xl flex items-center justify-center mb-8 ring-2 ring-school-green-100 group-hover:bg-school-green-500 group-hover:text-white transition-all duration-500 shadow-sm">
+                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                     </svg>
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-3">Student</h3>
-                  <p className="text-white/50 text-sm leading-relaxed mb-8">
-                    Access your personalized learning dashboard, view grades, and stay on top of assignments.
+                  
+                  <span className="text-xs font-black text-school-green-600 uppercase tracking-[0.4em] mb-2">Student Access</span>
+                  <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">STUDENT</h3>
+                  <p className="text-gray-500 font-medium leading-relaxed mb-10">
+                    Access your personalized learning dashboard, view terminal results, attendance records, and participate in voting.
                   </p>
-                  <div className="flex items-center text-blue-400 font-bold group-hover:translate-x-2 transition-transform">
-                    <span>Enter Portal</span>
-                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  
+                  <div className="mt-auto flex items-center text-school-green-600 font-black text-sm uppercase tracking-widest group-hover:translate-x-3 transition-transform duration-500">
+                    <span>Enter Student Portal</span>
+                    <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </div>
                 </div>
@@ -111,28 +116,33 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
               onClick={() => onSelectPortal('teacher')}
               className="group relative cursor-pointer"
             >
-              <div className="absolute inset-0 bg-school-green-500/20 blur-2xl group-hover:bg-school-green-500/30 transition-all duration-500 rounded-3xl opacity-0 group-hover:opacity-100"></div>
-              <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] hover:border-school-green-500/50 transition-all duration-500 overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-32 h-32 text-school-green-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              {/* Animated Glow Effect */}
+              <div className="absolute inset-0 bg-blue-200/40 blur-3xl group-hover:bg-blue-400/30 transition-all duration-700 rounded-[3rem] opacity-0 group-hover:opacity-100 -z-10"></div>
+              
+              <div className="relative bg-white border-2 border-gray-100 p-10 rounded-[3rem] hover:border-blue-500 transition-all duration-500 overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.04)] group-hover:shadow-[0_25px_60px_rgba(59,130,246,0.15)] group-hover:-translate-y-2">
+                <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none">
+                  <svg className="w-48 h-48 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
 
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-school-green-500/20 rounded-2xl flex items-center justify-center mb-6 ring-1 ring-school-green-500/30 group-hover:scale-110 transition-transform duration-500">
-                    <svg className="w-8 h-8 text-school-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <div className="relative z-10 h-full flex flex-col">
+                  <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-8 ring-2 ring-blue-100 group-hover:bg-blue-500 group-hover:text-white transition-all duration-500 shadow-sm">
+                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
                     </svg>
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-3">Teacher</h3>
-                  <p className="text-white/50 text-sm leading-relaxed mb-8">
-                    Manage your classes, grade assignments, and track student performance with precision tools.
+                  
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-[0.4em] mb-2">Academic Staff</span>
+                  <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">TEACHER</h3>
+                  <p className="text-gray-500 font-medium leading-relaxed mb-10">
+                    Manage class assignments, upload student performance data, track behavioral records, and coordinate with staff.
                   </p>
-                  <div className="flex items-center text-school-green-400 font-bold group-hover:translate-x-2 transition-transform">
-                    <span>Enter Portal</span>
-                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  
+                  <div className="mt-auto flex items-center text-blue-600 font-black text-sm uppercase tracking-widest group-hover:translate-x-3 transition-transform duration-500">
+                    <span>Enter Staff Portal</span>
+                    <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </div>
                 </div>
@@ -143,14 +153,14 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 py-8 text-center border-t border-white/5 bg-black/40">
-        <p className="text-white/30 text-[11px] uppercase tracking-[0.3em] font-medium mb-2">
+      <footer className="relative z-10 py-12 text-center border-t border-gray-100 bg-white">
+        <p className="text-gray-400 text-[11px] uppercase tracking-[0.5em] font-black mb-3">
           &copy; 2025 Akim Asafo Senior High School
         </p>
-        <p className="text-white/20 text-[10px] font-semibold">
-          COMPREHENSIVE STUDENT MANAGEMENT SYSTEM 3.0 • PRO EDITION
+        <p className="text-gray-300 text-[10px] font-bold tracking-tighter">
+          SECURE SCHOOL MANAGEMENT ARCHITECTURE • IDENTITY VERSION 4.2
         </p>
       </footer>
     </div>
   );
-};
+};
