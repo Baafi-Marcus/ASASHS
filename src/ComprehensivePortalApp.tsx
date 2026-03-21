@@ -30,7 +30,7 @@ import { TeacherAuthProvider, useTeacherAuth } from './contexts/TeacherAuthConte
 import { TeacherLogin } from './pages/teacher/TeacherLogin';
 import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 
-function StudentPortalContent({ onBackToSelection }: { onBackToSelection: () => void }) {
+function StudentPortalContent({ onBackToSelection, isVotingMode }: { onBackToSelection: () => void, isVotingMode?: boolean }) {
   const { student, loading, login, logout } = useStudentAuth();
   const [showBackButton, setShowBackButton] = useState(true);
 
@@ -78,7 +78,7 @@ function StudentPortalContent({ onBackToSelection }: { onBackToSelection: () => 
       {!student ? (
         <StudentLogin onLogin={login} />
       ) : (
-        <StudentDashboard student={student} onLogout={logout} />
+        <StudentDashboard student={student} onLogout={logout} isVotingMode={isVotingMode} />
       )}
     </div>
   );
@@ -472,6 +472,7 @@ function ComprehensivePortalApp() {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const [showNewsPage, setShowNewsPage] = useState(false);
   const [selectedPortal, setSelectedPortal] = useState<'admin' | 'student' | 'teacher' | null>(null);
+  const [isVotingMode, setIsVotingMode] = useState(false);
 
   useEffect(() => {
     // Check for /admin in the URL
@@ -493,13 +494,21 @@ function ComprehensivePortalApp() {
   const handlePortalSelection = (portal: 'admin' | 'student' | 'teacher') => {
     setSelectedPortal(portal);
     setShowLandingPage(false);
-    if (portal !== 'admin') {
-      localStorage.setItem('selectedPortal', portal);
+    localStorage.setItem('selectedPortal', portal);
+    if (portal === 'admin') {
+      window.history.pushState({}, '', '/admin');
     }
+  };
+
+  const handleVoteClick = () => {
+    setSelectedPortal('student');
+    setIsVotingMode(true);
+    setShowLandingPage(false);
   };
 
   const handleBackToSelection = () => {
     setSelectedPortal(null);
+    setIsVotingMode(false);
     localStorage.removeItem('selectedPortal');
     if (window.location.pathname === '/admin') {
       window.history.pushState({}, '', '/');
@@ -540,7 +549,7 @@ function ComprehensivePortalApp() {
 
   const StudentPortalWrapper = () => (
     <StudentAuthProvider>
-      <StudentPortalContent onBackToSelection={handleBackToSelection} />
+      <StudentPortalContent onBackToSelection={handleBackToSelection} isVotingMode={isVotingMode} />
     </StudentAuthProvider>
   );
 
@@ -557,7 +566,7 @@ function ComprehensivePortalApp() {
         {showNewsPage ? (
           <NewsEventsPage onLoginClick={goToPortalSelection} />
         ) : showLandingPage ? (
-          <SchoolLandingPage onLoginClick={goToPortalSelection} onNewsClick={goToNewsPage} />
+          <SchoolLandingPage onLoginClick={goToPortalSelection} onVoteClick={handleVoteClick} onNewsClick={goToNewsPage} />
         ) : !selectedPortal ? (
           <PortalSelection onSelectPortal={handlePortalSelection} onBackToHome={handleBackToLanding} />
         ) : (

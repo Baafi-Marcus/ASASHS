@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 interface LandingNavbarProps {
   onLoginClick: () => void;
+  onVoteClick?: () => void;
 }
 
-export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onLoginClick }) => {
+export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onLoginClick, onVoteClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -66,6 +67,15 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onLoginClick }) =>
                 {link.name}
               </a>
             ))}
+            {onVoteClick && (
+              <button
+                onClick={onVoteClick}
+                className="px-6 py-2 rounded-full font-bold text-sm bg-yellow-500 text-black hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-md flex items-center space-x-2 animate-pulse"
+              >
+                <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                <span>VOTE NOW</span>
+              </button>
+            )}
             <button
               onClick={onLoginClick}
               className={`px-6 py-2 rounded-full font-bold text-sm transition-all transform hover:scale-105 ${isScrolled
@@ -109,12 +119,27 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onLoginClick }) =>
                 {link.name}
               </a>
             ))}
+            {onVoteClick && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onVoteClick();
+                }}
+                className="w-full text-left block px-3 py-3 rounded-md text-base font-bold text-black bg-yellow-500 hover:bg-yellow-400 mt-2 flex items-center justify-between"
+              >
+                <span>Student Voting 2025</span>
+                <div className="flex items-center space-x-2">
+                   <div className="w-2 h-2 bg-red-600 rounded-full animate-ping"></div>
+                   <span className="text-[10px] uppercase font-black">Live</span>
+                </div>
+              </button>
+            )}
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 onLoginClick();
               }}
-              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-school-green-600 bg-school-green-50 hover:bg-school-green-100 mt-4"
+              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-school-green-600 bg-school-green-50 hover:bg-school-green-100 mt-2"
             >
               Portal Login
             </button>

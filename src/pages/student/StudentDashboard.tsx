@@ -51,8 +51,9 @@ interface Assignment {
 export const StudentDashboard: React.FC<{ 
   student: Student; 
   onLogout: () => void;
-}> = ({ student, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+  isVotingMode?: boolean;
+}> = ({ student, onLogout, isVotingMode }) => {
+  const [activeTab, setActiveTab] = useState(isVotingMode ? 'voting' : 'overview');
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -151,8 +152,8 @@ export const StudentDashboard: React.FC<{
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Registration Pending Alert */}
-      {student && student.registration_status !== 'complete' && (
+      {/* Registration Pending Alert - Suppressed in Voting Mode */}
+      {student && student.registration_status !== 'complete' && !isVotingMode && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start space-x-3">
           <div className="flex-shrink-0">
             <svg className="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -4,13 +4,14 @@ import { LandingFooter } from '../components/LandingFooter';
 
 interface SchoolLandingPageProps {
     onLoginClick: () => void;
+    onVoteClick?: () => void;
     onNewsClick?: () => void;
 }
 
-export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginClick, onNewsClick }) => {
+export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginClick, onVoteClick, onNewsClick }) => {
     return (
         <div className="min-h-screen bg-white font-sans">
-            <LandingNavbar onLoginClick={onLoginClick} />
+            <LandingNavbar onLoginClick={onLoginClick} onVoteClick={onVoteClick} />
 
             {/* Hero Section */}
             <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">
@@ -38,7 +39,18 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                     <p className="text-base md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-light animate-slide-up [animation-delay:200ms]">
                         Providing holistic quality education, inculcating Godliness and moral uprightness for over three decades.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-3 animate-slide-up [animation-delay:400ms]">
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up [animation-delay:400ms]">
+                        {onVoteClick && (
+                            <button
+                                onClick={onVoteClick}
+                                className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black rounded-full font-black text-lg transition-all transform hover:-translate-y-1 shadow-xl hover:shadow-yellow-500/40 flex items-center justify-center space-x-3 animate-pulse border-2 border-white/20"
+                            >
+                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z" />
+                                </svg>
+                                <span>VOTE IN 2025 ELECTIONS</span>
+                            </button>
+                        )}
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
                             className="px-6 py-3 md:px-8 md:py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
