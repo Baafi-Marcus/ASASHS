@@ -204,7 +204,9 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
                       </div>
                       
                       <h4 className="text-xl font-bold text-gray-900 mb-1">{cand.display_name}</h4>
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">Candidate</p>
+                      <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mb-4">
+                        {cand.student_class || 'Candidate'}
+                      </p>
                       
                       <div className="flex flex-col w-full space-y-2">
                         {cand.manifesto && (

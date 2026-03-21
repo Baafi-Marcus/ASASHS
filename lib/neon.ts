@@ -2187,7 +2187,18 @@ export const db = {
   },
 
   async getCandidates(positionId: number) {
-    return await sql`SELECT * FROM candidates WHERE position_id = ${positionId} ORDER BY display_name ASC`;
+    return await sql`
+      SELECT 
+        c.*, 
+        s.surname, 
+        s.other_names, 
+        cl.class_name as student_class
+      FROM candidates c 
+      LEFT JOIN students s ON c.student_id = s.id
+      LEFT JOIN classes cl ON s.current_class_id = cl.id
+      WHERE c.position_id = ${positionId} 
+      ORDER BY c.display_name ASC
+    `;
   },
 
   async submitVote(electionId: number, studentId: number, selections: { position_id: number; candidate_id: number }[]) {
@@ -2235,15 +2246,19 @@ export const db = {
       SELECT 
         p.title as position_title,
         c.display_name as candidate_name,
+        cl.class_name as candidate_class,
         COUNT(v.id) as vote_count
       FROM positions p
       JOIN candidates c ON p.id = c.position_id
+      LEFT JOIN students s ON c.student_id = s.id
+      LEFT JOIN classes cl ON s.current_class_id = cl.id
       LEFT JOIN votes v ON c.id = v.candidate_id
       WHERE p.election_id = ${electionId}
-      GROUP BY p.id, p.title, c.id, c.display_name
+      GROUP BY p.id, p.title, c.id, c.display_name, cl.class_name
       ORDER BY p.sort_order, p.id, vote_count DESC
     `;
   },
+
 
   async createAuditLog(action: string, performedBy: string, details: any) {
     await sql`

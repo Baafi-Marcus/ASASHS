@@ -35,6 +35,18 @@ interface Candidate {
   display_name: string;
   manifesto: string | null;
   image_url: string | null;
+  student_id: number | null;
+  surname?: string;
+  other_names?: string;
+  student_class?: string;
+}
+
+interface StudentRecord {
+  id: number;
+  surname: string;
+  other_names: string;
+  student_id: string;
+  class_name: string;
 }
 
 export const AdminElectionManagement: React.FC = () => {
@@ -48,6 +60,7 @@ export const AdminElectionManagement: React.FC = () => {
   const [candidates, setCandidates] = useState<Record<number, Candidate[]>>({});
   const [stats, setStats] = useState<{ total: number; voted: number; percentage: number } | null>(null);
   const [results, setResults] = useState<any[]>([]);
+  const [allStudents, setAllStudents] = useState<StudentRecord[]>([]);
 
   const [newElection, setNewElection] = useState({
     name: '',
@@ -57,10 +70,17 @@ export const AdminElectionManagement: React.FC = () => {
   });
 
   const [newPosition, setNewPosition] = useState({ title: '', max_selections: 1 });
-  const [newCandidate, setNewCandidate] = useState({ position_id: 0, display_name: '', manifesto: '', image_url: '' });
+  const [newCandidate, setNewCandidate] = useState<{
+    position_id: number;
+    student_id: number | '';
+    display_name: string;
+    manifesto: string;
+    image_url: string;
+  }>({ position_id: 0, student_id: '', display_name: '', manifesto: '', image_url: '' });
 
   useEffect(() => {
     fetchElections();
+    fetchAllStudents();
   }, []);
 
   useEffect(() => {
@@ -77,6 +97,16 @@ export const AdminElectionManagement: React.FC = () => {
       toast.error('Failed to load elections');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllStudents = async () => {
+    try {
+      // Use the existing getStudents method with a high limit to get all students for the dropdown
+      const data = await db.getStudents({ limit: 1000 }); 
+      setAllStudents(data);
+    } catch (error) {
+      console.error('Failed to load students for candidate selection');
     }
   };
 
@@ -130,12 +160,30 @@ export const AdminElectionManagement: React.FC = () => {
     e.preventDefault();
     if (!newCandidate.position_id) return;
     try {
-      await db.createCandidate(newCandidate);
-      toast.success('Candidate added');
-      setNewCandidate({ position_id: 0, display_name: '', manifesto: '', image_url: '' });
+      await db.createCandidate({
+        ...newCandidate,
+        student_id: newCandidate.student_id === '' ? undefined : newCandidate.student_id
+      });
+      toast.success('Candidate registered');
+      setNewCandidate({ position_id: 0, student_id: '', display_name: '', manifesto: '', image_url: '' });
       if (selectedElection) fetchElectionDetails(selectedElection.id);
     } catch (error) {
       toast.error('Failed to add candidate');
+    }
+  };
+
+  const handleStudentSelect = (studentId: string) => {
+    if (studentId === '') {
+      setNewCandidate({ ...newCandidate, student_id: '', display_name: '' });
+      return;
+    }
+    const student = allStudents.find(s => s.id === parseInt(studentId));
+    if (student) {
+      setNewCandidate({ 
+        ...newCandidate, 
+        student_id: student.id, 
+        display_name: `${student.surname} ${student.other_names}`
+      });
     }
   };
 
@@ -341,18 +389,31 @@ export const AdminElectionManagement: React.FC = () => {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Candidate Name</label>
+                    <label className="text-xs font-black text-gray-500 uppercase">Link Student (Search)</label>
+                    <select 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none bg-white font-medium"
+                      value={newCandidate.student_id}
+                      onChange={(e) => handleStudentSelect(e.target.value)}
+                    >
+                      <option value="">Manual Entry / Search...</option>
+                      {allStudents.map(s => (
+                        <option key={s.id} value={s.id}>{s.surname} {s.other_names} ({s.class_name})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-500 uppercase">Display Name</label>
                     <input 
                       required
                       type="text"
-                      placeholder="Full Name"
+                      placeholder="Candidate's Name"
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none"
                       value={newCandidate.display_name}
                       onChange={(e) => setNewCandidate({...newCandidate, display_name: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Image URL</label>
+                    <label className="text-xs font-black text-gray-500 uppercase">Image URL (Optional)</label>
                     <input 
                       type="text"
                       placeholder="https://..."
@@ -361,11 +422,8 @@ export const AdminElectionManagement: React.FC = () => {
                       onChange={(e) => setNewCandidate({...newCandidate, image_url: e.target.value})}
                     />
                   </div>
-                  <button type="submit" className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-md">
-                    Register Candidate
-                  </button>
-                  <div className="md:col-span-2 lg:col-span-4 space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Manifesto</label>
+                  <div className="md:col-span-2 lg:col-span-3 space-y-2">
+                    <label className="text-xs font-black text-gray-500 uppercase">Manifesto / Vision Statement</label>
                     <textarea 
                       placeholder="The candidate's vision..."
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 min-h-[100px] outline-none"
@@ -373,6 +431,9 @@ export const AdminElectionManagement: React.FC = () => {
                       onChange={(e) => setNewCandidate({...newCandidate, manifesto: e.target.value})}
                     />
                   </div>
+                  <button type="submit" className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 uppercase tracking-widest text-xs">
+                    Register Candidate
+                  </button>
                 </form>
 
                 {positions.map((pos) => (
@@ -381,22 +442,25 @@ export const AdminElectionManagement: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {candidates[pos.id]?.map((cand) => (
                         <div key={cand.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center space-x-4 hover:shadow-sm transition-shadow">
-                          <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+                          <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden ring-1 ring-gray-100">
                             {cand.image_url ? (
                               <img src={cand.image_url} alt={cand.display_name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
+                                <svg className="w-8 h-8 opacity-20" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                 </svg>
                               </div>
                             )}
                           </div>
                           <div className="flex-grow">
-                            <p className="font-bold text-gray-900">{cand.display_name}</p>
-                            <p className="text-xs text-gray-400 line-clamp-1 italic">{cand.manifesto || 'No manifesto recorded.'}</p>
+                            <p className="font-black text-gray-900 leading-tight">{cand.display_name}</p>
+                            <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mt-1">
+                              {cand.student_class || 'Class Unknown'}
+                            </p>
+                            <p className="text-xs text-gray-400 line-clamp-1 italic mt-1">{cand.manifesto || 'No manifesto recorded.'}</p>
                           </div>
-                          <button className="text-gray-400 hover:text-red-600 p-2">
+                          <button className="text-gray-300 hover:text-red-600 p-2 transition-colors">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -438,20 +502,23 @@ export const AdminElectionManagement: React.FC = () => {
                         {posResults.map((r, idx) => {
                           const percentage = totalPosVotes > 0 ? (parseInt(r.vote_count) / totalPosVotes) * 100 : 0;
                           return (
-                            <div key={idx} className="space-y-2">
+                            <div key={idx} className="space-y-3">
                               <div className="flex justify-between items-end">
-                                <p className="font-bold text-gray-900 flex items-center">
-                                  {r.candidate_name}
-                                  {idx === 0 && totalPosVotes > 0 && (
-                                    <span className="ml-3 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-black uppercase rounded-full border border-yellow-200">Leading</span>
-                                  )}
-                                </p>
+                                <div>
+                                  <p className="font-bold text-gray-900 flex items-center">
+                                    {r.candidate_name}
+                                    {idx === 0 && totalPosVotes > 0 && (
+                                      <span className="ml-3 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-black uppercase rounded-full border border-yellow-200">Leading</span>
+                                    )}
+                                  </p>
+                                  <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mt-0.5">{r.candidate_class}</p>
+                                </div>
                                 <p className="text-sm font-black text-gray-600">{r.vote_count} votes ({percentage.toFixed(1)}%)</p>
                               </div>
                               <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full transition-all duration-1000 ${
-                                    idx === 0 ? 'bg-school-green-500' : 'bg-blue-400'
+                                    idx === 0 ? 'bg-school-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-blue-400'
                                   }`}
                                   style={{ width: `${percentage}%` }}
                                 ></div>
