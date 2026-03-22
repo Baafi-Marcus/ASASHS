@@ -9,6 +9,7 @@ interface SchoolLandingPageProps {
     onNewsClick?: () => void;
     onStaffClick?: () => void;
     onCalendarClick?: () => void;
+    onHomeClick?: () => void;
 }
 
 export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ 
@@ -16,7 +17,8 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
     onVoteClick, 
     onNewsClick,
     onStaffClick,
-    onCalendarClick
+    onCalendarClick,
+    onHomeClick
 }) => {
     const [hasActiveElection, setHasActiveElection] = React.useState(false);
 
@@ -35,7 +37,14 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
 
     return (
         <div className="min-h-screen bg-white font-sans">
-            <LandingNavbar onLoginClick={onLoginClick} onVoteClick={hasActiveElection ? onVoteClick : undefined} />
+            <LandingNavbar 
+                onLoginClick={onLoginClick} 
+                onVoteClick={hasActiveElection ? onVoteClick : undefined} 
+                onNewsClick={onNewsClick}
+                onStaffClick={onStaffClick}
+                onCalendarClick={onCalendarClick}
+                onHomeClick={onHomeClick}
+            />
 
             {/* Hero Section */}
             <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">

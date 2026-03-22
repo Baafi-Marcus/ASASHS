@@ -6,12 +6,14 @@ interface NewsEventsPageProps {
     onLoginClick: () => void;
     onStaffClick?: () => void;
     onCalendarClick?: () => void;
+    onHomeClick?: () => void;
 }
 
 export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ 
     onLoginClick,
     onStaffClick,
-    onCalendarClick
+    onCalendarClick,
+    onHomeClick
 }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -106,7 +108,13 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
-            <LandingNavbar onLoginClick={onLoginClick} />
+            <LandingNavbar 
+                onLoginClick={onLoginClick} 
+                onNewsClick={() => {}} // Already on news
+                onStaffClick={onStaffClick}
+                onCalendarClick={onCalendarClick}
+                onHomeClick={onHomeClick}
+            />
 
             {/* Hero Section with Background Image */}
             <section className="relative h-[500px] flex items-center justify-center overflow-hidden">

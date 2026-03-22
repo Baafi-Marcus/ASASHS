@@ -14,12 +14,14 @@ interface StaffDirectoryPageProps {
     onLoginClick: () => void;
     onNewsClick?: () => void;
     onCalendarClick?: () => void;
+    onHomeClick?: () => void;
 }
 
 export const StaffDirectoryPage: React.FC<StaffDirectoryPageProps> = ({ 
     onLoginClick, 
     onNewsClick,
-    onCalendarClick
+    onCalendarClick,
+    onHomeClick
 }) => {
     const staff: StaffMember[] = [
         {
@@ -54,7 +56,13 @@ export const StaffDirectoryPage: React.FC<StaffDirectoryPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <LandingNavbar onLoginClick={onLoginClick} />
+            <LandingNavbar 
+                onLoginClick={onLoginClick} 
+                onNewsClick={onNewsClick}
+                onStaffClick={() => {}} // Already on staff
+                onCalendarClick={onCalendarClick}
+                onHomeClick={onHomeClick}
+            />
             
             <section className="relative h-[300px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-school-green-900">

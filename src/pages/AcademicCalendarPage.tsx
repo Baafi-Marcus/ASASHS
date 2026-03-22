@@ -12,12 +12,14 @@ interface AcademicCalendarPageProps {
     onLoginClick: () => void;
     onNewsClick?: () => void;
     onStaffClick?: () => void;
+    onHomeClick?: () => void;
 }
 
 export const AcademicCalendarPage: React.FC<AcademicCalendarPageProps> = ({ 
     onLoginClick,
     onNewsClick,
-    onStaffClick
+    onStaffClick,
+    onHomeClick
 }) => {
     const events: CalendarEvent[] = [
         { date: "May 15, 2025", title: "First Semester Resumption", category: "Academic" },
@@ -29,7 +31,13 @@ export const AcademicCalendarPage: React.FC<AcademicCalendarPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <LandingNavbar onLoginClick={onLoginClick} />
+            <LandingNavbar 
+                onLoginClick={onLoginClick} 
+                onNewsClick={onNewsClick}
+                onStaffClick={onStaffClick}
+                onCalendarClick={() => {}} // Already on calendar
+                onHomeClick={onHomeClick}
+            />
             
             <section className="relative h-[300px] flex items-center justify-center overflow-hidden text-white">
                 <div className="absolute inset-0 bg-school-green-800">

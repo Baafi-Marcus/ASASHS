@@ -590,18 +590,21 @@ function ComprehensivePortalApp() {
             onLoginClick={goToPortalSelection} 
             onStaffClick={goToStaffPage}
             onCalendarClick={goToCalendarPage}
+            onHomeClick={handleBackToLanding}
           />
         ) : showStaffPage ? (
           <StaffDirectoryPage 
             onLoginClick={goToPortalSelection}
             onCalendarClick={goToCalendarPage}
             onNewsClick={goToNewsPage}
+            onHomeClick={handleBackToLanding}
           />
         ) : showCalendarPage ? (
           <AcademicCalendarPage 
              onLoginClick={goToPortalSelection}
              onStaffClick={goToStaffPage}
              onNewsClick={goToNewsPage}
+             onHomeClick={handleBackToLanding}
           />
         ) : showLandingPage ? (
           <SchoolLandingPage 
@@ -610,6 +613,7 @@ function ComprehensivePortalApp() {
             onNewsClick={goToNewsPage}
             onStaffClick={goToStaffPage}
             onCalendarClick={goToCalendarPage}
+            onHomeClick={handleBackToLanding}
           />
         ) : !selectedPortal ? (
           <PortalSelection onSelectPortal={handlePortalSelection} onBackToHome={handleBackToLanding} />
