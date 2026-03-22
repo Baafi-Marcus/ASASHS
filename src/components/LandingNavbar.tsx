@@ -29,6 +29,22 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith('#')) {
+      if (onHomeClick) {
+        e.preventDefault();
+        onHomeClick();
+        // Wait for render then scroll
+        setTimeout(() => {
+          const element = document.getElementById(href.substring(1));
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    }
+  };
+
   const navLinks = [
     { name: 'Home', onClick: onHomeClick },
     { name: 'About Us', href: '#about' },
@@ -37,7 +53,8 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
       dropdown: [
         { name: 'Academic Calendar', onClick: onCalendarClick },
         { name: 'Staff Directory', onClick: onStaffClick },
-        { name: 'Latest News', onClick: onNewsClick }
+        { name: 'Latest News', onClick: onNewsClick },
+        { name: 'Courses', href: '#academics' }
       ]
     },
     { 
@@ -100,6 +117,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                 ) : link.href ? (
                   <a
                     href={link.href}
+                    onClick={(e) => handleAnchorClick(e, link.href!)}
                     className={`text-sm font-semibold uppercase tracking-wide transition-colors ${isScrolled
                         ? 'text-gray-600 hover:text-school-green-600'
                         : 'text-white/90 hover:text-white'
@@ -144,6 +162,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                             key={subItem.name}
                             href={subItem.href}
                             target={subItem.href?.startsWith('http') ? '_blank' : undefined}
+                            onClick={(e) => handleAnchorClick(e, subItem.href!)}
                             className="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors uppercase tracking-tight"
                           >
                             {subItem.name}
@@ -230,8 +249,11 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                               key={subItem.name}
                               href={subItem.href}
                               target={subItem.href?.startsWith('http') ? '_blank' : undefined}
+                              onClick={(e) => {
+                                handleAnchorClick(e, subItem.href!);
+                                setIsMobileMenuOpen(false);
+                              }}
                               className="block px-3 py-2 rounded-md text-sm font-black text-gray-600 hover:text-school-green-600 uppercase tracking-tighter"
-                              onClick={() => setIsMobileMenuOpen(false)}
                             >
                               {subItem.name}
                             </a>
@@ -253,8 +275,11 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                 ) : (
                   <a
                     href={link.href}
+                    onClick={(e) => {
+                      handleAnchorClick(e, link.href!);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-school-green-600 hover:bg-gray-50"
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.name}
                   </a>
