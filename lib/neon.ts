@@ -2173,6 +2173,10 @@ export const db = {
     `;
   },
 
+  async deleteElection(id: number) {
+    return await sql`DELETE FROM elections WHERE id = ${id}`;
+  },
+
   async createPosition(data: { election_id: number; title: string; max_selections?: number }) {
     const result = await sql`
       INSERT INTO positions (election_id, title, max_selections)
