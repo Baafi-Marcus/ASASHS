@@ -380,8 +380,8 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                 </div>
             </section>
 
-            {/* Call to Action */}
-            <section className="py-24 px-4 bg-gray-900 relative overflow-hidden">
+            {/* Admissions Section */}
+            <section className="py-24 px-4 bg-gray-900 relative overflow-hidden" id="admissions">
                 <div className="absolute inset-0 opacity-20">
                     <img src="/akim-asafo-senior-high.png" className="w-full h-full object-cover grayscale" />
                 </div>
@@ -405,6 +405,9 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                     </div>
                 </div>
             </section>
+
+            {/* Contact Section Placeholder (using footer for now but adding ID) */}
+            <div id="contact"></div>
 
             <LandingFooter 
                 onLoginClick={onLoginClick} 

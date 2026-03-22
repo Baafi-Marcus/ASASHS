@@ -29,18 +29,34 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (onHomeClick) {
+      onHomeClick();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
       if (onHomeClick) {
         e.preventDefault();
         onHomeClick();
-        // Wait for render then scroll
+        // Increased timeout to ensure landing page components handle mounting
         setTimeout(() => {
           const element = document.getElementById(href.substring(1));
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            const offset = 80; // Navbar height offset
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = element.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
           }
-        }, 100);
+        }, 200);
       }
     }
   };
@@ -77,7 +93,10 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo Area */}
-          <div className="flex items-center space-x-2 md:space-x-3">
+          <button 
+            onClick={handleLogoClick}
+            className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity"
+          >
             <div className={`p-1.5 md:p-2 rounded-lg ${isScrolled ? 'bg-school-green-50' : 'bg-white/10 backdrop-blur-sm'}`}>
               <img
                 src="/asashs-logo.png"
@@ -85,7 +104,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                 className="w-8 h-8 md:w-10 md:h-10"
               />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col text-left">
               <h1 className={`text-lg md:text-xl font-bold leading-tight ${isScrolled ? 'text-school-green-800' : 'text-white'}`}>
                 ASASHS
               </h1>
@@ -93,7 +112,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                 AKIM ASAFO SENIOR HIGH
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
