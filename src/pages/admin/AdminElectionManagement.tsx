@@ -95,9 +95,11 @@ export const AdminElectionManagement: React.FC = () => {
   useEffect(() => {
     if (selectedElection) {
       fetchElectionDetails(selectedElection.id);
+      const startTime = String(selectedElection.start_time);
+      const endTime = String(selectedElection.end_time);
       setEditSchedule({
-        start_time: selectedElection.start_time.split('.')[0].slice(0, 16),
-        end_time: selectedElection.end_time.split('.')[0].slice(0, 16)
+        start_time: startTime.includes('T') ? startTime.slice(0, 16) : startTime.split('.')[0].slice(0, 16).replace(' ', 'T'),
+        end_time: endTime.includes('T') ? endTime.slice(0, 16) : endTime.split('.')[0].slice(0, 16).replace(' ', 'T')
       });
     }
   }, [selectedElection]);
