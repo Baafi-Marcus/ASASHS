@@ -7,9 +7,17 @@ interface SchoolLandingPageProps {
     onLoginClick: () => void;
     onVoteClick?: () => void;
     onNewsClick?: () => void;
+    onStaffClick?: () => void;
+    onCalendarClick?: () => void;
 }
 
-export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginClick, onVoteClick, onNewsClick }) => {
+export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ 
+    onLoginClick, 
+    onVoteClick, 
+    onNewsClick,
+    onStaffClick,
+    onCalendarClick
+}) => {
     const [hasActiveElection, setHasActiveElection] = React.useState(false);
 
     React.useEffect(() => {
@@ -389,7 +397,12 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                 </div>
             </section>
 
-            <LandingFooter onLoginClick={onLoginClick} onNewsClick={onNewsClick} />
+            <LandingFooter 
+                onLoginClick={onLoginClick} 
+                onNewsClick={onNewsClick}
+                onStaffClick={onStaffClick}
+                onCalendarClick={onCalendarClick}
+            />
         </div>
     );
 };

@@ -4,9 +4,15 @@ import { LandingFooter } from '../components/LandingFooter';
 
 interface NewsEventsPageProps {
     onLoginClick: () => void;
+    onStaffClick?: () => void;
+    onCalendarClick?: () => void;
 }
 
-export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) => {
+export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ 
+    onLoginClick,
+    onStaffClick,
+    onCalendarClick
+}) => {
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
     const newsArticles = [
@@ -260,7 +266,12 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({ onLoginClick }) 
                 </div>
             </section>
 
-            <LandingFooter />
+            <LandingFooter 
+                onLoginClick={onLoginClick} 
+                onNewsClick={() => {}} // Already on news page
+                onStaffClick={onStaffClick}
+                onCalendarClick={onCalendarClick}
+            />
         </div>
     );
 };

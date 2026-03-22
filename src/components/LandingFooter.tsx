@@ -3,9 +3,11 @@ import React from 'react';
 interface LandingFooterProps {
     onLoginClick?: () => void;
     onNewsClick?: () => void;
+    onStaffClick?: () => void;
+    onCalendarClick?: () => void;
 }
 
-export const LandingFooter: React.FC<LandingFooterProps> = ({ onLoginClick, onNewsClick }) => {
+export const LandingFooter: React.FC<LandingFooterProps> = ({ onLoginClick, onNewsClick, onStaffClick, onCalendarClick }) => {
     return (
         <footer className="bg-gray-900 text-white pt-16 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,9 +46,9 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onLoginClick, onNe
                             {[
                                 { label: 'About Our School', href: '#about' },
                                 { label: 'Admissions Process', href: 'https://www.myshsadmission.net/site/schools/ASASHS/' },
-                                { label: 'Academic Calendar', href: '#' },
+                                { label: 'Academic Calendar', onClick: onCalendarClick },
                                 { label: 'Student Portal', onClick: onLoginClick },
-                                { label: 'Staff Directory', href: '#' },
+                                { label: 'Staff Directory', onClick: onStaffClick },
                                 { label: 'Latest News', onClick: onNewsClick }
                             ].map((item) => (
                                 <li key={item.label}>

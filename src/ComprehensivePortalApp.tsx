@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast';
 import { PortalSelection } from './PortalSelection';
 import { SchoolLandingPage } from './pages/SchoolLandingPage';
 import { NewsEventsPage } from './pages/NewsEventsPage';
+import { StaffDirectoryPage } from './pages/StaffDirectoryPage';
+import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
 
 // Admin Portal Components
 import AuthProvider, { AuthContext } from '../AuthContext';
@@ -471,6 +473,8 @@ function AdminPortal({ onBackToSelection }: { onBackToSelection: () => void }) {
 function ComprehensivePortalApp() {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const [showNewsPage, setShowNewsPage] = useState(false);
+  const [showStaffPage, setShowStaffPage] = useState(false);
+  const [showCalendarPage, setShowCalendarPage] = useState(false);
   const [selectedPortal, setSelectedPortal] = useState<'admin' | 'student' | 'teacher' | null>(null);
   const [isVotingMode, setIsVotingMode] = useState(false);
 
@@ -532,6 +536,24 @@ function ComprehensivePortalApp() {
   const goToNewsPage = () => {
     setShowLandingPage(false);
     setShowNewsPage(true);
+    setShowStaffPage(false);
+    setShowCalendarPage(false);
+    setSelectedPortal(null);
+  };
+
+  const goToStaffPage = () => {
+    setShowLandingPage(false);
+    setShowNewsPage(false);
+    setShowStaffPage(true);
+    setShowCalendarPage(false);
+    setSelectedPortal(null);
+  };
+
+  const goToCalendarPage = () => {
+    setShowLandingPage(false);
+    setShowNewsPage(false);
+    setShowStaffPage(false);
+    setShowCalendarPage(true);
     setSelectedPortal(null);
   };
 
@@ -564,9 +586,31 @@ function ComprehensivePortalApp() {
       {/* Main wrapper for logic */}
       <div className="relative min-h-screen">
         {showNewsPage ? (
-          <NewsEventsPage onLoginClick={goToPortalSelection} />
+          <NewsEventsPage 
+            onLoginClick={goToPortalSelection} 
+            onStaffClick={goToStaffPage}
+            onCalendarClick={goToCalendarPage}
+          />
+        ) : showStaffPage ? (
+          <StaffDirectoryPage 
+            onLoginClick={goToPortalSelection}
+            onCalendarClick={goToCalendarPage}
+            onNewsClick={goToNewsPage}
+          />
+        ) : showCalendarPage ? (
+          <AcademicCalendarPage 
+             onLoginClick={goToPortalSelection}
+             onStaffClick={goToStaffPage}
+             onNewsClick={goToNewsPage}
+          />
         ) : showLandingPage ? (
-          <SchoolLandingPage onLoginClick={goToPortalSelection} onVoteClick={handleVoteClick} onNewsClick={goToNewsPage} />
+          <SchoolLandingPage 
+            onLoginClick={goToPortalSelection} 
+            onVoteClick={handleVoteClick} 
+            onNewsClick={goToNewsPage}
+            onStaffClick={goToStaffPage}
+            onCalendarClick={goToCalendarPage}
+          />
         ) : !selectedPortal ? (
           <PortalSelection onSelectPortal={handlePortalSelection} onBackToHome={handleBackToLanding} />
         ) : (
