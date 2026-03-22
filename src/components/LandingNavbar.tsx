@@ -37,15 +37,14 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
       dropdown: [
         { name: 'Academic Calendar', onClick: onCalendarClick },
         { name: 'Staff Directory', onClick: onStaffClick },
-        { name: 'Courses', href: '#academics' }
+        { name: 'Latest News', onClick: onNewsClick }
       ]
     },
     { 
       name: 'Admissions', 
       dropdown: [
         { name: 'Online Admission', href: 'https://www.myshsadmission.net/site/schools/ASASHS/' },
-        { name: 'Latest News', onClick: onNewsClick },
-        { name: 'Process', href: '#admissions' }
+        { name: 'Requirements', href: '#admissions' }
       ]
     },
     { name: 'Contact', href: '#contact' },
@@ -126,31 +125,32 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
 
                 {/* Dropdown Menu */}
                 {link.dropdown && activeDropdown === link.name && (
-                  <div className="absolute top-10 left-0 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 animate-in fade-in zoom-in duration-200">
-                    <div className="absolute -top-1 left-6 w-3 h-3 bg-white border-t border-l border-gray-100 rotate-45"></div>
-                    {link.dropdown.map((subItem) => (
-                      subItem.onClick ? (
-                        <button
-                          key={subItem.name}
-                          onClick={() => {
-                            subItem.onClick?.();
-                            setActiveDropdown(null);
-                          }}
-                          className="w-full text-left px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors flex items-center uppercase tracking-tight"
-                        >
-                          {subItem.name}
-                        </button>
-                      ) : (
-                        <a
-                          key={subItem.name}
-                          href={subItem.href}
-                          target={subItem.href?.startsWith('http') ? '_blank' : undefined}
-                          className="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors uppercase tracking-tight"
-                        >
-                          {subItem.name}
-                        </a>
-                      )
-                    ))}
+                  <div className="absolute top-full left-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
+                    <div className="pt-2"> {/* Tiny buffer space */}
+                      {link.dropdown.map((subItem: any) => (
+                        subItem.onClick ? (
+                          <button
+                            key={subItem.name}
+                            onClick={() => {
+                              subItem.onClick?.();
+                              setActiveDropdown(null);
+                            }}
+                            className="w-full text-left px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors flex items-center uppercase tracking-tight"
+                          >
+                            {subItem.name}
+                          </button>
+                        ) : (
+                          <a
+                            key={subItem.name}
+                            href={subItem.href}
+                            target={subItem.href?.startsWith('http') ? '_blank' : undefined}
+                            className="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors uppercase tracking-tight"
+                          >
+                            {subItem.name}
+                          </a>
+                        )
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -212,7 +212,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                     </button>
                     {activeDropdown === link.name && (
                       <div className="pl-4 py-1 space-y-1 bg-gray-50/50 rounded-lg mb-2">
-                        {link.dropdown.map((subItem) => (
+                        {link.dropdown.map((subItem: any) => (
                           subItem.onClick ? (
                             <button
                               key={subItem.name}
