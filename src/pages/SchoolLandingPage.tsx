@@ -1,5 +1,5 @@
 import React from 'react';
-import db from '../lib/neon';
+import db from '../../lib/neon';
 import { LandingNavbar } from '../components/LandingNavbar';
 import { LandingFooter } from '../components/LandingFooter';
 
