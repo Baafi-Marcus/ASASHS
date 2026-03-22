@@ -31,14 +31,6 @@ export const AcademicCalendarPage: React.FC<AcademicCalendarPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <LandingNavbar 
-                onLoginClick={onLoginClick} 
-                onNewsClick={onNewsClick}
-                onStaffClick={onStaffClick}
-                onCalendarClick={() => {}} // Already on calendar
-                onHomeClick={onHomeClick}
-            />
-            
             <section className="relative h-[300px] flex items-center justify-center overflow-hidden text-white">
                 <div className="absolute inset-0 bg-school-green-800">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>

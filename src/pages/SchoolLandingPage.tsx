@@ -37,15 +37,6 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
 
     return (
         <div className="min-h-screen bg-white font-sans">
-            <LandingNavbar 
-                onLoginClick={onLoginClick} 
-                onVoteClick={hasActiveElection ? onVoteClick : undefined} 
-                onNewsClick={onNewsClick}
-                onStaffClick={onStaffClick}
-                onCalendarClick={onCalendarClick}
-                onHomeClick={onHomeClick}
-            />
-
             {/* Hero Section */}
             <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">
                 {/* Background Overlay with Slideshow Effect */}

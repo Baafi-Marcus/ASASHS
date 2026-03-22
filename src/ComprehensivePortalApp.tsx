@@ -5,6 +5,7 @@ import { SchoolLandingPage } from './pages/SchoolLandingPage';
 import { NewsEventsPage } from './pages/NewsEventsPage';
 import { StaffDirectoryPage } from './pages/StaffDirectoryPage';
 import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
+import { LandingNavbar } from './components/LandingNavbar';
 
 // Admin Portal Components
 import AuthProvider, { AuthContext } from '../AuthContext';
@@ -522,6 +523,10 @@ function ComprehensivePortalApp() {
   const handleBackToLanding = () => {
     setSelectedPortal(null);
     setShowLandingPage(true);
+    setShowNewsPage(false);
+    setShowStaffPage(false);
+    setShowCalendarPage(false);
+    setIsVotingMode(false);
     localStorage.removeItem('selectedPortal');
     if (window.location.pathname === '/admin') {
       window.history.pushState({}, '', '/');
@@ -531,6 +536,10 @@ function ComprehensivePortalApp() {
   const goToPortalSelection = () => {
     setShowLandingPage(false);
     setShowNewsPage(false);
+    setShowStaffPage(false);
+    setShowCalendarPage(false);
+    setSelectedPortal(null);
+    setIsVotingMode(false);
   };
 
   const goToNewsPage = () => {
@@ -581,10 +590,23 @@ function ComprehensivePortalApp() {
     </TeacherAuthProvider>
   );
 
+  const isLandingView = showLandingPage || showNewsPage || showStaffPage || showCalendarPage;
+
   return (
     <div className="min-h-screen">
+      {isLandingView && (
+        <LandingNavbar 
+          onLoginClick={goToPortalSelection} 
+          onVoteClick={handleVoteClick} 
+          onNewsClick={goToNewsPage}
+          onStaffClick={goToStaffPage}
+          onCalendarClick={goToCalendarPage}
+          onHomeClick={handleBackToLanding}
+        />
+      )}
+      
       {/* Main wrapper for logic */}
-      <div className="relative min-h-screen">
+      <div className={`relative ${isLandingView ? '' : 'min-h-screen'}`}>
         {showNewsPage ? (
           <NewsEventsPage 
             onLoginClick={goToPortalSelection} 

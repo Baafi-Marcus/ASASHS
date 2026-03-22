@@ -56,14 +56,6 @@ export const StaffDirectoryPage: React.FC<StaffDirectoryPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <LandingNavbar 
-                onLoginClick={onLoginClick} 
-                onNewsClick={onNewsClick}
-                onStaffClick={() => {}} // Already on staff
-                onCalendarClick={onCalendarClick}
-                onHomeClick={onHomeClick}
-            />
-            
             <section className="relative h-[300px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-school-green-900">
                     <div className="absolute inset-0 bg-gradient-to-r from-school-green-900 to-black/50"></div>

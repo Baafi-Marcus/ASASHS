@@ -108,14 +108,6 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
-            <LandingNavbar 
-                onLoginClick={onLoginClick} 
-                onNewsClick={() => {}} // Already on news
-                onStaffClick={onStaffClick}
-                onCalendarClick={onCalendarClick}
-                onHomeClick={onHomeClick}
-            />
-
             {/* Hero Section with Background Image */}
             <section className="relative h-[500px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0">
