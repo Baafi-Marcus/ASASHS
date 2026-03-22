@@ -2164,6 +2164,15 @@ export const db = {
     return await sql`UPDATE elections SET status = ${status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id} RETURNING *`;
   },
 
+  async updateElectionSchedule(id: number, startTime: string, endTime: string) {
+    return await sql`
+      UPDATE elections 
+      SET start_time = ${startTime}, end_time = ${endTime}, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ${id} 
+      RETURNING *
+    `;
+  },
+
   async createPosition(data: { election_id: number; title: string; max_selections?: number }) {
     const result = await sql`
       INSERT INTO positions (election_id, title, max_selections)

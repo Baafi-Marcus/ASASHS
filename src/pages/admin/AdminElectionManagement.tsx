@@ -8,17 +8,7 @@ interface Election {
   description: string | null;
   start_time: string;
   end_time: string;
-  status: 'draft' | 'open' | 'closed';
-  created_at: string;
-}
-
-interface Election {
-  id: number;
-  name: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  status: 'draft' | 'open' | 'closed';
+  status: 'draft' | 'open' | 'paused' | 'closed';
   created_at: string;
 }
 
@@ -61,6 +51,7 @@ export const AdminElectionManagement: React.FC = () => {
   const [stats, setStats] = useState<{ total: number; voted: number; percentage: number } | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [allStudents, setAllStudents] = useState<StudentRecord[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [newElection, setNewElection] = useState({
     name: '',
@@ -78,6 +69,24 @@ export const AdminElectionManagement: React.FC = () => {
     image_url: string;
   }>({ position_id: 0, student_id: '', display_name: '', manifesto: '', image_url: '' });
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Image size must be less than 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewCandidate(prev => ({ ...prev, image_url: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [editSchedule, setEditSchedule] = useState({ start_time: '', end_time: '' });
+
   useEffect(() => {
     fetchElections();
     fetchAllStudents();
@@ -86,8 +95,25 @@ export const AdminElectionManagement: React.FC = () => {
   useEffect(() => {
     if (selectedElection) {
       fetchElectionDetails(selectedElection.id);
+      setEditSchedule({
+        start_time: selectedElection.start_time.split('.')[0].slice(0, 16),
+        end_time: selectedElection.end_time.split('.')[0].slice(0, 16)
+      });
     }
   }, [selectedElection]);
+
+  const handleUpdateStatus = async (status: 'open' | 'closed' | 'draft' | 'paused') => {
+    if (!selectedElection) return;
+    try {
+      await db.updateElectionStatus(selectedElection.id, status);
+      toast.success(`Election ${status === 'open' ? 'started' : status === 'paused' ? 'paused' : status === 'closed' ? 'ended' : 'moved to draft'}`);
+      const updated = { ...selectedElection, status };
+      setSelectedElection(updated);
+      fetchElections();
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
 
   const fetchElections = async () => {
     try {
@@ -187,22 +213,24 @@ export const AdminElectionManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = async (status: 'open' | 'closed' | 'draft') => {
+  const handleUpdateSchedule = async () => {
     if (!selectedElection) return;
     try {
-      await db.updateElectionStatus(selectedElection.id, status);
-      toast.success(`Election ${status === 'open' ? 'started' : status === 'closed' ? 'ended' : 'moved to draft'}`);
-      const updated = { ...selectedElection, status };
+      await db.updateElectionSchedule(selectedElection.id, editSchedule.start_time, editSchedule.end_time);
+      toast.success('Election schedule updated');
+      const updated = { ...selectedElection, ...editSchedule };
       setSelectedElection(updated);
       fetchElections();
+      setIsEditingSchedule(false);
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error('Failed to update schedule');
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-green-100 text-green-800 border-green-200';
+      case 'paused': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'closed': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-amber-100 text-amber-800 border-amber-200';
     }
@@ -242,6 +270,16 @@ export const AdminElectionManagement: React.FC = () => {
               <p className="text-gray-500 font-medium">{selectedElection.description || 'Managing school leadership elections.'}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => setIsEditingSchedule(!isEditingSchedule)}
+                className="px-6 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all border border-gray-200 flex items-center space-x-2 shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{isEditingSchedule ? 'Cancel Editing' : 'Edit Schedule'}</span>
+              </button>
+
               {selectedElection.status === 'draft' && (
                 <button 
                   onClick={() => handleUpdateStatus('open')}
@@ -254,11 +292,33 @@ export const AdminElectionManagement: React.FC = () => {
                 </button>
               )}
               {selectedElection.status === 'open' && (
+                <>
+                  <button 
+                    onClick={() => handleUpdateStatus('paused')}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200 flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Pause</span>
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateStatus('closed')}
+                    className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-md shadow-red-200"
+                  >
+                    End Election
+                  </button>
+                </>
+              )}
+              {selectedElection.status === 'paused' && (
                 <button 
-                  onClick={() => handleUpdateStatus('closed')}
-                  className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-md shadow-red-200"
+                  onClick={() => handleUpdateStatus('open')}
+                  className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-md shadow-green-200 flex items-center space-x-2"
                 >
-                  End Election
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  </svg>
+                  <span>Resume Election</span>
                 </button>
               )}
               {selectedElection.status === 'closed' && (
@@ -271,6 +331,40 @@ export const AdminElectionManagement: React.FC = () => {
               )}
             </div>
           </div>
+
+          {isEditingSchedule && (
+            <div className="bg-school-cream-50 p-6 rounded-2xl border border-school-cream-100 mb-8 animate-in slide-in-from-top-2 duration-300">
+              <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Update Election Schedule</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Start Time</label>
+                  <input 
+                    type="datetime-local"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-school-green-500"
+                    value={editSchedule.start_time}
+                    onChange={(e) => setEditSchedule({ ...editSchedule, start_time: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest">End Time</label>
+                  <input 
+                    type="datetime-local"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-school-green-500"
+                    value={editSchedule.end_time}
+                    onChange={(e) => setEditSchedule({ ...editSchedule, end_time: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <button 
+                    onClick={handleUpdateSchedule}
+                    className="px-8 py-2.5 bg-school-green-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-school-green-700 shadow-lg shadow-school-green-100"
+                  >
+                    Save New Schedule
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats */}
           {stats && (
@@ -413,14 +507,33 @@ export const AdminElectionManagement: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Image URL (Optional)</label>
-                    <input 
-                      type="text"
-                      placeholder="https://..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none"
-                      value={newCandidate.image_url}
-                      onChange={(e) => setNewCandidate({...newCandidate, image_url: e.target.value})}
-                    />
+                    <label className="text-xs font-black text-gray-500 uppercase">Image URL (or upload)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        placeholder="https://..."
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 outline-none"
+                        value={newCandidate.image_url}
+                        onChange={(e) => setNewCandidate({...newCandidate, image_url: e.target.value})}
+                      />
+                      <input 
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest border border-gray-200 shrink-0"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Device
+                      </button>
+                    </div>
                   </div>
                   <div className="md:col-span-2 lg:col-span-3 space-y-2">
                     <label className="text-xs font-black text-gray-500 uppercase">Manifesto / Vision Statement</label>

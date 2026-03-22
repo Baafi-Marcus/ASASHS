@@ -1,4 +1,5 @@
 import React from 'react';
+import db from '../lib/neon';
 import { LandingNavbar } from '../components/LandingNavbar';
 import { LandingFooter } from '../components/LandingFooter';
 
@@ -9,9 +10,24 @@ interface SchoolLandingPageProps {
 }
 
 export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginClick, onVoteClick, onNewsClick }) => {
+    const [hasActiveElection, setHasActiveElection] = React.useState(false);
+
+    React.useEffect(() => {
+        const checkElections = async () => {
+            try {
+                const elections = await db.getElections();
+                const active = elections.some((e: any) => e.status === 'open');
+                setHasActiveElection(active);
+            } catch (error) {
+                console.error('Failed to check election status');
+            }
+        };
+        checkElections();
+    }, []);
+
     return (
         <div className="min-h-screen bg-white font-sans">
-            <LandingNavbar onLoginClick={onLoginClick} onVoteClick={onVoteClick} />
+            <LandingNavbar onLoginClick={onLoginClick} onVoteClick={hasActiveElection ? onVoteClick : undefined} />
 
             {/* Hero Section */}
             <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">
@@ -40,7 +56,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                         Providing holistic quality education, inculcating Godliness and moral uprightness for over three decades.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up [animation-delay:400ms]">
-                        {onVoteClick && (
+                        {onVoteClick && hasActiveElection && (
                             <button
                                 onClick={onVoteClick}
                                 className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black rounded-full font-black text-lg transition-all transform hover:-translate-y-1 shadow-xl hover:shadow-yellow-500/40 flex items-center justify-center space-x-3 animate-pulse border-2 border-white/20"
@@ -56,9 +72,6 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                             className="px-6 py-3 md:px-8 md:py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
                         >
                             Explore Admissions
-                        </button>
-                        <button className="px-6 py-3 md:px-8 md:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border-2 border-white/30 rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1">
-                            Take a Tour
                         </button>
                     </div>
                 </div>
@@ -376,7 +389,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ onLoginCli
                 </div>
             </section>
 
-            <LandingFooter />
+            <LandingFooter onLoginClick={onLoginClick} onNewsClick={onNewsClick} />
         </div>
     );
 };

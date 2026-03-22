@@ -1,6 +1,11 @@
 import React from 'react';
 
-export const LandingFooter: React.FC = () => {
+interface LandingFooterProps {
+    onLoginClick?: () => void;
+    onNewsClick?: () => void;
+}
+
+export const LandingFooter: React.FC<LandingFooterProps> = ({ onLoginClick, onNewsClick }) => {
     return (
         <footer className="bg-gray-900 text-white pt-16 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,17 +42,30 @@ export const LandingFooter: React.FC = () => {
                         <h4 className="text-lg font-bold mb-6 border-b border-gray-700 pb-2 inline-block">Quick Links</h4>
                         <ul className="space-y-3">
                             {[
-                                { label: 'About Our School', href: '#' },
+                                { label: 'About Our School', href: '#about' },
                                 { label: 'Admissions Process', href: 'https://www.myshsadmission.net/site/schools/ASASHS/' },
                                 { label: 'Academic Calendar', href: '#' },
-                                { label: 'Student Portal', href: '#' },
+                                { label: 'Student Portal', onClick: onLoginClick },
                                 { label: 'Staff Directory', href: '#' },
-                                { label: 'Gallery', href: '#' }
+                                { label: 'Latest News', onClick: onNewsClick }
                             ].map((item) => (
                                 <li key={item.label}>
-                                    <a href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} className="text-gray-400 hover:text-school-green-400 text-sm transition-colors flex items-center">
-                                        <span className="mr-2">›</span> {item.label}
-                                    </a>
+                                    {item.onClick ? (
+                                        <button 
+                                            onClick={item.onClick}
+                                            className="text-gray-400 hover:text-school-green-400 text-sm transition-colors flex items-center"
+                                        >
+                                            <span className="mr-2">›</span> {item.label}
+                                        </button>
+                                    ) : (
+                                        <a 
+                                            href={item.href} 
+                                            target={item.href?.startsWith('http') ? '_blank' : undefined} 
+                                            className="text-gray-400 hover:text-school-green-400 text-sm transition-colors flex items-center"
+                                        >
+                                            <span className="mr-2">›</span> {item.label}
+                                        </a>
+                                    )}
                                 </li>
                             ))}
                         </ul>
