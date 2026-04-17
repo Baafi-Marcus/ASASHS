@@ -277,29 +277,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {activeTab === 'overview' && 'Dashboard Overview'}
-          {activeTab === 'classes' && 'My Classes'}
-          {activeTab === 'assignments' && 'Assignments'}
-          {activeTab === 'grades' && 'Gradebook'}
-          {activeTab === 'performance' && 'Student Performance'}
-          {activeTab === 'messages' && 'Messages'}
-          {activeTab === 'profile' && 'My Profile'}
-          {activeTab === 'elearning' && 'E-Learning Platform'}
-        </h1>
-        <p className="text-gray-600">
-          {activeTab === 'overview' && 'Your teaching dashboard overview'}
-          {activeTab === 'classes' && 'Manage your classes and students'}
-          {activeTab === 'assignments' && 'Create and manage assignments'}
-          {activeTab === 'grades' && 'Grade student assignments and exams'}
-          {activeTab === 'performance' && 'Track student performance analytics'}
-          {activeTab === 'messages' && 'Communicate with students and parents'}
-          {activeTab === 'profile' && 'Manage your profile and account settings'}
-          {activeTab === 'elearning' && 'Create AI-powered quizzes and manage digital assessments'}
-        </p>
-      </div>
-      
       {loading && activeTab === 'overview' ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>

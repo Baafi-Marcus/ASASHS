@@ -210,12 +210,6 @@ export const StudentDashboard: React.FC<{
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 capitalize">
-          {activeTab ? activeTab.replace('_', ' ') : 'Dashboard'}
-        </h1>
-        <p className="text-gray-600">Access your school information and resources below.</p>
-      </div>
       {loading && activeTab === 'overview' ? (
         <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-school-green-600"></div></div>
       ) : renderContent()}
