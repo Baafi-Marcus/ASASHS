@@ -2407,6 +2407,21 @@ export const db = {
     `;
   },
 
+  async getAIKeys(): Promise<string[]> {
+    const raw = await this.getSchoolSetting('github_model_api_keys');
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw);
+    } catch {
+      // Fallback for migration: if it was a single string, return as array
+      return [raw];
+    }
+  },
+
+  async updateAIKeys(keys: string[]) {
+    await this.updateSchoolSetting('github_model_api_keys', JSON.stringify(keys));
+  },
+
   // eLearning Quizzes
   async getQuizzes(filters?: { class_id?: number; teacher_id?: number; subject_id?: number }) {
     let query = sql`

@@ -51,6 +51,7 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [houseDistribution, setHouseDistribution] = useState<HouseDistribution[]>([]);
+  const [aiKeyCount, setAiKeyCount] = useState<number>(0);
 
   // Ensure we're using the admin and onLogout props
   const _admin = admin;
@@ -146,6 +147,10 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
         });
       });
       
+      // Check AI Keys
+      const keys = await db.getAIKeys();
+      setAiKeyCount(keys.length);
+      
       setRecentActivities(activities);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -157,6 +162,29 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
 
   const renderOverview = () => (
     <div className="space-y-6">
+      {/* System Health Alerts */}
+      {aiKeyCount === 0 && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl animate-pulse">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <span className="text-2xl mr-3">⚠️</span>
+            </div>
+            <div>
+              <p className="text-sm font-black text-red-800 uppercase tracking-tight">AI Service Configuration Required</p>
+              <p className="text-xs text-red-700">
+                You haven't added any AI API keys yet. Teachers will not be able to auto-generate quiz questions.
+                <button 
+                  onClick={() => toast.success('Navigate to Admin Settings to add keys')} 
+                  className="font-bold underline ml-1"
+                >
+                  Configure Now
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <PortalCard>

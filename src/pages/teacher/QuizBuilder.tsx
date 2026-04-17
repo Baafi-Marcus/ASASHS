@@ -5,7 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
 import { documentParser } from '../../../lib/documentParser';
-import { aiService, GeneratedQuestion } from '../../../lib/ai.ts';
+import { aiService, GeneratedQuestion, AICapacityExhaustedError } from '../../../lib/ai.ts';
 
 interface QuizBuilderProps {
   teacherId: number;
@@ -68,7 +68,11 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
       toast.success('Questions generated! You can now review and edit them.', { id: 'ai-gen' });
     } catch (error: any) {
       console.error('AI Generation failed:', error);
-      toast.error(error.message || 'AI generation failed', { id: 'ai-gen' });
+      if (error instanceof AICapacityExhaustedError) {
+        toast.error('AI assistance is temporarily at capacity. Please try again in a few minutes or enter questions manually.', { id: 'ai-gen', duration: 6000 });
+      } else {
+        toast.error(error.message || 'AI generation failed', { id: 'ai-gen' });
+      }
     } finally {
       setIsGenerating(false);
     }
