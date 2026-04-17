@@ -2163,15 +2163,25 @@ export const db = {
   },
 
   async getElections() {
-    return await sql`SELECT * FROM elections ORDER BY created_at DESC`;
+    try {
+      return await sql`SELECT * FROM elections ORDER BY created_at DESC`;
+    } catch (error) {
+      console.error('Error fetching elections:', error);
+      return [];
+    }
   },
 
   async getElectionById(id: number) {
-    const election = await sql`SELECT * FROM elections WHERE id = ${id}`;
-    if (election.length === 0) return null;
+    try {
+      const election = await sql`SELECT * FROM elections WHERE id = ${id}`;
+      if (election.length === 0) return null;
 
-    const positions = await this.getPositions(id);
-    return { ...election[0], positions };
+      const positions = await this.getPositions(id);
+      return { ...election[0], positions };
+    } catch (error) {
+      console.error('Error fetching election by ID:', error);
+      return null;
+    }
   },
 
   async updateElectionStatus(id: number, status: string) {
@@ -2201,7 +2211,12 @@ export const db = {
   },
 
   async getPositions(electionId: number) {
-    return await sql`SELECT * FROM positions WHERE election_id = ${electionId} ORDER BY sort_order ASC, id ASC`;
+    try {
+      return await sql`SELECT * FROM positions WHERE election_id = ${electionId} ORDER BY sort_order ASC, id ASC`;
+    } catch (error) {
+      console.error('Error fetching positions:', error);
+      return [];
+    }
   },
 
   async createCandidate(data: { position_id: number; student_id?: number; display_name: string; manifesto?: string; image_url?: string }) {
@@ -2214,18 +2229,23 @@ export const db = {
   },
 
   async getCandidates(positionId: number) {
-    return await sql`
-      SELECT 
-        c.*, 
-        s.surname, 
-        s.other_names, 
-        cl.class_name as student_class
-      FROM candidates c 
-      LEFT JOIN students s ON c.student_id = s.id
-      LEFT JOIN classes cl ON s.current_class_id = cl.id
-      WHERE c.position_id = ${positionId} 
-      ORDER BY c.display_name ASC
-    `;
+    try {
+      return await sql`
+        SELECT 
+          c.*, 
+          s.surname, 
+          s.other_names, 
+          cl.class_name as student_class
+        FROM candidates c 
+        LEFT JOIN students s ON c.student_id = s.id
+        LEFT JOIN classes cl ON s.current_class_id = cl.id
+        WHERE c.position_id = ${positionId} 
+        ORDER BY c.display_name ASC
+      `;
+    } catch (error) {
+      console.error('Error fetching candidates:', error);
+      return [];
+    }
   },
 
   async submitVote(electionId: number, studentId: number, selections: { position_id: number; candidate_id: number }[]) {

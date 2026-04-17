@@ -65,25 +65,30 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
     try {
       setLoading(true);
       // Fetch data from database, including inactive users for accurate statistics
-      const [students, teachers, courses, subjects] = await Promise.all([
+      const [studentsRaw, teachersRaw, coursesRaw, subjectsRaw] = await Promise.all([
         db.getStudents({ limit: 1000, includeInactive: true }),
         db.getTeachers({ limit: 1000, includeInactive: true }),
         db.getCourses(),
         db.getSubjects(),
       ]);
 
+      const students = Array.isArray(studentsRaw) ? studentsRaw : [];
+      const teachers = Array.isArray(teachersRaw) ? teachersRaw : [];
+      const courses = Array.isArray(coursesRaw) ? coursesRaw : [];
+      const subjects = Array.isArray(subjectsRaw) ? subjectsRaw : [];
+
       // Calculate recent registrations (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const recentStudents = students.filter((student: any) => 
-        new Date(student.created_at) > thirtyDaysAgo
-      );
+      const recentStudents = students?.filter((student: any) => 
+        student && student.created_at && new Date(student.created_at) > thirtyDaysAgo
+      ) || [];
 
       // Calculate gender distribution (only active students)
-      const activeStudents = students.filter((student: any) => student.is_active);
-      const maleStudents = activeStudents.filter((student: any) => student.gender === 'Male').length;
-      const femaleStudents = activeStudents.filter((student: any) => student.gender === 'Female').length;
+      const activeStudents = students?.filter((student: any) => student?.is_active) || [];
+      const maleStudents = activeStudents.filter((student: any) => student?.gender === 'Male').length;
+      const femaleStudents = activeStudents.filter((student: any) => student?.gender === 'Female').length;
 
       // Calculate house distribution
       const houseCounts: Record<string, number> = {};
@@ -99,17 +104,18 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
         .sort((a, b) => b.count - a.count);
 
       // Get active classes count
-      const activeClasses = await db.getClasses();
+      const activeClassesResult = await db.getClasses();
+      const activeClasses = Array.isArray(activeClassesResult) ? activeClassesResult : [];
 
       setStats({
-        totalStudents: students.length,
-        totalTeachers: teachers.length,
-        totalCourses: courses.length,
-        recentRegistrations: recentStudents.length,
+        totalStudents: students?.length || 0,
+        totalTeachers: teachers?.length || 0,
+        totalCourses: courses?.length || 0,
+        recentRegistrations: recentStudents?.length || 0,
         maleStudents,
         femaleStudents,
-        activeClasses: activeClasses.length,
-        totalSubjects: subjects.length,
+        activeClasses: activeClasses?.length || 0,
+        totalSubjects: subjects?.length || 0,
       });
 
       setHouseDistribution(houseDistributionData);
@@ -149,7 +155,7 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
       
       // Check AI Keys
       const keys = await db.getAIKeys();
-      setAiKeyCount(keys.length);
+      setAiKeyCount(Array.isArray(keys) ? keys.length : 0);
       
       setRecentActivities(activities);
     } catch (error) {

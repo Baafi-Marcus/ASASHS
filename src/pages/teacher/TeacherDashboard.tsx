@@ -25,10 +25,16 @@ interface Teacher {
 interface TeacherDashboardProps {
   teacher: Teacher;
   onLogout: () => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ 
+  teacher, 
+  onLogout, 
+  activeTab, 
+  setActiveTab 
+}) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [stats, setStats] = useState({
     studentsCount: 0,
@@ -36,51 +42,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
     upcomingExams: 0
   });
   const [loading, setLoading] = useState(true);
-
-  // Sidebar items for teacher portal
-  const sidebarItems = [
-    { id: 'overview', label: 'Overview', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    )},
-    { id: 'classes', label: 'My Classes', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    )},
-    { id: 'assignments', label: 'Assignments', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    )},
-    { id: 'grades', label: 'Gradebook', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-      </svg>
-    )},
-    { id: 'performance', label: 'Performance', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-    )},
-    { id: 'messages', label: 'Messages', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-      </svg>
-    )},
-    { id: 'elearning', label: 'E-Learning', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    )},
-    { id: 'profile', label: 'My Profile', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    )},
-  ];
 
   useEffect(() => {
     fetchDashboardData();
@@ -90,13 +51,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
     try {
       setLoading(true);
       
-      // Fetch teacher's subjects and classes
-      const teacherSubjects: any[] = await db.getTeacherSubjects(teacher.teacherDbId);
+      const teacherSubjectsResult = await db.getTeacherSubjects(teacher.teacherDbId);
+      const teacherSubjects = Array.isArray(teacherSubjectsResult) ? teacherSubjectsResult : [];
       
       // Get unique class IDs
       const classIdSet = new Set<number>();
       teacherSubjects.forEach((subject: any) => {
-        const classId = Number(subject.class_id);
+        const classId = Number(subject?.class_id);
         if (!isNaN(classId)) {
           classIdSet.add(classId);
         }
@@ -109,24 +70,27 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
       
       for (let i = 0; i < classIds.length; i++) {
         const classId = classIds[i];
-        const classStudents = await db.getClassStudents(classId);
+        const classStudentsResult = await db.getClassStudents(classId);
+        const classStudents = Array.isArray(classStudentsResult) ? classStudentsResult : [];
         classStudents.forEach((student: any) => {
-          studentIds.add(student.id);
+          if (student?.id) studentIds.add(student.id);
         });
       }
       
       totalStudents = studentIds.size;
       
       // Fetch assignments to count pending grades and upcoming exams
-      const assignmentsData = await db.getAssignmentsByTeacher(teacher.teacherDbId);
+      const assignmentsRaw = await db.getAssignmentsByTeacher(teacher.teacherDbId);
+      const assignmentsData = Array.isArray(assignmentsRaw) ? assignmentsRaw : [];
       
       // Count pending grades (assignments without submissions)
       let pendingGrades = 0;
       for (const assignment of assignmentsData) {
-        const submissions = await db.getAssignmentSubmissions(assignment.id);
+        const submissionsResult = await db.getAssignmentSubmissions(assignment.id);
+        const submissions = Array.isArray(submissionsResult) ? submissionsResult : [];
         // In a real implementation, we would check for ungraded submissions
         // For now, we'll use the assignment count as a proxy
-        pendingGrades += submissions.length;
+        pendingGrades += (submissions?.length || 0);
       }
       
       // Count upcoming exams (assignments with type 'Exam' or 'Midsem Exam')
@@ -181,7 +145,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
               </div>
               <div className="bg-school-cream-100 px-4 py-2 rounded-lg">
                 <span className="text-sm text-gray-600">Classes</span>
-                <div className="font-semibold">{teacher.classes.length}</div>
+                <div className="font-semibold">{teacher?.classes?.length || 0}</div>
               </div>
             </div>
           </div>
@@ -305,86 +269,44 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
       case 'elearning':
         return <TeacherELearning teacherId={teacher.teacherDbId} />;
       case 'profile': 
-        return <TeacherProfile teacher={teacher} onLogout={onLogout} />;
+        return <TeacherProfile teacher={teacher as any} onLogout={onLogout} />;
       default: 
         return renderOverview();
     }
   };
 
   return (
-    <div className="min-h-screen bg-school-cream-50 flex flex-col">
-      <PortalHeader 
-        portalName="Teacher" 
-        userName={teacher.fullName} 
-        onLogout={onLogout} 
-      />
-      
-      <div className="flex flex-1">
-        <PortalSidebar 
-          items={sidebarItems} 
-          activeItem={activeTab} 
-          onItemClick={setActiveTab} 
-        />
-        
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {activeTab === 'overview' && 'Dashboard Overview'}
-                {activeTab === 'classes' && 'My Classes'}
-                {activeTab === 'assignments' && 'Assignments'}
-                {activeTab === 'grades' && 'Gradebook'}
-                {activeTab === 'performance' && 'Student Performance'}
-                {activeTab === 'messages' && 'Messages'}
-                {activeTab === 'profile' && 'My Profile'}
-                {activeTab === 'elearning' && 'E-Learning Platform'}
-              </h1>
-              <p className="text-gray-600">
-                {activeTab === 'overview' && 'Your teaching dashboard overview'}
-                {activeTab === 'classes' && 'Manage your classes and students'}
-                {activeTab === 'assignments' && 'Create and manage assignments'}
-                {activeTab === 'grades' && 'Grade student assignments and exams'}
-                {activeTab === 'performance' && 'Track student performance analytics'}
-                {activeTab === 'messages' && 'Communicate with students and parents'}
-                {activeTab === 'profile' && 'Manage your profile and account settings'}
-                {activeTab === 'elearning' && 'Create AI-powered quizzes and manage digital assessments'}
-              </p>
-            </div>
-            
-            {loading && activeTab === 'overview' ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
-              </div>
-            ) : (
-              renderContent()
-            )}
-          </div>
-        </main>
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {activeTab === 'overview' && 'Dashboard Overview'}
+          {activeTab === 'classes' && 'My Classes'}
+          {activeTab === 'assignments' && 'Assignments'}
+          {activeTab === 'grades' && 'Gradebook'}
+          {activeTab === 'performance' && 'Student Performance'}
+          {activeTab === 'messages' && 'Messages'}
+          {activeTab === 'profile' && 'My Profile'}
+          {activeTab === 'elearning' && 'E-Learning Platform'}
+        </h1>
+        <p className="text-gray-600">
+          {activeTab === 'overview' && 'Your teaching dashboard overview'}
+          {activeTab === 'classes' && 'Manage your classes and students'}
+          {activeTab === 'assignments' && 'Create and manage assignments'}
+          {activeTab === 'grades' && 'Grade student assignments and exams'}
+          {activeTab === 'performance' && 'Track student performance analytics'}
+          {activeTab === 'messages' && 'Communicate with students and parents'}
+          {activeTab === 'profile' && 'Manage your profile and account settings'}
+          {activeTab === 'elearning' && 'Create AI-powered quizzes and manage digital assessments'}
+        </p>
       </div>
-
-      {/* Logout Modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Sign Out</h3>
-            <p className="text-gray-600 mb-6">Are you sure you want to sign out of your account?</p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onLogout}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
+      
+      {loading && activeTab === 'overview' ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
         </div>
+      ) : (
+        renderContent()
       )}
     </div>
   );
-};
+};

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
-import { PortalHeader } from '../../components/PortalHeader';
-import { PortalSidebar } from '../../components/PortalSidebar';
 import { PortalCard } from '../../components/PortalCard';
 import { StudentProfile } from './StudentProfile';
 import { StudentBehavior } from './StudentBehavior';
@@ -10,7 +8,6 @@ import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
 import { StudentELearning } from './StudentELearning';
-
 import { Student } from '../../contexts/StudentAuthContext';
 
 interface Subject {
@@ -54,9 +51,10 @@ interface Assignment {
 export const StudentDashboard: React.FC<{ 
   student: Student; 
   onLogout: () => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   isVotingMode?: boolean;
-}> = ({ student, onLogout, isVotingMode }) => {
-  const [activeTab, setActiveTab] = useState(isVotingMode ? 'voting' : 'overview');
+}> = ({ student, onLogout, activeTab, setActiveTab, isVotingMode }) => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -69,59 +67,7 @@ export const StudentDashboard: React.FC<{
   const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
 
-  // Sidebar items for student portal
-  const sidebarItems = [
-    { id: 'overview', label: 'Overview', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    )},
-    { id: 'profile', label: 'My Profile', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    )},
-    { id: 'grades', label: 'My Grades', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-      </svg>
-    )},
-    { id: 'assignments', label: 'Assignments', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    )},
-    { id: 'behavior', label: 'Behavior', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )},
-    { id: 'downloads', label: 'Downloads', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-    )},
-    { id: 'messages', label: 'Messages', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-      </svg>
-    )},
-    { id: 'voting', label: 'Vote Now', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )},
-    { id: 'elearning', label: 'E-Learning', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    )},
-  ];
-
-  // Fetch data from database
   useEffect(() => {
-    // Map semester to term (semester 1 = term 1, semester 2 = term 2)
     setTerm(semester);
   }, [semester]);
 
@@ -132,33 +78,33 @@ export const StudentDashboard: React.FC<{
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      // Convert student.id (string) to number for database queries
       const studentDbId = parseInt(student.id);
-      
-      // Fetch student's subjects for the current class
-      const studentSubjects = await db.getStudentSubjects(studentDbId);
+      const studentSubjectsResult = await db.getStudentSubjects(studentDbId);
+      const studentSubjects = Array.isArray(studentSubjectsResult) ? studentSubjectsResult : [];
       setSubjects(studentSubjects);
       
-      // Fetch student's results for the selected academic year and term
-      const studentResults = await db.getStudentResults(studentDbId, academicYear, term);
+      const studentResultsResult = await db.getStudentResults(studentDbId, academicYear, term);
+      const studentResults = Array.isArray(studentResultsResult) ? studentResultsResult : [];
       setResults(studentResults);
       
-      // Fetch assignments for the student's class
-      // We'll need to get the actual class ID - for now using a placeholder approach
-      // In a real implementation, we would get this from the student data
-      const classAssignments = await db.getAssignmentsByClass(1); // Placeholder
+      const classAssignmentsResult = await db.getAssignmentsByClass(student.current_class_id || 1);
+      const classAssignments = Array.isArray(classAssignmentsResult) ? classAssignmentsResult : [];
       setAssignments(classAssignments);
-
-      // Fetch student's submissions to check status
+      
       const subs: Record<number, any> = {};
-      for (const ass of classAssignments) {
-        const sub = await db.getStudentSubmissionForAssignment(ass.id, studentDbId);
-        if (sub) subs[ass.id] = sub;
+      if (classAssignments.length > 0) {
+        for (const ass of classAssignments) {
+          if (ass?.id) {
+            const sub = await db.getStudentSubmissionForAssignment(ass.id, studentDbId);
+            if (sub) subs[ass.id] = sub;
+          }
+        }
       }
       setSubmissions(subs);
-      const allElections = await db.getElections();
-      setActiveElections(allElections.filter((e: any) => e.status === 'open'));
+      
+      const allElectionsResult = await db.getElections();
+      const allElections = Array.isArray(allElectionsResult) ? allElectionsResult : [];
+      setActiveElections(allElections.filter((e: any) => e && e.status === 'open'));
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to load dashboard data');
@@ -169,13 +115,10 @@ export const StudentDashboard: React.FC<{
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Registration Pending Alert - Suppressed in Voting Mode */}
       {student && student.registration_status !== 'complete' && !isVotingMode && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <svg className="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+             <span className="text-xl">⚠️</span>
           </div>
           <div>
             <h3 className="text-sm font-bold text-amber-800">Registration Incomplete</h3>
@@ -185,454 +128,123 @@ export const StudentDashboard: React.FC<{
           </div>
         </div>
       )}
-      {/* Election Alert */}
-      {activeElections.length > 0 && (
-        <div className="bg-school-green-600 rounded-2xl p-4 text-white shadow-lg animate-pulse flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 p-2 rounded-xl">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-bold">Active Election: {activeElections[0].name}</p>
-              <p className="text-sm text-school-green-100">Cast your vote before the deadline!</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setActiveTab('voting')}
-            className="bg-white text-school-green-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-school-cream-50 transition-colors"
-          >
-            Vote Now
-          </button>
-        </div>
-      )}
-      {/* Welcome Card */}
+
       <PortalCard>
         <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-6">
-          <div className="bg-school-green-100 p-4 rounded-xl">
-            <svg className="w-12 h-12 text-school-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
+          <div className="bg-school-green-100 p-4 rounded-xl text-4xl">🎓</div>
           <div className="text-center md:text-left">
             <h2 className="text-2xl font-bold text-gray-900">Welcome back, {student.fullName}!</h2>
             <p className="text-gray-600 mt-1">Here's your academic dashboard for this semester.</p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
-              <div className="bg-school-cream-100 px-4 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Student ID</span>
-                <div className="font-semibold">{student.studentId}</div>
-              </div>
-              <div className="bg-school-cream-100 px-4 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Course</span>
-                <div className="font-semibold">{student.course}</div>
-              </div>
-              <div className="bg-school-cream-100 px-4 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Class</span>
-                <div className="font-semibold">{student.className}</div>
-              </div>
-            </div>
           </div>
         </div>
       </PortalCard>
 
-      {/* Academic Year and Semester Selector */}
-      <PortalCard title="Academic Period">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
-            <select 
-              value={academicYear}
-              onChange={(e) => setAcademicYear(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-school-green-500 focus:border-school-green-500"
-            >
-              <option value="2024">2024/2025</option>
-              <option value="2025">2025/2026</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-            <select 
-              value={semester}
-              onChange={(e) => setSemester(Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-school-green-500 focus:border-school-green-500"
-            >
-              <option value={1}>Semester 1</option>
-              <option value={2}>Semester 2</option>
-            </select>
-          </div>
-        </div>
-      </PortalCard>
-
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <PortalCard className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-100 p-3 rounded-xl">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">{subjects.length}</h3>
-              <p className="text-gray-600">Subjects</p>
-            </div>
-          </div>
+        <PortalCard className="hover:shadow-lg transition-all transform hover:-translate-y-1">
+          <h3 className="text-2xl font-bold text-blue-600">{subjects?.length || 0}</h3>
+          <p className="text-gray-600">Enrolled Subjects</p>
         </PortalCard>
-
-        <PortalCard className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center space-x-4">
-            <div className="bg-green-100 p-3 rounded-xl">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">{results.filter(r => r.grade).length}</h3>
-              <p className="text-gray-600">Graded Results</p>
-            </div>
-          </div>
+        <PortalCard className="hover:shadow-lg transition-all transform hover:-translate-y-1">
+          <h3 className="text-2xl font-bold text-green-600">{results?.filter(r => r?.grade)?.length || 0}</h3>
+          <p className="text-gray-600">Graded Results</p>
         </PortalCard>
-
-        <PortalCard className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center space-x-4">
-            <div className="bg-purple-100 p-3 rounded-xl">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">{assignments.length}</h3>
-              <p className="text-gray-600">Assignments</p>
-            </div>
-          </div>
+        <PortalCard className="hover:shadow-lg transition-all transform hover:-translate-y-1">
+          <h3 className="text-2xl font-bold text-purple-600">{assignments?.length || 0}</h3>
+          <p className="text-gray-600">Active Assignments</p>
         </PortalCard>
       </div>
-
-      {/* Recent Assignments */}
-      {assignments.length > 0 && (
-        <PortalCard title="Recent Assignments">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assignments.slice(0, 3).map((assignment) => {
-              const sub = submissions[assignment.id];
-              return (
-                <div key={assignment.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-gray-900 text-sm">{assignment.title}</h3>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`px-2 py-0.5 text-[10px] uppercase font-bold rounded-full ${
-                        assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' :
-                        assignment.assignment_type === 'Exam' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {assignment.assignment_type}
-                      </span>
-                      {sub ? (
-                        <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full bg-green-100 text-green-800">Submitted</span>
-                      ) : (
-                        <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full bg-amber-100 text-amber-800">Pending</span>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 mt-2 line-clamp-2">{assignment.description}</p>
-                  <div className="mt-3 flex justify-between items-center">
-                    <div className="text-xs font-bold text-gray-400">
-                      Due: {new Date(assignment.due_date).toLocaleDateString()}
-                    </div>
-                    {assignment.submission_type !== 'none' && !sub && (
-                      <button 
-                        onClick={() => setShowSubmitModal(assignment)}
-                        className="text-xs text-school-green-600 hover:text-school-green-700 font-black uppercase tracking-wider"
-                      >
-                        Submit Now
-                      </button>
-                    )}
-                    {sub && sub.score !== null && (
-                      <div className="text-xs font-black text-school-green-600">
-                        Score: {sub.score}/{assignment.max_score}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </PortalCard>
-      )}
     </div>
   );
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': 
-        return renderOverview();
-      case 'profile': 
-        return <StudentProfile student={student} onLogout={onLogout} />;
-      case 'grades': 
-        return (
-          <PortalCard title="My Grades">
-            {results.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {results.map((result) => (
-                      <tr key={result.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{result.subject_name}</div>
-                          <div className="text-sm text-gray-500">{result.subject_code}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {result.score !== null ? result.score : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            result.grade === 'A' ? 'bg-green-100 text-green-800' :
-                            result.grade === 'B' ? 'bg-blue-100 text-blue-800' :
-                            result.grade === 'C' ? 'bg-yellow-100 text-yellow-800' :
-                            result.grade === 'D' ? 'bg-orange-100 text-orange-800' :
-                            result.grade === 'E' ? 'bg-red-100 text-red-800' :
-                            result.grade === 'F' ? 'bg-red-200 text-red-900' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {result.grade || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {result.remark || 'N/A'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No grades available</h3>
-                <p className="mt-1 text-sm text-gray-500">No grades have been recorded for the selected period.</p>
-              </div>
-            )}
-          </PortalCard>
-        );
-      case 'assignments': 
-        return (
-          <PortalCard title="Assignments">
-            {assignments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {assignments.map((assignment) => (
-                  <div key={assignment.id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                       <h3 className="font-bold text-gray-900">{assignment.title}</h3>
-                       <span className={`px-2 py-1 text-[10px] uppercase font-bold rounded-full ${
-                          assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                       }`}>
-                          {assignment.assignment_type}
-                       </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4 flex-1">{assignment.description}</p>
-                    <div className="pt-4 border-t flex justify-between items-center">
-                       <div className="text-xs text-gray-500">
-                          Due: {new Date(assignment.due_date).toLocaleDateString()}
-                       </div>
-                       {submissions[assignment.id] ? (
-                          <div className="flex items-center gap-2">
-                             <span className="text-xs font-bold text-green-600">✓ Submitted</span>
-                             {submissions[assignment.id].score !== null && (
-                                <span className="bg-school-green-100 text-school-green-700 px-2 py-1 rounded text-[10px] font-black">
-                                   GRADED: {submissions[assignment.id].score}/{assignment.max_score}
-                                </span>
-                             )}
-                          </div>
-                       ) : (
-                          <button 
-                             onClick={() => setShowSubmitModal(assignment)}
-                             className="bg-school-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-school-green-700 transition-colors"
-                          >
-                             Submit
-                          </button>
-                       )}
-                    </div>
-                  </div>
+      case 'overview': return renderOverview();
+      case 'profile': return <StudentProfile student={student} onLogout={onLogout} />;
+      case 'grades': return (
+        <PortalCard title="My Grades">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Subject</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Grade</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {results.map((result) => (
+                  <tr key={result.id}>
+                    <td className="px-6 py-4 font-medium">{result.subject_name}</td>
+                    <td className="px-6 py-4 font-bold text-school-green-600">{result.grade || 'N/A'}</td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </PortalCard>
+      );
+      case 'assignments': return (
+        <PortalCard title="Assignments">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {assignments.map((ass) => (
+              <div key={ass.id} className="p-4 border rounded-xl">
+                <h4 className="font-bold">{ass.title}</h4>
+                <p className="text-sm text-gray-500 mb-2">{ass.description}</p>
+                <div className="flex justify-between items-center">
+                   <span className="text-xs text-gray-400">Due: {new Date(ass.due_date).toLocaleDateString()}</span>
+                   {submissions[ass.id] ? <span className="text-xs text-green-600 font-bold">Submitted</span> : 
+                   <button onClick={() => setShowSubmitModal(ass)} className="text-xs bg-school-green-600 text-white px-3 py-1 rounded-lg">Submit</button>}
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments</h3>
-                <p className="mt-1 text-sm text-gray-500">No assignments have been posted for your class.</p>
-              </div>
-            )}
-          </PortalCard>
-        );
-      case 'behavior': 
-        return <StudentBehavior studentId={parseInt(student.id)} />;
-      case 'downloads': 
-        return <StudentDownloads />;
-      case 'messages': 
-        return <StudentMessages />;
-      case 'voting':
-        return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
-      case 'elearning':
-        return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id} />;
-      default: 
-        return renderOverview();
+            ))}
+          </div>
+        </PortalCard>
+      );
+      case 'behavior': return <StudentBehavior studentId={parseInt(student.id)} />;
+      case 'downloads': return <StudentDownloads />;
+      case 'messages': return <StudentMessages />;
+      case 'voting': return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
+      case 'elearning': return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id} />;
+      default: return renderOverview();
     }
   };
 
   return (
-    <div className="min-h-screen bg-school-cream-50 flex flex-col">
-      <PortalHeader 
-        portalName="Student" 
-        userName={student.fullName} 
-        onLogout={onLogout} 
-      />
-      
-      <div className="flex flex-1">
-        <PortalSidebar 
-          items={sidebarItems} 
-          activeItem={activeTab} 
-          onItemClick={setActiveTab} 
-        />
-        
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {activeTab === 'overview' && 'Dashboard Overview'}
-                {activeTab === 'profile' && 'My Profile'}
-                {activeTab === 'grades' && 'My Grades'}
-                {activeTab === 'assignments' && 'Assignments'}
-                {activeTab === 'behavior' && 'Behavior Records'}
-                {activeTab === 'downloads' && 'Downloads'}
-                {activeTab === 'messages' && 'Messages'}
-                {activeTab === 'voting' && 'School Voting System'}
-                {activeTab === 'elearning' && 'E-Learning Platform'}
-              </h1>
-              <p className="text-gray-600">
-                {activeTab === 'overview' && 'Your academic dashboard overview'}
-                {activeTab === 'profile' && 'Manage your profile and personal information'}
-                {activeTab === 'grades' && 'View your academic results and grades'}
-                {activeTab === 'assignments' && 'View and manage your assignments'}
-                {activeTab === 'behavior' && 'View your behavior records and conduct'}
-                {activeTab === 'downloads' && 'Download learning materials and resources'}
-                {activeTab === 'messages' && 'Communicate with teachers and school administration'}
-                {activeTab === 'voting' && 'Participate in ongoing school elections'}
-                {activeTab === 'elearning' && 'Take online quizzes and exams'}
-              </p>
-            </div>
-            
-            {loading && activeTab === 'overview' ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
-              </div>
-            ) : (
-              renderContent()
-            )}
-          </div>
-        </main>
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 capitalize">
+          {activeTab ? activeTab.replace('_', ' ') : 'Dashboard'}
+        </h1>
+        <p className="text-gray-600">Access your school information and resources below.</p>
       </div>
+      {loading && activeTab === 'overview' ? (
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-school-green-600"></div></div>
+      ) : renderContent()}
 
-      {/* Assignment Submission Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="bg-school-green-700 p-6 text-white flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-bold">{showSubmitModal.title}</h2>
-                <p className="text-school-green-100 text-xs uppercase font-bold tracking-wider">Submission Type: {showSubmitModal.submission_type}</p>
-              </div>
-              <button onClick={() => setShowSubmitModal(null)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Submit {showSubmitModal.title}</h3>
+            <textarea 
+               className="w-full p-3 border rounded-xl mb-4" 
+               rows={4} 
+               placeholder="Enter your response..." 
+               value={submissionData.text}
+               onChange={e => setSubmissionData({...submissionData, text: e.target.value})}
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setShowSubmitModal(null)} className="flex-1 py-2 text-gray-500">Cancel</button>
+              <button 
+                onClick={async () => {
+                  await db.submitAssignment(showSubmitModal.id, parseInt(student.id), undefined);
+                  toast.success('Submitted');
+                  setShowSubmitModal(null);
+                  fetchData();
+                }}
+                className="flex-1 py-2 bg-school-green-600 text-white rounded-xl"
+              >
+                Submit
               </button>
             </div>
-            
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                // In a real app, you'd upload the file first
-                const filePath = submissionData.file ? `/uploads/${submissionData.file.name}` : undefined;
-                await db.submitAssignment(showSubmitModal.id, parseInt(student.id), filePath);
-                toast.success('Assignment submitted!');
-                setShowSubmitModal(null);
-                setSubmissionData({ text: '', file: null });
-                fetchData();
-              } catch (error) {
-                toast.error('Submission failed');
-              }
-            }} className="p-6 space-y-6">
-              {showSubmitModal.submission_type === 'file' && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Upload File (PDF/DOC)</label>
-                  <div 
-                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-school-green-400 transition-colors"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                  >
-                    <input 
-                      type="file" 
-                      id="file-upload" 
-                      className="hidden" 
-                      onChange={e => setSubmissionData({ ...submissionData, file: e.target.files?.[0] || null })}
-                    />
-                    {submissionData.file ? (
-                       <div className="text-school-green-600 font-bold flex items-center justify-center space-x-2">
-                          <span>📄</span>
-                          <span>{submissionData.file.name}</span>
-                       </div>
-                    ) : (
-                      <>
-                        <div className="text-4xl mb-2">📁</div>
-                        <p className="text-sm text-gray-500">Click to select your work file</p>
-                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">PDF, DOC, DOCX SUPPORTED</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {showSubmitModal.submission_type === 'text' && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-bold text-gray-700">Your Response</label>
-                  <textarea 
-                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-school-green-500 outline-none transition-all"
-                    rows={6}
-                    placeholder="Type your answer here..."
-                    value={submissionData.text}
-                    onChange={e => setSubmissionData({ ...submissionData, text: e.target.value })}
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-4">
-                 <button 
-                   type="button" 
-                   onClick={() => setShowSubmitModal(null)}
-                   className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
-                 >
-                   Cancel
-                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-3 bg-school-green-600 text-white font-bold rounded-xl shadow-lg shadow-school-green-100 hover:bg-school-green-700 transition-colors uppercase tracking-widest text-sm"
-                >
-                  Submit Work
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
