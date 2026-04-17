@@ -707,6 +707,14 @@ export function AdminReports() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">System Reports & Analytics</h2>
+          <p className="text-gray-600">View detailed statistics and performance metrics</p>
+        </div>
+      </div>
+
       {/* Report Tabs */}
       <div className="bg-white rounded-xl border-2 border-school-cream-200 p-2">
         <div className="flex space-x-2">

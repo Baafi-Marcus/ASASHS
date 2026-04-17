@@ -328,6 +328,14 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Admin Overview</h2>
+          <p className="text-gray-600">System summary and key statistics</p>
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
