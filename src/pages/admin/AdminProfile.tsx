@@ -21,11 +21,23 @@ export function AdminProfile({ adminId }: { adminId: string }) {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
+  const [settings, setSettings] = useState<{ github_model_api_key: string }>({ github_model_api_key: '' });
   const [formData, setFormData] = useState<Partial<Admin>>({});
 
   useEffect(() => {
     fetchAdminDetails();
+    fetchSettings();
   }, [adminId]);
+
+  const fetchSettings = async () => {
+    try {
+      const key = await db.getSchoolSetting('github_model_api_key');
+      setSettings({ github_model_api_key: key });
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
 
   const fetchAdminDetails = async () => {
     setLoading(true);
@@ -87,8 +99,28 @@ export function AdminProfile({ adminId }: { adminId: string }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <PortalCard title="Admin Profile">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'profile' ? 'bg-school-green-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          Admin Profile
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'settings' ? 'bg-school-green-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          System Settings
+        </button>
+      </div>
+
+      {activeTab === 'profile' ? (
+        <PortalCard title="Admin Profile">
         {!isEditing ? (
           // View Mode
           <div className="space-y-6">
@@ -221,6 +253,42 @@ export function AdminProfile({ adminId }: { adminId: string }) {
           </form>
         )}
       </PortalCard>
+      ) : (
+        <PortalCard title="System Settings">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Configuration</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Configure the GitHub Models / OpenAI API key for AI-powered features like quiz generation.
+              </p>
+              <div className="space-y-4">
+                <PortalInput
+                  label="GitHub Model API Key"
+                  type="password"
+                  value={settings.github_model_api_key}
+                  onChange={(e) => setSettings({ github_model_api_key: e.target.value })}
+                  placeholder="ghp_xxxxxxxxxxxx"
+                />
+                <div className="flex justify-end">
+                  <PortalButton
+                    onClick={async () => {
+                      try {
+                        await db.updateSchoolSetting('github_model_api_key', settings.github_model_api_key);
+                        toast.success('Settings updated successfully!');
+                      } catch (error) {
+                        toast.error('Failed to update settings');
+                      }
+                    }}
+                    variant="primary"
+                  >
+                    Save Settings
+                  </PortalButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </PortalCard>
+      )}
     </div>
   );
 }

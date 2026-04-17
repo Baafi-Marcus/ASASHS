@@ -9,6 +9,7 @@ import { StudentBehavior } from './StudentBehavior';
 import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
+import { StudentELearning } from './StudentELearning';
 
 import { Student } from '../../contexts/StudentAuthContext';
 
@@ -46,6 +47,8 @@ interface Assignment {
   file_path: string | null;
   created_at: string;
   subject_name: string;
+  submission_type: string;
+  max_score: number;
 }
 
 export const StudentDashboard: React.FC<{ 
@@ -61,7 +64,10 @@ export const StudentDashboard: React.FC<{
   const [loading, setLoading] = useState(true);
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear().toString());
   const [semester, setSemester] = useState(1);
-  const [term, setTerm] = useState(1); // Map semester to term (semester 1 = term 1, semester 2 = term 2)
+  const [term, setTerm] = useState(1);
+  const [submissions, setSubmissions] = useState<Record<number, any>>({});
+  const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
+  const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
 
   // Sidebar items for student portal
   const sidebarItems = [
@@ -106,6 +112,11 @@ export const StudentDashboard: React.FC<{
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     )},
+    { id: 'elearning', label: 'E-Learning', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    )},
   ];
 
   // Fetch data from database
@@ -139,7 +150,13 @@ export const StudentDashboard: React.FC<{
       const classAssignments = await db.getAssignmentsByClass(1); // Placeholder
       setAssignments(classAssignments);
 
-      // Fetch active elections for voter alerts
+      // Fetch student's submissions to check status
+      const subs: Record<number, any> = {};
+      for (const ass of classAssignments) {
+        const sub = await db.getStudentSubmissionForAssignment(ass.id, studentDbId);
+        if (sub) subs[ass.id] = sub;
+      }
+      setSubmissions(subs);
       const allElections = await db.getElections();
       setActiveElections(allElections.filter((e: any) => e.status === 'open'));
     } catch (error) {
@@ -296,32 +313,49 @@ export const StudentDashboard: React.FC<{
       {assignments.length > 0 && (
         <PortalCard title="Recent Assignments">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assignments.slice(0, 3).map((assignment) => (
-              <div key={assignment.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-gray-900 text-sm">{assignment.title}</h3>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' :
-                    assignment.assignment_type === 'Midsem Exam' ? 'bg-purple-100 text-purple-800' :
-                    assignment.assignment_type === 'Exam' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {assignment.assignment_type}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 mt-2 line-clamp-2">{assignment.description}</p>
-                <div className="mt-3 flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    Due: {new Date(assignment.due_date).toLocaleDateString()}
+            {assignments.slice(0, 3).map((assignment) => {
+              const sub = submissions[assignment.id];
+              return (
+                <div key={assignment.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-gray-900 text-sm">{assignment.title}</h3>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`px-2 py-0.5 text-[10px] uppercase font-bold rounded-full ${
+                        assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' :
+                        assignment.assignment_type === 'Exam' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {assignment.assignment_type}
+                      </span>
+                      {sub ? (
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full bg-green-100 text-green-800">Submitted</span>
+                      ) : (
+                        <span className="px-2 py-0.5 text-[10px] uppercase font-bold rounded-full bg-amber-100 text-amber-800">Pending</span>
+                      )}
+                    </div>
                   </div>
-                  {assignment.file_path && (
-                    <button className="text-xs text-school-green-600 hover:text-school-green-700 font-medium">
-                      Download
-                    </button>
-                  )}
+                  <p className="text-xs text-gray-600 mt-2 line-clamp-2">{assignment.description}</p>
+                  <div className="mt-3 flex justify-between items-center">
+                    <div className="text-xs font-bold text-gray-400">
+                      Due: {new Date(assignment.due_date).toLocaleDateString()}
+                    </div>
+                    {assignment.submission_type !== 'none' && !sub && (
+                      <button 
+                        onClick={() => setShowSubmitModal(assignment)}
+                        className="text-xs text-school-green-600 hover:text-school-green-700 font-black uppercase tracking-wider"
+                      >
+                        Submit Now
+                      </button>
+                    )}
+                    {sub && sub.score !== null && (
+                      <div className="text-xs font-black text-school-green-600">
+                        Score: {sub.score}/{assignment.max_score}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </PortalCard>
       )}
@@ -396,28 +430,37 @@ export const StudentDashboard: React.FC<{
             {assignments.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {assignments.map((assignment) => (
-                  <div key={assignment.id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold text-gray-900">{assignment.title}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' :
-                        assignment.assignment_type === 'Midsem Exam' ? 'bg-purple-100 text-purple-800' :
-                        assignment.assignment_type === 'Exam' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {assignment.assignment_type}
-                      </span>
+                  <div key={assignment.id} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                       <h3 className="font-bold text-gray-900">{assignment.title}</h3>
+                       <span className={`px-2 py-1 text-[10px] uppercase font-bold rounded-full ${
+                          assignment.assignment_type === 'Assignment' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                       }`}>
+                          {assignment.assignment_type}
+                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">{assignment.description}</p>
-                    <div className="mt-4 flex justify-between items-center">
-                      <div className="text-sm text-gray-500">
-                        Due: {new Date(assignment.due_date).toLocaleDateString()}
-                      </div>
-                      {assignment.file_path && (
-                        <button className="text-sm text-school-green-600 hover:text-school-green-700 font-medium">
-                          Download
-                        </button>
-                      )}
+                    <p className="text-sm text-gray-600 mb-4 flex-1">{assignment.description}</p>
+                    <div className="pt-4 border-t flex justify-between items-center">
+                       <div className="text-xs text-gray-500">
+                          Due: {new Date(assignment.due_date).toLocaleDateString()}
+                       </div>
+                       {submissions[assignment.id] ? (
+                          <div className="flex items-center gap-2">
+                             <span className="text-xs font-bold text-green-600">✓ Submitted</span>
+                             {submissions[assignment.id].score !== null && (
+                                <span className="bg-school-green-100 text-school-green-700 px-2 py-1 rounded text-[10px] font-black">
+                                   GRADED: {submissions[assignment.id].score}/{assignment.max_score}
+                                </span>
+                             )}
+                          </div>
+                       ) : (
+                          <button 
+                             onClick={() => setShowSubmitModal(assignment)}
+                             className="bg-school-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-school-green-700 transition-colors"
+                          >
+                             Submit
+                          </button>
+                       )}
                     </div>
                   </div>
                 ))}
@@ -441,6 +484,8 @@ export const StudentDashboard: React.FC<{
         return <StudentMessages />;
       case 'voting':
         return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
+      case 'elearning':
+        return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id} />;
       default: 
         return renderOverview();
     }
@@ -473,6 +518,7 @@ export const StudentDashboard: React.FC<{
                 {activeTab === 'downloads' && 'Downloads'}
                 {activeTab === 'messages' && 'Messages'}
                 {activeTab === 'voting' && 'School Voting System'}
+                {activeTab === 'elearning' && 'E-Learning Platform'}
               </h1>
               <p className="text-gray-600">
                 {activeTab === 'overview' && 'Your academic dashboard overview'}
@@ -483,6 +529,7 @@ export const StudentDashboard: React.FC<{
                 {activeTab === 'downloads' && 'Download learning materials and resources'}
                 {activeTab === 'messages' && 'Communicate with teachers and school administration'}
                 {activeTab === 'voting' && 'Participate in ongoing school elections'}
+                {activeTab === 'elearning' && 'Take online quizzes and exams'}
               </p>
             </div>
             
@@ -496,6 +543,99 @@ export const StudentDashboard: React.FC<{
           </div>
         </main>
       </div>
+
+      {/* Assignment Submission Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="bg-school-green-700 p-6 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold">{showSubmitModal.title}</h2>
+                <p className="text-school-green-100 text-xs uppercase font-bold tracking-wider">Submission Type: {showSubmitModal.submission_type}</p>
+              </div>
+              <button onClick={() => setShowSubmitModal(null)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                // In a real app, you'd upload the file first
+                const filePath = submissionData.file ? `/uploads/${submissionData.file.name}` : undefined;
+                await db.submitAssignment(showSubmitModal.id, parseInt(student.id), filePath);
+                toast.success('Assignment submitted!');
+                setShowSubmitModal(null);
+                setSubmissionData({ text: '', file: null });
+                fetchData();
+              } catch (error) {
+                toast.error('Submission failed');
+              }
+            }} className="p-6 space-y-6">
+              {showSubmitModal.submission_type === 'file' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Upload File (PDF/DOC)</label>
+                  <div 
+                    className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-school-green-400 transition-colors"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    <input 
+                      type="file" 
+                      id="file-upload" 
+                      className="hidden" 
+                      onChange={e => setSubmissionData({ ...submissionData, file: e.target.files?.[0] || null })}
+                    />
+                    {submissionData.file ? (
+                       <div className="text-school-green-600 font-bold flex items-center justify-center space-x-2">
+                          <span>📄</span>
+                          <span>{submissionData.file.name}</span>
+                       </div>
+                    ) : (
+                      <>
+                        <div className="text-4xl mb-2">📁</div>
+                        <p className="text-sm text-gray-500">Click to select your work file</p>
+                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold">PDF, DOC, DOCX SUPPORTED</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {showSubmitModal.submission_type === 'text' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-bold text-gray-700">Your Response</label>
+                  <textarea 
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-school-green-500 outline-none transition-all"
+                    rows={6}
+                    placeholder="Type your answer here..."
+                    value={submissionData.text}
+                    onChange={e => setSubmissionData({ ...submissionData, text: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                 <button 
+                   type="button" 
+                   onClick={() => setShowSubmitModal(null)}
+                   className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"
+                 >
+                   Cancel
+                 </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-school-green-600 text-white font-bold rounded-xl shadow-lg shadow-school-green-100 hover:bg-school-green-700 transition-colors uppercase tracking-widest text-sm"
+                >
+                  Submit Work
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

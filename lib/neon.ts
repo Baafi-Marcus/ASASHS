@@ -1618,10 +1618,10 @@ export const db = {
   async createAssignment(assignmentData: any) {
     try {
       const result = await sql`
-        INSERT INTO assignments (teacher_id, class_id, subject_id, title, description, assignment_type_id, due_date, max_score)
+        INSERT INTO assignments (teacher_id, class_id, subject_id, title, description, assignment_type_id, due_date, max_score, submission_type)
         VALUES (${assignmentData.teacher_id}, ${assignmentData.class_id}, ${assignmentData.subject_id}, 
                 ${assignmentData.title}, ${assignmentData.description}, ${assignmentData.assignment_type_id}, 
-                ${assignmentData.due_date}, ${assignmentData.max_score})
+                ${assignmentData.due_date}, ${assignmentData.max_score}, ${assignmentData.submission_type})
         RETURNING *
       `;
       
@@ -1700,6 +1700,20 @@ export const db = {
     } catch (error) {
       console.error('Error fetching assignment submissions:', error);
       return [];
+    }
+  },
+
+  async getStudentSubmissionForAssignment(assignmentId: number, studentId: number) {
+    try {
+      const result = await sql`
+        SELECT * FROM assignment_submissions
+        WHERE assignment_id = ${assignmentId} AND student_id = ${studentId}
+        LIMIT 1
+      `;
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error fetching student submission:', error);
+      return null;
     }
   },
 
@@ -2375,7 +2389,137 @@ export const db = {
 
   getLearningMaterials,
   uploadLearningMaterial,
-  deleteLearningMaterial
+  deleteLearningMaterial,
+
+  // Settings
+  async getSchoolSetting(key: string): Promise<string> {
+    const result = await sql`SELECT setting_value FROM school_settings WHERE setting_key = ${key}`;
+    return result.length > 0 ? result[0].setting_value : '';
+  },
+
+  async updateSchoolSetting(key: string, value: string) {
+    await sql`
+      INSERT INTO school_settings (setting_key, setting_value, updated_at)
+      VALUES (${key}, ${value}, CURRENT_TIMESTAMP)
+      ON CONFLICT (setting_key) DO UPDATE SET 
+        setting_value = EXCLUDED.setting_value,
+        updated_at = CURRENT_TIMESTAMP
+    `;
+  },
+
+  // eLearning Quizzes
+  async getQuizzes(filters?: { class_id?: number; teacher_id?: number; subject_id?: number }) {
+    let query = sql`
+      SELECT q.*, t.surname as teacher_surname, t.other_names as teacher_other_names, 
+             s.name as subject_name, c.class_name
+      FROM elearning_quizzes q
+      JOIN teachers t ON q.teacher_id = t.id
+      JOIN subjects s ON q.subject_id = s.id
+      JOIN classes c ON q.class_id = c.id
+      WHERE q.is_active = true
+    `;
+    
+    if (filters?.class_id) query = sql`${query} AND q.class_id = ${filters.class_id}`;
+    if (filters?.teacher_id) query = sql`${query} AND q.teacher_id = ${filters.teacher_id}`;
+    if (filters?.subject_id) query = sql`${query} AND q.subject_id = ${filters.subject_id}`;
+    
+    return await query;
+  },
+
+  async getQuizById(quizId: number) {
+    const quiz = await sql`SELECT * FROM elearning_quizzes WHERE id = ${quizId}`;
+    if (quiz.length === 0) return null;
+    
+    const questions = await sql`
+      SELECT q.*, 
+             (SELECT json_agg(o.*) FROM quiz_options o WHERE o.question_id = q.id) as options,
+             (SELECT json_agg(a.*) FROM quiz_correct_answers a WHERE a.question_id = q.id) as correct_answers
+      FROM quiz_questions q
+      WHERE q.quiz_id = ${quizId}
+      ORDER BY q.order_index ASC
+    `;
+    
+    return { ...quiz[0], questions };
+  },
+
+  async createQuiz(data: any) {
+    const result = await sql`
+      INSERT INTO elearning_quizzes (teacher_id, class_id, subject_id, title, description, instructions, time_limit, passing_score, total_points)
+      VALUES (${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description}, ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points})
+      RETURNING id
+    `;
+    const quizId = result[0].id;
+    
+    for (const q of data.questions) {
+      const qResult = await sql`
+        INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index)
+        VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points}, ${q.order_index})
+        RETURNING id
+      `;
+      const qId = qResult[0].id;
+      
+      if (q.options) {
+        for (const opt of q.options) {
+          await sql`INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES (${qId}, ${opt.option_text}, ${opt.is_correct})`;
+        }
+      }
+      
+      if (q.correct_answers) {
+        for (const ans of q.correct_answers) {
+          await sql`INSERT INTO quiz_correct_answers (question_id, answer_text) VALUES (${qId}, ${ans})`;
+        }
+      }
+    }
+    return quizId;
+  },
+
+  async getQuizAttempts(filters: { student_id?: number; quiz_id?: number }) {
+    let query = sql`
+      SELECT a.*, q.title as quiz_title, s.name as subject_name
+      FROM quiz_attempts a
+      JOIN elearning_quizzes q ON a.quiz_id = q.id
+      JOIN subjects s ON q.subject_id = s.id
+      WHERE 1=1
+    `;
+    if (filters.student_id) query = sql`${query} AND a.student_id = ${filters.student_id}`;
+    if (filters.quiz_id) query = sql`${query} AND a.quiz_id = ${filters.quiz_id}`;
+    return await query;
+  },
+
+  async startQuizAttempt(studentId: number, quizId: number) {
+    const result = await sql`
+      INSERT INTO quiz_attempts (student_id, quiz_id, status)
+      VALUES (${studentId}, ${quizId}, 'in-progress')
+      RETURNING id
+    `;
+    return result[0].id;
+  },
+
+  async submitQuizResponse(data: { attempt_id: number; question_id: number; response_text: string; is_correct: boolean; points_earned: number }) {
+    await sql`
+      INSERT INTO quiz_responses (attempt_id, question_id, response_text, is_correct, points_earned)
+      VALUES (${data.attempt_id}, ${data.question_id}, ${data.response_text}, ${data.is_correct}, ${data.points_earned})
+    `;
+  },
+
+  async completeQuizAttempt(attemptId: number, score: number, percentage: number, tabSwitches: number = 0) {
+    await sql`
+      UPDATE quiz_attempts 
+      SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
+      WHERE id = ${attemptId}
+    `;
+  },
+
+  async getDetailedQuizAttempts(quizId: number) {
+    return await sql`
+      SELECT a.*, u.user_id as student_admission_number, s.surname, s.other_names
+      FROM quiz_attempts a
+      JOIN students s ON a.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      WHERE a.quiz_id = ${quizId} AND a.status = 'completed'
+      ORDER BY a.end_time DESC
+    `;
+  }
 };
 
 // Learning Materials
@@ -2469,6 +2613,10 @@ async function deleteLearningMaterial(materialId: number) {
 }
 
 
-export { uploadLearningMaterial, getLearningMaterials, deleteLearningMaterial };
+export { 
+  uploadLearningMaterial, 
+  getLearningMaterials, 
+  deleteLearningMaterial
+};
 
 export default db;

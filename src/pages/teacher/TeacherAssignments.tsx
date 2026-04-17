@@ -12,6 +12,7 @@ interface Assignment {
   assignment_type: string;
   due_date: string;
   max_score: number;
+  submission_type: string;
   created_at: string;
 }
 
@@ -37,8 +38,13 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
     subject_id: '',
     assignment_type_id: '',
     due_date: '',
-    max_score: 100
+    max_score: 100,
+    submission_type: 'file'
   });
+  
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [gradingModal, setGradingModal] = useState<any>(null);
   
   // Learning materials state
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -97,7 +103,8 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
         subject_id: '',
         assignment_type_id: '',
         due_date: '',
-        max_score: 100
+        max_score: 100,
+        submission_type: 'file'
       });
       fetchAssignments();
     } catch (error) {
@@ -206,6 +213,36 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
       material_type: 'assessment'
     });
     setShowUploadModal(true);
+  };
+  
+  const fetchSubmissions = async (assignment: Assignment) => {
+    try {
+      setLoading(true);
+      const data = await db.getAssignmentSubmissions(assignment.id);
+      setSubmissions(data as any[]);
+      setSelectedAssignment(assignment);
+    } catch (error) {
+      toast.error('Failed to load submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGradeSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await db.gradeAssignmentSubmission(
+        gradingModal.id,
+        gradingModal.score,
+        gradingModal.remarks,
+        teacherId
+      );
+      toast.success('Grade saved!');
+      setGradingModal(null);
+      if (selectedAssignment) fetchSubmissions(selectedAssignment);
+    } catch (error) {
+      toast.error('Failed to save grade');
+    }
   };
 
   if (loading) {
@@ -340,6 +377,20 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
                     step="0.1"
                     className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Submission Type *</label>
+                  <select
+                    name="submission_type"
+                    value={formData.submission_type}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  >
+                    <option value="none">No Submission</option>
+                    <option value="file">File Upload (PDF/DOC)</option>
+                    <option value="text">Online Text</option>
+                  </select>
                 </div>
               </div>
               
@@ -553,11 +604,11 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
                       <span className="text-blue-600 font-medium">12/25</span> submitted
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      <button className="text-school-green-600 hover:text-school-green-800 mr-3">
-                        View
-                      </button>
-                      <button className="text-blue-600 hover:text-blue-800 mr-3">
-                        Edit
+                      <button 
+                        onClick={() => fetchSubmissions(assignment)}
+                        className="text-school-green-600 font-bold hover:text-school-green-800 mr-3"
+                      >
+                        Submissions
                       </button>
                       <button className="text-red-600 hover:text-red-800">
                         Delete
@@ -580,6 +631,124 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
           </table>
         </div>
       </div>
+
+      {/* Submissions Modal */}
+      {selectedAssignment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            <div className="bg-school-green-700 px-6 py-4 flex justify-between items-center rounded-t-2xl text-white">
+              <div>
+                <h2 className="text-xl font-bold">{selectedAssignment.title} - Submissions</h2>
+                <p className="text-school-green-100 text-sm">{selectedAssignment.class_name} | Max Score: {selectedAssignment.max_score}</p>
+              </div>
+              <button onClick={() => setSelectedAssignment(null)} className="hover:bg-white/10 p-2 rounded-full">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-6">
+              {loading ? (
+                <div className="flex justify-center items-center h-48">
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-school-green-600 border-t-transparent"></div>
+                </div>
+              ) : submissions.length > 0 ? (
+                <div className="overflow-x-auto border rounded-xl">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Student</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Submission</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Score</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {submissions.map((sub: any) => (
+                        <tr key={sub.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4">
+                            <div className="text-sm font-bold text-gray-900">{sub.surname}, {sub.other_names}</div>
+                            <div className="text-xs text-gray-500">{sub.student_admission_number || sub.student_id}</div>
+                          </td>
+                          <td className="px-4 py-4 text-xs">
+                             {sub.score !== null ? 
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full font-bold">GRADED</span> : 
+                              <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full font-bold">PENDING</span>
+                             }
+                          </td>
+                          <td className="px-4 py-4">
+                            {sub.file_path ? (
+                              <a href={sub.file_path} className="text-blue-600 hover:underline flex items-center" target="_blank">
+                                <span className="mr-1">📄</span> {sub.file_path.split('/').pop()}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">No file</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 font-bold text-school-green-700">{sub.score !== null ? `${sub.score}/${selectedAssignment.max_score}` : '-'}</td>
+                          <td className="px-4 py-4">
+                            <button 
+                              onClick={() => setGradingModal(sub)}
+                              className="text-school-green-600 font-bold hover:underline"
+                            >
+                              Grade
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed">
+                  <p className="text-gray-500">No submissions yet for this assignment.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grading Form Modal */}
+      {gradingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-md">
+            <div className="p-4 border-b">
+              <h3 className="font-bold text-lg">Grade Submission</h3>
+              <p className="text-xs text-gray-500">Student: {gradingModal.surname}, {gradingModal.other_names}</p>
+            </div>
+            <form onSubmit={handleGradeSubmission} className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Score (Max: {selectedAssignment?.max_score})</label>
+                <input 
+                  type="number"
+                  required
+                  max={selectedAssignment?.max_score}
+                  value={gradingModal.score || ''}
+                  onChange={e => setGradingModal({ ...gradingModal, score: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                <textarea 
+                  value={gradingModal, remarks || ''}
+                  onChange={e => setGradingModal({ ...gradingModal, remarks: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  rows={3}
+                  placeholder="Excellent work..."
+                />
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <button type="button" onClick={() => setGradingModal(null)} className="px-4 py-2 text-sm text-gray-600">Cancel</button>
+                <button type="submit" className="px-6 py-2 bg-school-green-600 text-white rounded-lg text-sm font-bold">Save Grade</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

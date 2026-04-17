@@ -10,6 +10,7 @@ import { TeacherGradebook } from './TeacherGradebook';
 import { TeacherStudentPerformance } from './TeacherStudentPerformance';
 import { TeacherMessages } from './TeacherMessages';
 import { TeacherProfile } from './TeacherProfile';
+import { TeacherELearning } from './TeacherELearning';
 
 interface Teacher {
   id: string;
@@ -67,6 +68,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
     { id: 'messages', label: 'Messages', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+    )},
+    { id: 'elearning', label: 'E-Learning', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     )},
     { id: 'profile', label: 'My Profile', icon: (
@@ -296,6 +302,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
         return <TeacherStudentPerformance teacherId={teacher.teacherDbId} />;
       case 'messages': 
         return <TeacherMessages teacherId={teacher.teacherDbId} />;
+      case 'elearning':
+        return <TeacherELearning teacherId={teacher.teacherDbId} />;
       case 'profile': 
         return <TeacherProfile teacher={teacher} onLogout={onLogout} />;
       default: 
@@ -329,6 +337,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
                 {activeTab === 'performance' && 'Student Performance'}
                 {activeTab === 'messages' && 'Messages'}
                 {activeTab === 'profile' && 'My Profile'}
+                {activeTab === 'elearning' && 'E-Learning Platform'}
               </h1>
               <p className="text-gray-600">
                 {activeTab === 'overview' && 'Your teaching dashboard overview'}
@@ -338,6 +347,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ teacher, onL
                 {activeTab === 'performance' && 'Track student performance analytics'}
                 {activeTab === 'messages' && 'Communicate with students and parents'}
                 {activeTab === 'profile' && 'Manage your profile and account settings'}
+                {activeTab === 'elearning' && 'Create AI-powered quizzes and manage digital assessments'}
               </p>
             </div>
             
