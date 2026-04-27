@@ -89,11 +89,26 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
   useEffect(() => {
     // If student prop is provided, populate the form with student data
     if (student) {
+      const formatDateForInput = (dateStr: string | null | undefined) => {
+        if (!dateStr) return '';
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr;
+          // Use local time to avoid timezone shifts
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        } catch (e) {
+          return dateStr;
+        }
+      };
+
       setFormData({
         admission_number: student.admission_number || '',
         surname: student.surname || '',
         other_names: student.other_names || '',
-        date_of_birth: student.date_of_birth || '',
+        date_of_birth: formatDateForInput(student.date_of_birth),
         gender: student.gender || '',
         programme_id: student.course_id?.toString() || '',
         form: '', // This would need to be derived from class information
@@ -112,7 +127,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         known_allergies: student.known_allergies || 'None',
         chronic_conditions: student.chronic_conditions || 'None',
         blood_group: student.blood_group || '',
-        enrollment_date: student.enrollment_date || new Date().toISOString().split('T')[0],
+        enrollment_date: formatDateForInput(student.enrollment_date) || new Date().toISOString().split('T')[0],
         residential_status: student.residential_status || 'Day Student',
         house_preference: student.house_preference || ''
       });
@@ -208,7 +223,17 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      if (field === 'residential_status') {
+        if (value === 'Day Student') {
+          newData.house_preference = 'House 5';
+        } else if (value === 'Boarding Student' && prev.house_preference === 'House 5') {
+          newData.house_preference = ''; // Reset if they were day student
+        }
+      }
+      return newData;
+    });
   };
 
   return (
@@ -221,6 +246,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           onChange={(e) => handleInputChange('admission_number', e.target.value)}
           required
           placeholder="Enter admission number"
+          disabled={!!student}
         />
         
         <PortalInput
@@ -433,13 +459,23 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
             </select>
           </div>
           
-          <PortalInput
-            label="House Preference"
-            type="text"
-            value={formData.house_preference}
-            onChange={(e) => handleInputChange('house_preference', e.target.value)}
-            placeholder="Enter house preference"
-          />
+          {formData.residential_status === 'Boarding Student' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">House</label>
+              <select
+                value={formData.house_preference || ''}
+                onChange={(e) => handleInputChange('house_preference', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                required
+              >
+                <option value="">Select House</option>
+                <option value="House 1">House 1</option>
+                <option value="House 2">House 2</option>
+                <option value="House 3">House 3</option>
+                <option value="House 4">House 4</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 

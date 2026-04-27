@@ -270,13 +270,7 @@ export function StudentList() {
             <span className="text-sm">House 5 Only</span>
           </label>
 
-          {/* Button to assign unassigned students to House 5 */}
-          <button
-            onClick={handleAssignToHouse5}
-            className="bg-school-green-600 text-white px-4 py-2 rounded-lg hover:bg-school-green-700 transition-colors"
-          >
-            Assign Unassigned to House 5
-          </button>
+
         </div>
 
         {/* Table */}

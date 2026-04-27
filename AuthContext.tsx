@@ -18,7 +18,7 @@ interface User {
 
 interface AuthContextProps {
   user: User | null;
-  signIn: (userId: string, password: string) => Promise<void>;
+  signIn: (userId: string, password: string, requiredRole?: string) => Promise<void>;
   signOut: () => void;
   changePassword: (newPassword: string) => Promise<void>;
   loading: boolean;
@@ -49,7 +49,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     setLoading(false);
   }, []);
 
-  const signIn = async (userId: string, password: string) => {
+  const signIn = async (userId: string, password: string, requiredRole?: string) => {
     try {
       setLoading(true);
       
@@ -62,6 +62,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       
       if (!authenticatedUser) {
         toast.error('Invalid credentials. Please check your ID and password.');
+        return;
+      }
+
+      if (requiredRole && authenticatedUser.user_type !== requiredRole) {
+        toast.error(`Access denied. This portal is restricted to ${requiredRole}s only.`);
+        setLoading(false);
         return;
       }
       

@@ -503,6 +503,16 @@ export const db = {
 
   async updateStudent(studentId: number, studentData: any) {
     try {
+      const parseDate = (d: string | null | undefined) => {
+        if (!d) return null;
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return d;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const result = await sql`
         UPDATE students 
         SET 
@@ -510,7 +520,7 @@ export const db = {
           current_class_id = COALESCE(${studentData.current_class_id}, current_class_id),
           surname = COALESCE(${studentData.surname}, surname),
           other_names = COALESCE(${studentData.other_names}, other_names),
-          date_of_birth = COALESCE(${studentData.date_of_birth}, date_of_birth),
+          date_of_birth = COALESCE(${parseDate(studentData.date_of_birth)}, date_of_birth),
           gender = COALESCE(${studentData.gender}, gender),
           nationality = COALESCE(${studentData.nationality}, nationality),
           hometown = COALESCE(${studentData.hometown}, hometown),
@@ -527,7 +537,7 @@ export const db = {
           known_allergies = COALESCE(${studentData.known_allergies}, known_allergies),
           chronic_conditions = COALESCE(${studentData.chronic_conditions}, chronic_conditions),
           blood_group = COALESCE(${studentData.blood_group}, blood_group),
-          enrollment_date = COALESCE(${studentData.enrollment_date}, enrollment_date),
+          enrollment_date = COALESCE(${parseDate(studentData.enrollment_date)}, enrollment_date),
           residential_status = COALESCE(${studentData.residential_status}, residential_status),
           house_preference = COALESCE(${studentData.house_preference}, house_preference),
           updated_at = CURRENT_TIMESTAMP

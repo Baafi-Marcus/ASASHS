@@ -288,7 +288,7 @@ export function TeacherDetailsModal({
                         type="text"
                         value={formData.teacher_id || ''}
                         onChange={(e) => handleInputChange('teacher_id', e.target.value)}
-                        disabled={isSubmitting}
+                        disabled={true}
                       />
                     </div>
                     <div>
@@ -297,7 +297,7 @@ export function TeacherDetailsModal({
                         type="text"
                         value={formData.staff_id || ''}
                         onChange={(e) => handleInputChange('staff_id', e.target.value)}
-                        disabled={isSubmitting}
+                        disabled={true}
                       />
                     </div>
                     <div>

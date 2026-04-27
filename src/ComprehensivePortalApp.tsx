@@ -197,7 +197,7 @@ function ComprehensivePortalApp() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-school-cream-50 p-4">
         <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-xl border border-school-cream-200">
-           <LoginForm onSubmit={signIn} />
+           <LoginForm onSubmit={(id, pass) => signIn(id, pass, 'admin')} />
            <button onClick={handleBackToLanding} className="mt-6 text-sm text-gray-500 hover:text-gray-700 w-full text-center">Back to Home</button>
         </div>
       </div>
