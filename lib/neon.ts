@@ -417,16 +417,15 @@ export const db = {
 
   async deleteStudent(studentId: number) {
     try {
-      // This will cascade delete the student and associated user
-      const result = await sql`
-        DELETE FROM students 
-        WHERE id = ${studentId}
-        RETURNING *
-      `;
-      
-      if (result.length === 0) {
+      const student = await sql`SELECT user_id FROM students WHERE id = ${studentId}`;
+      if (student.length === 0) {
         throw new Error('Student not found');
       }
+      
+      const userId = student[0].user_id;
+      
+      await sql`DELETE FROM students WHERE id = ${studentId}`;
+      await sql`DELETE FROM users WHERE id = ${userId}`;
       
       return {
         success: true,
@@ -669,16 +668,15 @@ export const db = {
 
   async deleteTeacher(teacherId: number) {
     try {
-      // This will cascade delete the teacher and associated user
-      const result = await sql`
-        DELETE FROM teachers 
-        WHERE id = ${teacherId}
-        RETURNING *
-      `;
-      
-      if (result.length === 0) {
+      const teacher = await sql`SELECT user_id FROM teachers WHERE id = ${teacherId}`;
+      if (teacher.length === 0) {
         throw new Error('Teacher not found');
       }
+      
+      const userId = teacher[0].user_id;
+      
+      await sql`DELETE FROM teachers WHERE id = ${teacherId}`;
+      await sql`DELETE FROM users WHERE id = ${userId}`;
       
       return {
         success: true,
