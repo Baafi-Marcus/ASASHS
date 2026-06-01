@@ -1050,12 +1050,12 @@ export function AdminTeacherManagement() {
             setShowSubjectAssignmentModal(false);
             setSelectedTeacherForAssignment(null);
           }}
-          onAssign={async (assignmentData: any) => {
+          onAssign={async (subjectId: number, classId: number) => {
             try {
               await db.assignSubjectToTeacher(
                 selectedTeacherForAssignment.id,
-                assignmentData.subject_id,
-                assignmentData.class_id
+                subjectId,
+                classId
               );
               toast.success('Subject assigned to teacher successfully!');
               setShowSubjectAssignmentModal(false);
