@@ -734,7 +734,7 @@ export const TeacherAssignments: React.FC<TeacherAssignmentsProps> = ({ teacherI
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
                 <textarea 
-                  value={gradingModal, remarks || ''}
+                  value={gradingModal?.remarks || ''}
                   onChange={e => setGradingModal({ ...gradingModal, remarks: e.target.value })}
                   className="w-full px-4 py-2 border rounded-lg"
                   rows={3}

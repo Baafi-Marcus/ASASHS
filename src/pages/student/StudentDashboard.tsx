@@ -8,7 +8,14 @@ import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
 import { StudentELearning } from './StudentELearning';
-import { Student } from '../../contexts/StudentAuthContext';
+export interface Student {
+  id: string;
+  student_id: string;
+  fullName: string;
+  current_class_id?: number;
+  registration_status?: string;
+  [key: string]: any;
+}
 
 interface Subject {
   id: number;

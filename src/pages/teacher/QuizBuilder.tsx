@@ -170,18 +170,26 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
             </div>
             <PortalInput
               label="Select Class"
-              type="select"
+              as="select"
               value={quizInfo.class_id}
               onChange={e => setQuizInfo({ ...quizInfo, class_id: e.target.value })}
-              options={classes.map(c => ({ value: c.class_id, label: c.class_name }))}
-            />
+            >
+              <option value="">Select Class</option>
+              {classes.map(c => (
+                <option key={c.class_id} value={c.class_id}>{c.class_name}</option>
+              ))}
+            </PortalInput>
             <PortalInput
               label="Select Subject"
-              type="select"
+              as="select"
               value={quizInfo.subject_id}
               onChange={e => setQuizInfo({ ...quizInfo, subject_id: e.target.value })}
-              options={subjects.filter(s => s.class_id == quizInfo.class_id).map(s => ({ value: s.id, label: s.name }))}
-            />
+            >
+              <option value="">Select Subject</option>
+              {subjects.filter(s => s.class_id == quizInfo.class_id).map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </PortalInput>
             <PortalInput
               label="Time Limit (Minutes)"
               type="number"

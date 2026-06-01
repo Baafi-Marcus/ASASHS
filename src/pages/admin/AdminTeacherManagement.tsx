@@ -79,35 +79,17 @@ export function AdminTeacherManagement() {
     title: 'Mr.',
     surname: '',
     other_names: '',
-    dob: '',
     gender: 'Male',
-    nationality: 'Ghanaian',
-    ghana_card_id: '',
-    employment_date: '',
     department: '',
-    status: 'Active',
     position_rank: '',
-    staff_type: 'Permanent',
-    personal_phone: '',
-    alt_phone: '',
-    personal_email: '',
-    residential_address: '',
-    highest_qualification: '',
-    field_of_study: '',
-    institution: '',
-    year_obtained: '',
-    other_qualifications: '',
-    role: 'Teacher',
-    emergency_name: '',
-    emergency_relationship: '',
-    emergency_phone: '',
-    // Subject assignment fields
-    assigned_subject_id: '',
-    assigned_class_id: '',
   });
 
   // State for editing form data
   const [editFormData, setEditFormData] = useState({
+    title: 'Mr.',
+    surname: '',
+    other_names: '',
+    gender: 'Male',
     department: '',
     position_rank: '',
   });
@@ -152,26 +134,32 @@ export function AdminTeacherManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      const result: any = await db.createTeacher(formData);
+      const defaultBloatData = {
+        dob: '1980-01-01',
+        nationality: 'Ghanaian',
+        ghana_card_id: 'N/A',
+        employment_date: new Date().toISOString().split('T')[0],
+        status: 'Active',
+        staff_type: 'Permanent',
+        personal_phone: '0000000000',
+        alt_phone: '',
+        personal_email: '',
+        residential_address: 'N/A',
+        highest_qualification: 'N/A',
+        field_of_study: 'N/A',
+        institution: 'N/A',
+        year_obtained: new Date().getFullYear(),
+        other_qualifications: '',
+        role: 'Teacher',
+        emergency_name: 'N/A',
+        emergency_relationship: 'N/A',
+        emergency_phone: '0000000000'
+      };
       
-      // If subject assignment is provided, assign the subject to the teacher
-      if (result && formData.assigned_subject_id && formData.assigned_class_id) {
-        try {
-          await db.assignSubjectToTeacher(
-            result.id, 
-            parseInt(formData.assigned_subject_id), 
-            parseInt(formData.assigned_class_id)
-          );
-          toast.success('Subject assigned to teacher successfully!');
-        } catch (assignError) {
-          console.error('Failed to assign subject:', assignError);
-          toast.error('Teacher registered but subject assignment failed');
-        }
-      }
+      const submitData = { ...formData, ...defaultBloatData };
+      const result: any = await db.createTeacher(submitData);
       
-      // Show the generated teacher ID and password
       if (result && result.teacher_id && result.password) {
         setRegistrationResult({
           teacher_id: result.teacher_id,
@@ -183,36 +171,14 @@ export function AdminTeacherManagement() {
       }
       
       setShowForm(false);
-      setCurrentStep(1); // Reset to first step
       setFormData({
         staff_id: '',
         title: 'Mr.',
         surname: '',
         other_names: '',
-        dob: '',
         gender: 'Male',
-        nationality: 'Ghanaian',
-        ghana_card_id: '',
-        employment_date: '',
         department: '',
-        status: 'Active',
         position_rank: '',
-        staff_type: 'Permanent',
-        personal_phone: '',
-        alt_phone: '',
-        personal_email: '',
-        residential_address: '',
-        highest_qualification: '',
-        field_of_study: '',
-        institution: '',
-        year_obtained: '',
-        other_qualifications: '',
-        role: 'Teacher',
-        emergency_name: '',
-        emergency_relationship: '',
-        emergency_phone: '',
-        assigned_subject_id: '',
-        assigned_class_id: '',
       });
       fetchTeachers();
     } catch (error) {
@@ -268,501 +234,70 @@ export function AdminTeacherManagement() {
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Personal Information</h3>
-            <div className="bg-school-cream-50 p-6 rounded-xl border border-school-cream-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Staff ID</label>
-                  <input
-                    type="text"
-                    name="staff_id"
-                    value={formData.staff_id}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="Leave empty to auto-generate"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                  <select
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Mr.">Mr.</option>
-                    <option value="Mrs.">Mrs.</option>
-                    <option value="Ms.">Ms.</option>
-                    <option value="Dr.">Dr.</option>
-                    <option value="Prof.">Prof.</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Surname *</label>
-                  <input
-                    type="text"
-                    name="surname"
-                    value={formData.surname}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Other Names *</label>
-                  <input
-                    type="text"
-                    name="other_names"
-                    value={formData.other_names}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-                  <input
-                    type="date"
-                    name="dob"
-                    value={formData.dob}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-                  <select
-                    name="nationality"
-                    value={formData.nationality}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Ghanaian">Ghanaian</option>
-                    <option value="Nigerian">Nigerian</option>
-                    <option value="British">British</option>
-                    <option value="American">American</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ghana Card ID</label>
-                  <input
-                    type="text"
-                    name="ghana_card_id"
-                    value={formData.ghana_card_id}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="GHA-XXXXXXXXX-X"
-                  />
-                </div>
-              </div>
-            </div>
+    return (
+      <div className="space-y-6">
+        <div className="bg-blue-50 p-4 rounded-xl mb-6">
+          <h3 className="text-blue-800 font-bold mb-1">Lite Registration Mode</h3>
+          <p className="text-blue-600 text-sm">Detailed records are maintained in the main SMS. Please provide the essential details for portal access.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Staff ID</label>
+            <input type="text" name="staff_id" value={formData.staff_id} onChange={handleInputChange} className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500" placeholder="Leave empty to auto-generate" />
           </div>
-        );
-      
-      case 2:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Professional Information</h3>
-            <div className="bg-school-green-50 p-6 rounded-xl border border-school-green-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
-                  <select
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Department</option>
-                    <option value="Mathematics Department">Mathematics Department</option>
-                    <option value="Language Department">Language Department</option>
-                    <option value="Science Department">Science Department</option>
-                    <option value="Social Studies Department">Social Studies Department</option>
-                    <option value="Religious Studies Department">Religious Studies Department</option>
-                    <option value="Business Studies Department">Business Studies Department</option>
-                    <option value="Technical Skills Department">Technical Skills Department</option>
-                    <option value="Creative Arts Department">Creative Arts Department</option>
-                    <option value="Physical Education Department">Physical Education Department</option>
-                    <option value="Computing Department">Computing Department</option>
-                    <option value="French Department">French Department</option>
-                    <option value="Other Department">Other Department</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Position/Rank</label>
-                  <select
-                    name="position_rank"
-                    value={formData.position_rank}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Position</option>
-                    <option value="Teacher">Teacher</option>
-                    <option value="Senior Teacher">Senior Teacher</option>
-                    <option value="Head of Department">Head of Department</option>
-                    <option value="Deputy Principal">Deputy Principal</option>
-                    <option value="Principal">Principal</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Employment Date *</label>
-                  <input
-                    type="date"
-                    name="employment_date"
-                    value={formData.employment_date}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Staff Type</label>
-                  <select
-                    name="staff_type"
-                    value={formData.staff_type}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Permanent">Permanent</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Volunteer">Volunteer</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Teacher">Teacher</option>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Counselor">Counselor</option>
-                    <option value="Librarian">Librarian</option>
-                    <option value="Accountant">Accountant</option>
-                    <option value="Security">Security</option>
-                    <option value="Cleaner">Cleaner</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="Suspended">Suspended</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Personal Phone *</label>
-                  <input
-                    type="tel"
-                    name="personal_phone"
-                    value={formData.personal_phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="+233 24 123 4567"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Alternative Phone</label>
-                  <input
-                    type="tel"
-                    name="alt_phone"
-                    value={formData.alt_phone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="+233 20 123 4567"
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Personal Email</label>
-                  <input
-                    type="email"
-                    name="personal_email"
-                    value={formData.personal_email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="email@example.com"
-                  />
-                </div>
-                
-                <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Residential Address</label>
-                  <textarea
-                    name="residential_address"
-                    value={formData.residential_address}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="Enter full residential address"
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <select name="title" value={formData.title} onChange={handleInputChange} className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500">
+              <option value="Mr.">Mr.</option><option value="Mrs.">Mrs.</option><option value="Ms.">Ms.</option><option value="Dr.">Dr.</option><option value="Prof.">Prof.</option>
+            </select>
           </div>
-        );
-      
-      case 3:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Educational Qualifications</h3>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Highest Qualification</label>
-                  <select
-                    name="highest_qualification"
-                    value={formData.highest_qualification}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Qualification</option>
-                    <option value="WASSCE">WASSCE</option>
-                    <option value="SSSCE">SSSCE</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="B.Ed">B.Ed</option>
-                    <option value="B.A">B.A</option>
-                    <option value="B.Sc">B.Sc</option>
-                    <option value="M.Ed">M.Ed</option>
-                    <option value="M.A">M.A</option>
-                    <option value="M.Sc">M.Sc</option>
-                    <option value="PhD">PhD</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Field of Study</label>
-                  <input
-                    type="text"
-                    name="field_of_study"
-                    value={formData.field_of_study}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="e.g., Mathematics, English"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Institution</label>
-                  <input
-                    type="text"
-                    name="institution"
-                    value={formData.institution}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="Name of institution"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Year Obtained</label>
-                  <input
-                    type="number"
-                    name="year_obtained"
-                    value={formData.year_obtained}
-                    onChange={handleInputChange}
-                    min="1950"
-                    max={new Date().getFullYear()}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="e.g., 2010"
-                  />
-                </div>
-                
-                <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Other Qualifications</label>
-                  <textarea
-                    name="other_qualifications"
-                    value={formData.other_qualifications}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="List any other relevant qualifications or certifications..."
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Surname *</label>
+            <input type="text" name="surname" value={formData.surname} onChange={handleInputChange} required className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500" />
           </div>
-        );
-      
-      case 4:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Emergency Contact</h3>
-            <div className="bg-red-50 p-6 rounded-xl border border-red-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Contact Name *</label>
-                  <input
-                    type="text"
-                    name="emergency_name"
-                    value={formData.emergency_name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="Full name"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
-                  <select
-                    name="emergency_relationship"
-                    value={formData.emergency_relationship}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Relationship</option>
-                    <option value="Spouse">Spouse</option>
-                    <option value="Parent">Parent</option>
-                    <option value="Sibling">Sibling</option>
-                    <option value="Child">Child</option>
-                    <option value="Friend">Friend</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Phone *</label>
-                  <input
-                    type="tel"
-                    name="emergency_phone"
-                    value={formData.emergency_phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                    placeholder="+233 24 123 4567"
-                  />
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Other Names *</label>
+            <input type="text" name="other_names" value={formData.other_names} onChange={handleInputChange} required className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500" />
           </div>
-        );
-      
-      case 5:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800">Subject Assignment</h3>
-            <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign Subject *</label>
-                  <select
-                    name="assigned_subject_id"
-                    value={formData.assigned_subject_id}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Subject</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name} ({subject.is_core ? 'Core' : 'Elective'})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-gray-500 mt-1">Select the subject this teacher will teach</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign Class *</label>
-                  <select
-                    name="assigned_class_id"
-                    value={formData.assigned_class_id}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Class</option>
-                    {classes.map((classItem) => (
-                      <option key={classItem.id} value={classItem.id}>
-                        {classItem.class_name} (Form {classItem.form}{classItem.stream ? ` ${classItem.stream}` : ''})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-gray-500 mt-1">Select the class where this subject will be taught</p>
-                </div>
-              </div>
-              
-              {formData.assigned_subject_id && formData.assigned_class_id && (
-                <div className="mt-6 p-4 bg-school-green-100 border border-school-green-200 rounded-lg">
-                  <h4 className="font-semibold text-school-green-800 mb-2">Assignment Preview</h4>
-                  <div className="text-sm text-school-green-700">
-                    <p>This teacher will be assigned to teach:</p>
-                    <p className="font-medium mt-1">
-                      {subjects.find(s => s.id === parseInt(formData.assigned_subject_id))?.name} 
-                      {" "}in{" "}
-                      {classes.find(c => c.id === parseInt(formData.assigned_class_id))?.class_name}
-                    </p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-start space-x-3">
-                  <span className="text-amber-600 mt-0.5">ℹ️</span>
-                  <div>
-                    <h4 className="font-semibold text-amber-800">Additional Assignments</h4>
-                    <p className="text-amber-700 text-sm mt-1">
-                      You can assign additional subjects to this teacher after registration through the Teacher Management section.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+            <select name="gender" value={formData.gender} onChange={handleInputChange} required className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500">
+              <option value="Male">Male</option><option value="Female">Female</option>
+            </select>
           </div>
-        );
-      
-      default:
-        return null;
-    }
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Department *</label>
+            <select name="department" value={formData.department} onChange={handleInputChange} required className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500">
+              <option value="">Select Department</option>
+              <option value="Mathematics Department">Mathematics Department</option>
+              <option value="Language Department">Language Department</option>
+              <option value="Science Department">Science Department</option>
+              <option value="Social Studies Department">Social Studies Department</option>
+              <option value="Religious Studies Department">Religious Studies Department</option>
+              <option value="Business Studies Department">Business Studies Department</option>
+              <option value="Technical Skills Department">Technical Skills Department</option>
+              <option value="Creative Arts Department">Creative Arts Department</option>
+              <option value="Physical Education Department">Physical Education Department</option>
+              <option value="Computing Department">Computing Department</option>
+              <option value="French Department">French Department</option>
+              <option value="Other Department">Other Department</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Position/Rank</label>
+            <select name="position_rank" value={formData.position_rank} onChange={handleInputChange} className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500">
+              <option value="">Select Position</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Senior Teacher">Senior Teacher</option>
+              <option value="Head of Department">Head of Department</option>
+              <option value="Deputy Principal">Deputy Principal</option>
+              <option value="Principal">Principal</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    );
   };
-
   const renderStepButtons = () => {
     return (
       <div className="flex justify-between mt-8">
@@ -841,9 +376,13 @@ export function AdminTeacherManagement() {
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
     setEditFormData({
+      title: teacher.title || 'Mr.',
+      surname: teacher.surname || '',
+      other_names: teacher.other_names || '',
+      gender: teacher.gender === 'Female' ? 'Female' : 'Male',
       department: teacher.department || '',
       position_rank: teacher.position_rank || '',
-    });
+    } as any);
     setShowEditModal(true);
   };
 
@@ -1077,14 +616,27 @@ export function AdminTeacherManagement() {
               <h2 className="text-lg font-bold text-white">Edit Teacher</h2>
             </div>
             <form onSubmit={handleEditSubmit}>
-              <div className="p-4 space-y-4">
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Teacher Name</label>
-                  <div className="text-sm font-medium text-gray-900">
-                    {editingTeacher.title} {editingTeacher.surname}, {editingTeacher.other_names}
-                  </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <select value={editFormData.title} onChange={(e) => setEditFormData({...editFormData, title: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="Mr.">Mr.</option><option value="Mrs.">Mrs.</option><option value="Ms.">Ms.</option><option value="Dr.">Dr.</option><option value="Prof.">Prof.</option>
+                  </select>
                 </div>
-                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Surname</label>
+                  <input type="text" value={editFormData.surname} onChange={(e) => setEditFormData({...editFormData, surname: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Other Names</label>
+                  <input type="text" value={editFormData.other_names} onChange={(e) => setEditFormData({...editFormData, other_names: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <select value={editFormData.gender} onChange={(e) => setEditFormData({...editFormData, gender: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="Male">Male</option><option value="Female">Female</option>
+                  </select>
+                </div>
                 <div>
                   <PortalInput
                     label="Department *"
@@ -1095,7 +647,6 @@ export function AdminTeacherManagement() {
                     placeholder="Enter department"
                   />
                 </div>
-
                 <div>
                   <PortalInput
                     label="Position Rank *"
@@ -1295,52 +846,12 @@ export function AdminTeacherManagement() {
             </div>
             
             {/* Progress Bar */}
-            <div className="px-4 py-3 bg-school-cream-50">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>Step {currentStep} of {totalSteps}</span>
-                <span>{Math.round((currentStep / totalSteps) * 100)}% Complete</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-school-green-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-            
             <form onSubmit={handleSubmit}>
               <div className="p-6 max-h-[70vh] overflow-y-auto">
                 {renderStepContent()}
               </div>
               
-              <div className="flex justify-between p-4 border-t border-gray-200">
-                <PortalButton
-                  type="button"
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  disabled={currentStep === 1}
-                  variant="secondary"
-                >
-                  Previous
-                </PortalButton>
-                
-                {currentStep < totalSteps ? (
-                  <PortalButton
-                    type="button"
-                    onClick={() => setCurrentStep(Math.min(totalSteps, currentStep + 1))}
-                    variant="primary"
-                  >
-                    Next
-                  </PortalButton>
-                ) : (
-                  <PortalButton
-                    type="submit"
-                    variant="primary"
-                  >
-                    Register Teacher
-                  </PortalButton>
-                )}
-              </div>
-            </form>
+              </form>
           </div>
         </div>
       )}

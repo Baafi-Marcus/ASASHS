@@ -57,44 +57,26 @@ interface StudentFormProps {
 
 export function StudentForm({ onSuccess, programmes, classes, student, onEditSuccess }: StudentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Lite Registration Data
   const [formData, setFormData] = useState({
     admission_number: '',
     surname: '',
     other_names: '',
-    date_of_birth: '',
-    gender: '',
+    date_of_birth: '2005-01-01', // Default dummy DOB if not provided
+    gender: 'Male', // Default to avoid constraint errors
     programme_id: '',
-    form: '',
-    // Additional fields for full student details
-    nationality: 'Ghanaian',
-    hometown: '',
-    district_of_origin: '',
-    region_of_origin: '',
-    guardian_name: '',
-    guardian_relationship: '',
-    guardian_phone: '',
-    guardian_phone_alt: '',
-    guardian_email: '',
-    guardian_address: '',
-    previous_school: '',
-    graduation_year: new Date().getFullYear(),
-    known_allergies: 'None',
-    chronic_conditions: 'None',
-    blood_group: '',
-    enrollment_date: new Date().toISOString().split('T')[0],
-    residential_status: 'Day Student',
-    house_preference: ''
+    form: ''
   });
 
   useEffect(() => {
-    // If student prop is provided, populate the form with student data
+    // If student prop is provided, populate the form with existing data perfectly
     if (student) {
       const formatDateForInput = (dateStr: string | null | undefined) => {
-        if (!dateStr) return '';
+        if (!dateStr) return '2005-01-01';
         try {
           const d = new Date(dateStr);
           if (isNaN(d.getTime())) return dateStr;
-          // Use local time to avoid timezone shifts
           const year = d.getFullYear();
           const month = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
@@ -105,31 +87,13 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
       };
 
       setFormData({
-        admission_number: student.admission_number || '',
+        admission_number: student.admission_number || student.student_id || '',
         surname: student.surname || '',
         other_names: student.other_names || '',
         date_of_birth: formatDateForInput(student.date_of_birth),
-        gender: student.gender || '',
+        gender: student.gender === 'Female' ? 'Female' : 'Male', // Strict enforcement
         programme_id: student.course_id?.toString() || '',
-        form: '', // This would need to be derived from class information
-        nationality: student.nationality || 'Ghanaian',
-        hometown: student.hometown || '',
-        district_of_origin: student.district_of_origin || '',
-        region_of_origin: student.region_of_origin || '',
-        guardian_name: student.guardian_name || '',
-        guardian_relationship: student.guardian_relationship || '',
-        guardian_phone: student.guardian_phone || '',
-        guardian_phone_alt: student.guardian_phone_alt || '',
-        guardian_email: student.guardian_email || '',
-        guardian_address: student.guardian_address || '',
-        previous_school: student.previous_school || '',
-        graduation_year: student.graduation_year || new Date().getFullYear(),
-        known_allergies: student.known_allergies || 'None',
-        chronic_conditions: student.chronic_conditions || 'None',
-        blood_group: student.blood_group || '',
-        enrollment_date: formatDateForInput(student.enrollment_date) || new Date().toISOString().split('T')[0],
-        residential_status: student.residential_status || 'Day Student',
-        house_preference: student.house_preference || ''
+        form: '' 
       });
     }
   }, [student]);
@@ -138,35 +102,58 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Default values for the main SMS system fields we no longer collect
+    const defaultBloatData = {
+      nationality: 'Ghanaian',
+      hometown: 'N/A',
+      district_of_origin: 'N/A',
+      region_of_origin: 'N/A',
+      guardian_name: 'N/A',
+      guardian_relationship: 'N/A',
+      guardian_phone: '0000000000',
+      guardian_phone_alt: null,
+      guardian_email: null,
+      guardian_address: 'N/A',
+      previous_school: 'N/A',
+      graduation_year: new Date().getFullYear() + 3,
+      known_allergies: 'None',
+      chronic_conditions: 'None',
+      blood_group: null,
+      enrollment_date: new Date().toISOString().split('T')[0],
+      residential_status: 'Day Student',
+      house_preference: null
+    };
+    
     try {
       if (student) {
         // Update existing student
         const studentData = {
           admission_number: formData.admission_number,
           programme_id: parseInt(formData.programme_id),
-          current_class_id: 1, // Default class, should be calculated based on programme and form
+          current_class_id: student.current_class_id || 1, // Keep existing class
           surname: formData.surname,
           other_names: formData.other_names,
           date_of_birth: formData.date_of_birth,
           gender: formData.gender,
-          nationality: formData.nationality,
-          hometown: formData.hometown,
-          district_of_origin: formData.district_of_origin,
-          region_of_origin: formData.region_of_origin,
-          guardian_name: formData.guardian_name,
-          guardian_relationship: formData.guardian_relationship,
-          guardian_phone: formData.guardian_phone,
-          guardian_phone_alt: formData.guardian_phone_alt || null,
-          guardian_email: formData.guardian_email || null,
-          guardian_address: formData.guardian_address,
-          previous_school: formData.previous_school,
-          graduation_year: formData.graduation_year,
-          known_allergies: formData.known_allergies,
-          chronic_conditions: formData.chronic_conditions,
-          blood_group: formData.blood_group || null,
-          enrollment_date: formData.enrollment_date,
-          residential_status: formData.residential_status,
-          house_preference: formData.house_preference || null
+          // Merge with defaults to satisfy DB NOT NULLs without overriding everything if it exists
+          nationality: student.nationality || defaultBloatData.nationality,
+          hometown: student.hometown || defaultBloatData.hometown,
+          district_of_origin: student.district_of_origin || defaultBloatData.district_of_origin,
+          region_of_origin: student.region_of_origin || defaultBloatData.region_of_origin,
+          guardian_name: student.guardian_name || defaultBloatData.guardian_name,
+          guardian_relationship: student.guardian_relationship || defaultBloatData.guardian_relationship,
+          guardian_phone: student.guardian_phone || defaultBloatData.guardian_phone,
+          guardian_phone_alt: student.guardian_phone_alt,
+          guardian_email: student.guardian_email,
+          guardian_address: student.guardian_address || defaultBloatData.guardian_address,
+          previous_school: student.previous_school || defaultBloatData.previous_school,
+          graduation_year: student.graduation_year || defaultBloatData.graduation_year,
+          known_allergies: student.known_allergies || defaultBloatData.known_allergies,
+          chronic_conditions: student.chronic_conditions || defaultBloatData.chronic_conditions,
+          blood_group: student.blood_group,
+          enrollment_date: student.enrollment_date || defaultBloatData.enrollment_date,
+          residential_status: student.residential_status || defaultBloatData.residential_status,
+          house_preference: student.house_preference
         };
         
         await db.updateStudent(student.id, studentData);
@@ -177,35 +164,17 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         const studentData = {
           admission_number: formData.admission_number,
           programme_id: parseInt(formData.programme_id),
-          current_class_id: 1, // Default class, should be calculated based on programme and form
+          current_class_id: 1, // Default class
           surname: formData.surname,
           other_names: formData.other_names,
           date_of_birth: formData.date_of_birth,
           gender: formData.gender,
-          nationality: formData.nationality,
-          hometown: formData.hometown,
-          district_of_origin: formData.district_of_origin,
-          region_of_origin: formData.region_of_origin,
-          guardian_name: formData.guardian_name,
-          guardian_relationship: formData.guardian_relationship,
-          guardian_phone: formData.guardian_phone,
-          guardian_phone_alt: formData.guardian_phone_alt || null,
-          guardian_email: formData.guardian_email || null,
-          guardian_address: formData.guardian_address,
-          previous_school: formData.previous_school,
-          graduation_year: formData.graduation_year,
-          known_allergies: formData.known_allergies,
-          chronic_conditions: formData.chronic_conditions,
-          blood_group: formData.blood_group || null,
-          enrollment_date: formData.enrollment_date,
-          residential_status: formData.residential_status,
-          house_preference: formData.house_preference || null
+          ...defaultBloatData
         };
         
         // Save to database
         const result = await db.createStudent(studentData);
         
-        // Generate credentials (in production, implement proper password generation)
         const credentials = {
           admissionNumber: formData.admission_number,
           password: 'temp123' // TODO: Generate secure password
@@ -223,29 +192,24 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-      if (field === 'residential_status') {
-        if (value === 'Day Student') {
-          newData.house_preference = 'House 5';
-        } else if (value === 'Boarding Student' && prev.house_preference === 'House 5') {
-          newData.house_preference = ''; // Reset if they were day student
-        }
-      }
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-blue-50 p-4 rounded-xl mb-6">
+        <h3 className="text-blue-800 font-bold mb-1">Lite Registration Mode</h3>
+        <p className="text-blue-600 text-sm">Since detailed medical and guardian information is already tracked in the main School Management System, this portal only requires essential credentials.</p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <PortalInput
-          label="Admission Number"
+          label="Admission Number / Student ID"
           type="text"
           value={formData.admission_number}
           onChange={(e) => handleInputChange('admission_number', e.target.value)}
           required
-          placeholder="Enter admission number"
+          placeholder="Enter ID"
           disabled={!!student}
         />
         
@@ -266,7 +230,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           required
           placeholder="Enter other names"
         />
-        
+
         <PortalInput
           label="Date of Birth"
           type="date"
@@ -283,7 +247,6 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
             required
           >
-            <option value="">Select Gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
@@ -305,185 +268,17 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
             ))}
           </select>
         </div>
-        
-        <PortalInput
-          label="Nationality"
-          type="text"
-          value={formData.nationality}
-          onChange={(e) => handleInputChange('nationality', e.target.value)}
-          required
-          placeholder="Enter nationality"
-        />
-        
-        <PortalInput
-          label="Hometown"
-          type="text"
-          value={formData.hometown}
-          onChange={(e) => handleInputChange('hometown', e.target.value)}
-          required
-          placeholder="Enter hometown"
-        />
       </div>
 
-      {/* Guardian Information */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Guardian Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PortalInput
-            label="Guardian Name"
-            type="text"
-            value={formData.guardian_name}
-            onChange={(e) => handleInputChange('guardian_name', e.target.value)}
-            required
-            placeholder="Enter guardian name"
-          />
-          
-          <PortalInput
-            label="Relationship to Student"
-            type="text"
-            value={formData.guardian_relationship}
-            onChange={(e) => handleInputChange('guardian_relationship', e.target.value)}
-            required
-            placeholder="e.g., Father, Mother, Uncle"
-          />
-          
-          <PortalInput
-            label="Guardian Phone"
-            type="tel"
-            value={formData.guardian_phone}
-            onChange={(e) => handleInputChange('guardian_phone', e.target.value)}
-            required
-            placeholder="Enter phone number"
-          />
-          
-          <PortalInput
-            label="Guardian Alternative Phone"
-            type="tel"
-            value={formData.guardian_phone_alt}
-            onChange={(e) => handleInputChange('guardian_phone_alt', e.target.value)}
-            placeholder="Enter alternative phone number"
-          />
-          
-          <PortalInput
-            label="Guardian Email"
-            type="email"
-            value={formData.guardian_email}
-            onChange={(e) => handleInputChange('guardian_email', e.target.value)}
-            placeholder="Enter email address"
-          />
-          
-          <div className="md:col-span-2">
-            <PortalInput
-              label="Guardian Address"
-              as="textarea"
-              rows={3}
-              value={formData.guardian_address}
-              onChange={(e) => handleInputChange('guardian_address', e.target.value)}
-              required
-              placeholder="Enter full address"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Medical Information */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Medical Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PortalInput
-            label="Known Allergies"
-            type="text"
-            value={formData.known_allergies}
-            onChange={(e) => handleInputChange('known_allergies', e.target.value)}
-            placeholder="Enter known allergies"
-          />
-          
-          <PortalInput
-            label="Chronic Conditions"
-            type="text"
-            value={formData.chronic_conditions}
-            onChange={(e) => handleInputChange('chronic_conditions', e.target.value)}
-            placeholder="Enter chronic conditions"
-          />
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-            <select
-              value={formData.blood_group}
-              onChange={(e) => handleInputChange('blood_group', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-            >
-              <option value="">Select Blood Group</option>
-              <option value="A+">A+</option>
-              <option value="A-">A-</option>
-              <option value="B+">B+</option>
-              <option value="B-">B-</option>
-              <option value="AB+">AB+</option>
-              <option value="AB-">AB-</option>
-              <option value="O+">O+</option>
-              <option value="O-">O-</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Information */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PortalInput
-            label="Previous School"
-            type="text"
-            value={formData.previous_school}
-            onChange={(e) => handleInputChange('previous_school', e.target.value)}
-            placeholder="Enter previous school"
-          />
-          
-          <PortalInput
-            label="Graduation Year"
-            type="number"
-            value={formData.graduation_year}
-            onChange={(e) => handleInputChange('graduation_year', e.target.value)}
-            placeholder="Enter graduation year"
-          />
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Residential Status</label>
-            <select
-              value={formData.residential_status}
-              onChange={(e) => handleInputChange('residential_status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-            >
-              <option value="Day Student">Day Student</option>
-              <option value="Boarding Student">Boarding Student</option>
-            </select>
-          </div>
-          
-          {formData.residential_status === 'Boarding Student' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">House</label>
-              <select
-                value={formData.house_preference || ''}
-                onChange={(e) => handleInputChange('house_preference', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                required
-              >
-                <option value="">Select House</option>
-                <option value="House 1">House 1</option>
-                <option value="House 2">House 2</option>
-                <option value="House 3">House 3</option>
-                <option value="House 4">House 4</option>
-              </select>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-4 pt-6">
+      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
         <PortalButton
           type="button"
           variant="secondary"
-          onClick={() => window.history.back()}
+          onClick={() => {
+             // Let the parent handle cancel if provided, else just ignore
+             if (onEditSuccess) onEditSuccess(); 
+             else window.history.back();
+          }}
           disabled={isSubmitting}
         >
           Cancel
