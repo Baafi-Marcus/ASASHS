@@ -168,6 +168,34 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
 
   const renderOverview = () => (
     <div className="space-y-8">
+      {/* Premium Welcome Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-school-green-800 via-school-green-700 to-teal-900 rounded-[2rem] p-8 md:p-10 shadow-2xl text-white">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-10 w-40 h-40 bg-teal-400 opacity-20 rounded-full blur-2xl"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:space-x-8">
+          <div className="bg-white/10 p-5 rounded-3xl backdrop-blur-md border border-white/20 shadow-inner mb-6 md:mb-0">
+            <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div className="text-center md:text-left flex-1">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-2">Welcome back, {admin.fullName}!</h2>
+            <p className="text-school-green-100 text-lg opacity-90 mb-6">Here's your school's overview for today.</p>
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+              <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
+                <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Admin Role</span>
+                <div className="font-bold text-lg">{admin.role.charAt(0).toUpperCase() + admin.role.slice(1)}</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
+                <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">System Status</span>
+                <div className="font-bold text-lg text-emerald-300 flex items-center"><div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div> Online</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* System Health Alerts */}
       {aiKeyCount === 0 && (
         <div className="bg-gradient-to-r from-red-500 to-rose-500 p-[1px] rounded-2xl shadow-lg animate-pulse">

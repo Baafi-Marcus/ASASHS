@@ -8,6 +8,7 @@ import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
 import { StudentELearning } from './StudentELearning';
+import { StudentExams } from './StudentExams';
 export interface Student {
   id: string;
   student_id: string;
@@ -194,7 +195,7 @@ export const StudentDashboard: React.FC<{
   const renderContent = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
-      case 'profile': return <StudentProfile student={student} onLogout={onLogout} />;
+      case 'profile': return <StudentProfile student={student as any} onLogout={onLogout} />;
       case 'grades': return (
         <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
           <h3 className="text-xl font-bold text-gray-800 mb-6">My Grades</h3>
@@ -267,6 +268,7 @@ export const StudentDashboard: React.FC<{
       case 'downloads': return <StudentDownloads />;
       case 'messages': return <StudentMessages />;
       case 'voting': return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
+      case 'exams': return <StudentExams studentId={parseInt(student.id)} classId={student.current_class_id} />;
       case 'elearning': return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id} />;
       default: return renderOverview();
     }

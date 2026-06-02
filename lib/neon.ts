@@ -2487,8 +2487,18 @@ export const db = {
 
   async createQuiz(data: any) {
     const result = await sql`
-      INSERT INTO elearning_quizzes (teacher_id, class_id, subject_id, title, description, instructions, time_limit, passing_score, total_points)
-      VALUES (${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description}, ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points})
+      INSERT INTO elearning_quizzes (
+        teacher_id, class_id, subject_id, title, description, instructions, time_limit, 
+        passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately, 
+        display_mode, allow_late_grading
+      )
+      VALUES (
+        ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description}, 
+        ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points},
+        ${data.shuffle_questions || false}, ${data.shuffle_options || false}, 
+        ${data.show_results_immediately !== undefined ? data.show_results_immediately : true},
+        ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false}
+      )
       RETURNING id
     `;
     const quizId = result[0].id;
@@ -2561,6 +2571,315 @@ export const db = {
       JOIN users u ON s.user_id = u.id
       WHERE a.quiz_id = ${quizId} AND a.status = 'completed'
       ORDER BY a.end_time DESC
+    `;
+  },
+
+  // --- Sub-Admins Management ---
+  async getSubAdmins() {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT id, user_id, full_name, created_at 
+      FROM users 
+      WHERE user_type = 'admin' AND user_id != 'ADMIN001'
+      ORDER BY created_at DESC
+    `;
+  },
+  
+  async createSubAdmin(fullName: string) {
+    checkDatabaseConfig();
+    const tempPassword = 'admin' + Math.floor(100 + Math.random() * 900);
+    const hash = await bcrypt.hash(tempPassword, 10);
+    
+    // Generate ADMIN ID (e.g. ADMIN002)
+    const countResult = await sql`SELECT COUNT(*) as count FROM users WHERE user_type = 'admin'`;
+    const count = parseInt(countResult[0].count) + 1;
+    const userId = 'ADMIN' + count.toString().padStart(3, '0');
+
+    const result = await sql`
+      INSERT INTO users (user_id, password_hash, temp_password, user_type, full_name, role)
+      VALUES (${userId}, ${hash}, ${tempPassword}, 'admin', ${fullName}, 'admin')
+      RETURNING id, user_id, full_name, temp_password
+    `;
+    return result[0];
+  },
+
+  async deleteSubAdmin(id: number) {
+    checkDatabaseConfig();
+    // Prevent deleting ADMIN001
+    await sql`
+      DELETE FROM users 
+      WHERE id = ${id} AND user_id != 'ADMIN001' AND user_type = 'admin'
+    `;
+    return true;
+  },
+
+  // --- General Exams Management ---
+  async createGeneralExam(examData: {
+    title: string;
+    description?: string;
+    exam_type: string;
+    subject_id: number;
+    due_date: string;
+    max_score: number;
+    has_obj: boolean;
+    has_theory: boolean;
+    theory_content_url?: string;
+    obj_answer_key?: string;
+    extractedQuestions?: any[];
+    shuffle_questions?: boolean;
+    shuffle_options?: boolean;
+    show_results_immediately?: boolean;
+    allow_late_grading?: boolean;
+    display_mode?: string;
+  }, classIds: number[]) {
+    checkDatabaseConfig();
+    
+    let quizId = null;
+
+    // If there are extracted questions, create a master elearning_quiz record
+    if (examData.has_obj && examData.extractedQuestions && examData.extractedQuestions.length > 0) {
+      // Create master quiz (no specific class/teacher since it's general)
+      const qResult = await sql`
+        INSERT INTO elearning_quizzes (
+          title, description, subject_id, shuffle_questions, shuffle_options,
+          show_results_immediately, allow_late_grading, display_mode
+        ) VALUES (
+          ${examData.title}, ${examData.description || null}, ${examData.subject_id},
+          ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
+          ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
+          ${examData.display_mode || 'all_at_once'}
+        )
+        RETURNING id
+      `;
+      quizId = qResult[0].id;
+
+      // Insert questions
+      for (let i = 0; i < examData.extractedQuestions.length; i++) {
+        const q = examData.extractedQuestions[i];
+        const questionResult = await sql`
+          INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index)
+          VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points || 1}, ${i})
+          RETURNING id
+        `;
+        const questionId = questionResult[0].id;
+
+        if (q.options && q.options.length > 0) {
+          for (const opt of q.options) {
+            await sql`INSERT INTO quiz_options (question_id, option_text, is_correct) VALUES (${questionId}, ${opt.option_text}, ${opt.is_correct || false})`;
+          }
+        }
+
+        if (q.correct_answers && q.correct_answers.length > 0) {
+          for (const ans of q.correct_answers) {
+            await sql`INSERT INTO quiz_correct_answers (question_id, answer_text) VALUES (${questionId}, ${ans})`;
+          }
+        }
+      }
+    }
+
+    const results = [];
+    // We create a separate assignment record for each class selected.
+    for (const classId of classIds) {
+      // Find assignment_type_id for 'Exam' or fallback to 1
+      const typeResult = await sql`SELECT id FROM assignment_types WHERE name ILIKE '%Exam%' LIMIT 1`;
+      const assignmentTypeId = typeResult.length > 0 ? typeResult[0].id : 1;
+
+      const result = await sql`
+        INSERT INTO assignments (
+          title, description, exam_type, is_general_exam, subject_id, class_id, 
+          due_date, max_score, assignment_type_id, is_active,
+          has_obj, has_theory, theory_content_url, obj_answer_key, quiz_id,
+          shuffle_questions, shuffle_options, show_results_immediately, allow_late_grading, display_mode
+        ) VALUES (
+          ${examData.title}, ${examData.description || null}, ${examData.exam_type}, true,
+          ${examData.subject_id}, ${classId}, ${examData.due_date}, ${examData.max_score}, 
+          ${assignmentTypeId}, true,
+          ${examData.has_obj}, ${examData.has_theory}, ${examData.theory_content_url || null}, 
+          ${examData.obj_answer_key || null}, ${quizId},
+          ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
+          ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
+          ${examData.display_mode || 'all_at_once'}
+        )
+        RETURNING *
+      `;
+      results.push(result[0]);
+    }
+    return results;
+  },
+
+  async getGeneralExams() {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT a.*, 
+             s.name as subject_name,
+             c.class_name,
+             c.form,
+             c.course_id
+      FROM assignments a
+      JOIN subjects s ON a.subject_id = s.id
+      JOIN classes c ON a.class_id = c.id
+      WHERE a.is_general_exam = true
+      ORDER BY a.created_at DESC
+    `;
+  },
+
+  async getStudentExams(classId: number) {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT a.*, 
+             s.name as subject_name
+      FROM assignments a
+      JOIN subjects s ON a.subject_id = s.id
+      WHERE a.is_general_exam = true
+        AND a.class_id = ${classId}
+        AND a.is_active = true
+      ORDER BY a.due_date ASC
+    `;
+  },
+
+  async getExamReports(title: string, dueDate: string) {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT sub.id as submission_id, sub.score, sub.obj_score, sub.theory_score, sub.status,
+             st.student_id as admission_number, st.surname, st.other_names,
+             c.class_name
+      FROM assignment_submissions sub
+      JOIN assignments a ON sub.assignment_id = a.id
+      JOIN students st ON sub.student_id = st.id
+      JOIN classes c ON a.class_id = c.id
+      WHERE a.title = ${title} 
+        AND a.due_date = ${dueDate}
+        AND a.is_general_exam = true
+      ORDER BY c.class_name, st.surname, st.other_names
+    `;
+  },
+
+  async submitExam(data: {
+    assignment_id: number;
+    student_id: number;
+    obj_score: number;
+  }) {
+    checkDatabaseConfig();
+    
+    // Check if submission already exists
+    const existing = await sql`
+      SELECT id FROM assignment_submissions 
+      WHERE assignment_id = ${data.assignment_id} AND student_id = ${data.student_id}
+    `;
+
+    if (existing.length > 0) {
+      return await sql`
+        UPDATE assignment_submissions
+        SET obj_score = ${data.obj_score},
+            score = COALESCE(theory_score, 0) + ${data.obj_score},
+            status = 'graded',
+            updated_at = NOW()
+        WHERE id = ${existing[0].id}
+        RETURNING *
+      `;
+    }
+
+    return await sql`
+      INSERT INTO assignment_submissions (
+        assignment_id, student_id, obj_score, score, status, submission_date
+      ) VALUES (
+        ${data.assignment_id}, ${data.student_id}, ${data.obj_score}, ${data.obj_score}, 'graded', NOW()
+      )
+      RETURNING *
+    `;
+  },
+
+  async getTeacherGeneralExams(teacherId: number) {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT a.*, 
+             s.name as subject_name,
+             c.class_name
+      FROM assignments a
+      JOIN subjects s ON a.subject_id = s.id
+      JOIN classes c ON a.class_id = c.id
+      JOIN teacher_subjects ts ON ts.class_id = c.id AND ts.subject_id = a.subject_id
+      WHERE a.is_general_exam = true
+        AND ts.teacher_id = ${teacherId}
+      ORDER BY a.due_date DESC
+    `;
+  },
+
+  async getExamSubmissionsByAssignment(assignmentId: number) {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT sub.id as submission_id, sub.score, sub.obj_score, sub.theory_score, sub.status,
+             st.id as student_id, st.surname, st.other_names, st.student_id as admission_number
+      FROM students st
+      JOIN assignments a ON a.id = ${assignmentId}
+      LEFT JOIN assignment_submissions sub ON sub.student_id = st.id AND sub.assignment_id = a.id
+      WHERE st.current_class_id = a.class_id
+      ORDER BY st.surname, st.other_names
+    `;
+  },
+
+  async updateExamTheoryScore(assignmentId: number, studentId: number, submissionId: number | null, theoryScore: number) {
+    checkDatabaseConfig();
+    if (submissionId) {
+      return await sql`
+        UPDATE assignment_submissions
+        SET theory_score = ${theoryScore},
+            score = COALESCE(obj_score, 0) + ${theoryScore},
+            status = 'graded',
+            updated_at = NOW()
+        WHERE id = ${submissionId}
+      `;
+    } else {
+      return await sql`
+        INSERT INTO assignment_submissions (
+          assignment_id, student_id, theory_score, score, status, submission_date
+        ) VALUES (
+          ${assignmentId}, ${studentId}, ${theoryScore}, ${theoryScore}, 'graded', NOW()
+        )
+      `;
+    }
+  },
+
+  async getAiApiKeys() {
+    checkDatabaseConfig();
+    return await sql`
+      SELECT * FROM ai_api_keys
+      ORDER BY priority ASC, created_at DESC
+    `;
+  },
+
+  async saveAiApiKey(data: { id?: number; provider: string; key_value: string; priority?: number; is_active?: boolean }) {
+    checkDatabaseConfig();
+    if (data.id) {
+      return await sql`
+        UPDATE ai_api_keys
+        SET provider = ${data.provider},
+            key_value = ${data.key_value},
+            priority = COALESCE(${data.priority || 0}, priority),
+            is_active = COALESCE(${data.is_active !== undefined ? data.is_active : null}, is_active)
+        WHERE id = ${data.id}
+        RETURNING *
+      `;
+    } else {
+      return await sql`
+        INSERT INTO ai_api_keys (provider, key_value, priority, is_active)
+        VALUES (${data.provider}, ${data.key_value}, ${data.priority || 0}, ${data.is_active !== undefined ? data.is_active : true})
+        RETURNING *
+      `;
+    }
+  },
+
+  async deleteAiApiKey(id: number) {
+    checkDatabaseConfig();
+    return await sql`DELETE FROM ai_api_keys WHERE id = ${id}`;
+  },
+
+  async markApiKeyFailed(id: number) {
+    checkDatabaseConfig();
+    return await sql`
+      UPDATE ai_api_keys
+      SET last_failed_at = NOW()
+      WHERE id = ${id}
     `;
   }
 };

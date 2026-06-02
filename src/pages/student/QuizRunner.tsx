@@ -69,6 +69,20 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     try {
       const quizData = await db.getQuizById(quizId);
       if (!quizData) throw new Error('Quiz not found');
+      
+      // Handle Shuffling
+      if (quizData.shuffle_questions) {
+        quizData.questions.sort(() => Math.random() - 0.5);
+      }
+      
+      if (quizData.shuffle_options) {
+        quizData.questions.forEach((q: any) => {
+          if (q.options && Array.isArray(q.options)) {
+            q.options.sort(() => Math.random() - 0.5);
+          }
+        });
+      }
+
       setQuiz(quizData);
       setIsStarting(true); // Start with cover page
       setLoading(false);
@@ -124,10 +138,10 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
         let isCorrect = false;
         let pointsEarned = 0;
 
-        if (question.question_type === 'mcq' || question.question_type === 'tf') {
+        if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
           const selectedOption = question.options.find((o: any) => o.option_text === studentAnswer);
           isCorrect = selectedOption?.is_correct || false;
-        } else if (question.question_type === 'fill_in') {
+        } else if (question.question_type === 'short_answer') {
           const correctVariations = question.correct_answers.map((a: any) => a.answer_text.toLowerCase().trim());
           isCorrect = correctVariations.includes(studentAnswer.toLowerCase());
         }
@@ -257,7 +271,65 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     );
   }
 
-  const currentQuestion = quiz.questions[currentQuestionIdx];
+  const renderQuestion = (q: any, idx: number) => (
+    <PortalCard key={q.id} className="overflow-hidden border-none shadow-xl bg-white flex flex-col mb-6">
+      <div className="p-8 space-y-8 flex-1">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {idx + 1} of {quiz.questions.length}</span>
+            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points} POINTS</span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 leading-tight">
+            {q.question_text}
+          </h3>
+        </div>
+
+        <div className="space-y-4 pt-6">
+          {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
+            <div className="grid grid-cols-1 gap-3">
+              {q.options.map((option: any) => (
+                <button
+                  key={option.id}
+                  onClick={() => setAnswers({ ...answers, [q.id]: option.option_text })}
+                  className={`group p-5 rounded-2xl border-2 text-left transition-all ${
+                    answers[q.id] === option.option_text 
+                      ? 'border-school-green-600 bg-school-green-50 text-school-green-900 shadow-md' 
+                      : 'border-gray-50 bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${answers[q.id] === option.option_text ? 'border-school-green-600 bg-school-green-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                      {answers[q.id] === option.option_text && (
+                        <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                    <span className="text-lg font-medium">{option.option_text}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <input 
+                type="text"
+                className="w-full p-6 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:border-school-green-600 focus:bg-white outline-none transition-all text-xl font-medium"
+                placeholder="Type your final answer here..."
+                value={answers[q.id] || ''}
+                onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                onKeyPress={(e) => {
+                   if (e.key === 'Enter' && quiz.display_mode === 'one_by_one' && currentQuestionIdx < quiz.questions.length - 1) {
+                     setCurrentQuestionIdx(prev => prev + 1);
+                   }
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </PortalCard>
+  );
+
+  const isOneByOne = quiz.display_mode === 'one_by_one';
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 transition-all">
@@ -272,28 +344,30 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
           </div>
         </div>
 
-        {/* QUESTION NAVIGATOR BOX */}
-        <div className="flex flex-wrap justify-center gap-1.5 p-2 bg-gray-100 rounded-xl max-w-sm">
-          {quiz.questions.map((q: any, idx: number) => {
-            const isAnswered = !!answers[q.id];
-            const isCurrent = idx === currentQuestionIdx;
-            return (
-              <button
-                key={q.id}
-                onClick={() => setCurrentQuestionIdx(idx)}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
-                  isCurrent 
-                    ? 'bg-school-green-600 text-white ring-4 ring-school-green-100 shadow-md transform scale-110' 
-                    : isAnswered 
-                      ? 'bg-school-green-100 text-school-green-700' 
-                      : 'bg-white text-gray-400 hover:bg-gray-200'
-                }`}
-              >
-                {idx + 1}
-              </button>
-            );
-          })}
-        </div>
+        {/* QUESTION NAVIGATOR BOX (Only for one-by-one) */}
+        {isOneByOne && (
+          <div className="flex flex-wrap justify-center gap-1.5 p-2 bg-gray-100 rounded-xl max-w-sm">
+            {quiz.questions.map((q: any, idx: number) => {
+              const isAnswered = !!answers[q.id];
+              const isCurrent = idx === currentQuestionIdx;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentQuestionIdx(idx)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                    isCurrent 
+                      ? 'bg-school-green-600 text-white ring-4 ring-school-green-100 shadow-md transform scale-110' 
+                      : isAnswered 
+                        ? 'bg-school-green-100 text-school-green-700' 
+                        : 'bg-white text-gray-400 hover:bg-gray-200'
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className={`px-5 py-2 rounded-2xl font-mono text-2xl font-black flex items-center shadow-inner ${timeLeft < 60 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-900 text-school-green-400'}`}>
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,88 +378,41 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
       </div>
 
       {/* Progress Line */}
-      <div className="w-full bg-gray-200 rounded-full h-1">
-        <div 
-          className="bg-school-green-600 h-1 rounded-full transition-all duration-500" 
-          style={{ width: `${((currentQuestionIdx + 1) / quiz.questions.length) * 100}%` }}
-        ></div>
-      </div>
+      {isOneByOne && (
+        <div className="w-full bg-gray-200 rounded-full h-1">
+          <div 
+            className="bg-school-green-600 h-1 rounded-full transition-all duration-500" 
+            style={{ width: `${((currentQuestionIdx + 1) / quiz.questions.length) * 100}%` }}
+          ></div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6">
-        <PortalCard className="min-h-[450px] overflow-hidden border-none shadow-xl bg-white flex flex-col">
-          <div className="p-8 space-y-8 flex-1">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {currentQuestionIdx + 1} of {quiz.questions.length}</span>
-                <span className="text-[11px] font-bold text-gray-300 uppercase">{currentQuestion.points} POINTS</span>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 leading-tight">
-                {currentQuestion.question_text}
-              </h3>
-            </div>
-
-            <div className="space-y-4 pt-6">
-              {currentQuestion.question_type === 'mcq' || currentQuestion.question_type === 'tf' ? (
-                <div className="grid grid-cols-1 gap-3">
-                  {currentQuestion.options.map((option: any) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setAnswers({ ...answers, [currentQuestion.id]: option.option_text })}
-                      className={`group p-5 rounded-2xl border-2 text-left transition-all ${
-                        answers[currentQuestion.id] === option.option_text 
-                          ? 'border-school-green-600 bg-school-green-50 text-school-green-900 shadow-md' 
-                          : 'border-gray-50 bg-gray-50 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${answers[currentQuestion.id] === option.option_text ? 'border-school-green-600 bg-school-green-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
-                          {answers[currentQuestion.id] === option.option_text && (
-                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
-                          )}
-                        </div>
-                        <span className="text-lg font-medium">{option.option_text}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <input 
-                    type="text"
-                    className="w-full p-6 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:border-school-green-600 focus:bg-white outline-none transition-all text-xl font-medium"
-                    placeholder="Type your final answer here..."
-                    value={answers[currentQuestion.id] || ''}
-                    autoFocus
-                    onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
-                    onKeyPress={(e) => e.key === 'Enter' && currentQuestionIdx < quiz.questions.length - 1 && setCurrentQuestionIdx(prev => prev + 1)}
-                  />
-                  <div className="p-4 bg-blue-50 text-blue-700 rounded-xl flex items-start">
-                    <svg className="w-4 h-4 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-xs italic">Grading is flexible for fill-in questions, but ensure your spelling is as accurate as possible for the best score.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </PortalCard>
+        {isOneByOne ? (
+          renderQuestion(quiz.questions[currentQuestionIdx], currentQuestionIdx)
+        ) : (
+          quiz.questions.map((q: any, idx: number) => renderQuestion(q, idx))
+        )}
 
         {/* FOOTER ACTIONS */}
-        <div className="flex justify-between items-center py-4">
-          <PortalButton
-            variant="secondary"
-            onClick={() => {
-              setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            disabled={currentQuestionIdx === 0}
-            className="px-8"
-          >
-            ← Previous
-          </PortalButton>
+        <div className="flex justify-between items-center py-4 bg-white p-6 rounded-2xl shadow-sm">
+          {isOneByOne ? (
+            <PortalButton
+              variant="secondary"
+              onClick={() => {
+                setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={currentQuestionIdx === 0}
+              className="px-8"
+            >
+              ← Previous
+            </PortalButton>
+          ) : (
+            <div></div> // empty spacer
+          )}
           
-          {currentQuestionIdx === quiz.questions.length - 1 ? (
+          {(quiz.display_mode === 'all_at_once' || currentQuestionIdx === quiz.questions.length - 1) ? (
             <PortalButton
               variant="primary"
               onClick={() => {
@@ -402,12 +429,12 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
             <PortalButton
               variant="primary"
               onClick={() => {
-                setCurrentQuestionIdx(prev => prev + 1);
+                setCurrentQuestionIdx(prev => Math.min(quiz.questions.length - 1, prev + 1));
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-12"
+              className="px-8"
             >
-              Next Question →
+              Next →
             </PortalButton>
           )}
         </div>

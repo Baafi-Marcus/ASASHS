@@ -5,7 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
 import { documentParser } from '../../../lib/documentParser';
-import { aiService, GeneratedQuestion, AICapacityExhaustedError } from '../../../lib/ai.ts';
+import { aiService, ExtractedQuestion } from '../lib/aiService';
 
 interface QuizBuilderProps {
   teacherId: number;
@@ -26,11 +26,16 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     class_id: '',
     subject_id: '',
     time_limit: 30,
-    passing_score: 50
+    passing_score: 50,
+    shuffle_questions: false,
+    shuffle_options: false,
+    show_results_immediately: true,
+    display_mode: 'all_at_once',
+    allow_late_grading: false
   });
 
   // Questions
-  const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
+  const [questions, setQuestions] = useState<ExtractedQuestion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -62,17 +67,13 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
       const text = await documentParser.parseFile(file);
       
       toast.loading('AI is generating questions...', { id: 'ai-gen' });
-      const generated = await aiService.generateQuestions(text);
+      const generated = await aiService.extractQuestions(text);
       
       setQuestions([...questions, ...generated]);
       toast.success('Questions generated! You can now review and edit them.', { id: 'ai-gen' });
     } catch (error: any) {
       console.error('AI Generation failed:', error);
-      if (error instanceof AICapacityExhaustedError) {
-        toast.error('AI assistance is temporarily at capacity. Please try again in a few minutes or enter questions manually.', { id: 'ai-gen', duration: 6000 });
-      } else {
-        toast.error(error.message || 'AI generation failed', { id: 'ai-gen' });
-      }
+      toast.error(error.message || 'AI generation failed', { id: 'ai-gen' });
     } finally {
       setIsGenerating(false);
     }
@@ -82,7 +83,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  const updateQuestion = (index: number, updated: GeneratedQuestion) => {
+  const updateQuestion = (index: number, updated: ExtractedQuestion) => {
     const newQuestions = [...questions];
     newQuestions[index] = updated;
     setQuestions(newQuestions);
@@ -202,6 +203,31 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
               value={quizInfo.passing_score}
               onChange={e => setQuizInfo({ ...quizInfo, passing_score: parseInt(e.target.value) })}
             />
+            
+            <div className="md:col-span-2 pt-4 border-t mt-4">
+              <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase">Advanced Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
+                  <input type="checkbox" checked={quizInfo.shuffle_questions} onChange={e => setQuizInfo({...quizInfo, shuffle_questions: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
+                  <span className="text-sm font-medium text-gray-700">Shuffle Questions for each student</span>
+                </label>
+                <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
+                  <input type="checkbox" checked={quizInfo.shuffle_options} onChange={e => setQuizInfo({...quizInfo, shuffle_options: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
+                  <span className="text-sm font-medium text-gray-700">Shuffle Options (MCQ only)</span>
+                </label>
+                <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
+                  <input type="checkbox" checked={quizInfo.show_results_immediately} onChange={e => setQuizInfo({...quizInfo, show_results_immediately: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
+                  <span className="text-sm font-medium text-gray-700">Show Results Immediately after submission</span>
+                </label>
+                <div className="flex flex-col space-y-1 bg-gray-50 p-3 rounded-xl border">
+                  <label className="text-xs font-bold text-gray-500">Display Mode</label>
+                  <select value={quizInfo.display_mode} onChange={e => setQuizInfo({...quizInfo, display_mode: e.target.value})} className="border rounded-lg px-3 py-2 text-sm bg-white">
+                    <option value="all_at_once">Show All Questions at Once (Scroll)</option>
+                    <option value="one_by_one">Show One by One (Paginated)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex justify-end p-4 border-t">
             <PortalButton onClick={() => setStep(2)}>
@@ -244,7 +270,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                     />
                     
                     {/* Render specific inputs based on type */}
-                    {q.question_type === 'mcq' && q.options && (
+                    {q.question_type === 'multiple_choice' && q.options && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {q.options.map((opt, oIdx) => (
                           <div key={oIdx} className="flex items-center space-x-2 bg-gray-50 p-2 rounded">
@@ -270,7 +296,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                       </div>
                     )}
 
-                    {q.question_type === 'fill_in' && (
+                    {q.question_type === 'short_answer' && (
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-gray-400">Correct Answers (Comma separated)</label>
                         <input 
@@ -289,7 +315,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                 <PortalButton 
                   onClick={() => setQuestions([...questions, { 
                     question_text: '', 
-                    question_type: 'mcq', 
+                    question_type: 'multiple_choice', 
                     points: 1, 
                     order_index: questions.length,
                     options: [
@@ -306,7 +332,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                 <PortalButton 
                   onClick={() => setQuestions([...questions, { 
                     question_text: '', 
-                    question_type: 'fill_in', 
+                    question_type: 'short_answer', 
                     points: 1, 
                     order_index: questions.length,
                     correct_answers: ['']

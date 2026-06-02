@@ -11,6 +11,7 @@ import { TeacherStudentPerformance } from './TeacherStudentPerformance';
 import { TeacherMessages } from './TeacherMessages';
 import { TeacherProfile } from './TeacherProfile';
 import { TeacherELearning } from './TeacherELearning';
+import { TeacherExams } from './TeacherExams';
 
 interface Teacher {
   id: string;
@@ -216,6 +217,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         return <TeacherClasses teacherId={teacher.teacherDbId} />;
       case 'assignments': 
         return <TeacherAssignments teacherId={teacher.teacherDbId} />;
+      case 'exams':
+        return <TeacherExams teacherId={teacher.teacherDbId} />;
       case 'grades': 
         return <TeacherGradebook teacherId={teacher.teacherDbId} />;
       case 'performance': 
