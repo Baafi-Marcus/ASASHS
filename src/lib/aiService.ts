@@ -1,4 +1,4 @@
-import { db } from './neon';
+import { db } from '../../lib/neon';
 
 export interface ExtractedQuestion {
   question_text: string;

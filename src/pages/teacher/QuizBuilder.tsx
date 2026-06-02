@@ -5,7 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
 import { documentParser } from '../../../lib/documentParser';
-import { aiService, ExtractedQuestion } from '../lib/aiService';
+import { aiService, ExtractedQuestion } from '../../lib/aiService';
 
 interface QuizBuilderProps {
   teacherId: number;
