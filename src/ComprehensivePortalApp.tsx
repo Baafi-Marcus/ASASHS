@@ -261,7 +261,7 @@ function ComprehensivePortalApp() {
         ) : showLandingPage ? (
           <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
         ) : (
-          <UnifiedLogin onLogin={signIn} onHomeRedirect={handleBackToLanding} />
+          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} />
         )}
       </div>
 

@@ -65,7 +65,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         return;
       }
 
-      if (requiredRole && authenticatedUser.user_type !== requiredRole) {
+      if (requiredRole === 'non-admin' && authenticatedUser.user_type === 'admin') {
+        // Pretend credentials don't exist to hide admin existence from students
+        toast.error('Invalid credentials. Please check your ID and password.');
+        setLoading(false);
+        return;
+      } else if (requiredRole && requiredRole !== 'non-admin' && authenticatedUser.user_type !== requiredRole) {
         toast.error(`Access denied. This portal is restricted to ${requiredRole}s only.`);
         setLoading(false);
         return;
