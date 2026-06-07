@@ -62,7 +62,7 @@ async function createTables() {
         title VARCHAR(255) NOT NULL,
         description TEXT,
         assignment_type_id INTEGER REFERENCES assignment_types(id),
-        due_date DATE,
+        due_date TIMESTAMP,
         max_score DECIMAL(5,2) DEFAULT 100.00,
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
