@@ -190,7 +190,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
             >
               <option value="">Select Subject</option>
               {subjects.filter(s => s.class_id == quizInfo.class_id).map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.subject_id}>{s.name}</option>
               ))}
             </PortalInput>
             <PortalInput
