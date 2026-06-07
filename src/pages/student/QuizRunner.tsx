@@ -236,7 +236,10 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
         });
       }
 
-      await Promise.all(responses.map(resp => db.submitQuizResponse(resp)));
+      // Submit responses sequentially to avoid Neon HTTP connection pool limits
+      for (const resp of responses) {
+        await db.submitQuizResponse(resp);
+      }
 
       const totalPoints = parseFloat(quiz.total_points) || responses.length;
       const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
