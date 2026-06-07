@@ -12,6 +12,7 @@ interface User {
   must_change_password?: boolean;
   student_id?: string;
   teacher_id?: string;
+  teacher_db_id?: number;
   admission_number?: string;
   staff_id?: string;
 }

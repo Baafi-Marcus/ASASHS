@@ -172,7 +172,7 @@ function ComprehensivePortalApp() {
       const teacherProp = {
         fullName: user.full_name,
         teacherId: user.teacher_id,
-        teacherDbId: user.id,
+        teacherDbId: user.teacher_db_id || user.id,
         department: (user as any).department || 'General',
         classes: (user as any).classes || [],
         subjects: (user as any).subjects || []

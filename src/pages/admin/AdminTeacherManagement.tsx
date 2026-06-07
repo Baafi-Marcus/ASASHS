@@ -557,10 +557,22 @@ export function AdminTeacherManagement() {
               }
               setShowSubjectAssignmentModal(false);
               setSelectedTeacherForAssignment(null);
-              fetchData(); // Refresh the teacher list
+              fetchData();
             } catch (error) {
               console.error('Failed to assign subject:', error);
               toast.error('Failed to assign subject to teacher');
+            }
+          }}
+          onRemoveAssignment={async (assignmentId: number) => {
+            try {
+              await db.removeTeacherSubject(assignmentId);
+              toast.success('Assignment removed successfully');
+              // Refresh existing assignments
+              const existing = await db.getTeacherSubjects(selectedTeacherForAssignment!.id);
+              setTeacherExistingAssignments(existing);
+            } catch (error) {
+              console.error('Failed to remove assignment:', error);
+              toast.error('Failed to remove assignment');
             }
           }}
         />

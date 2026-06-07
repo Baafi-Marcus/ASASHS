@@ -44,6 +44,7 @@ interface AssignSubjectToTeacherModalProps {
   classes: Class[];
   existingAssignments?: ExistingAssignment[];
   onAssign: (subjectId: number, classId: number) => Promise<void>;
+  onRemoveAssignment?: (assignmentId: number) => Promise<void>;
 }
 
 export function AssignSubjectToTeacherModal({ 
@@ -53,7 +54,8 @@ export function AssignSubjectToTeacherModal({
   subjects, 
   classes,
   existingAssignments = [],
-  onAssign
+  onAssign,
+  onRemoveAssignment
 }: AssignSubjectToTeacherModalProps) {
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
@@ -115,13 +117,28 @@ export function AssignSubjectToTeacherModal({
             {existingAssignments.length > 0 && (
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h4 className="text-sm font-semibold text-green-800 mb-2">Currently Assigned</h4>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {existingAssignments.map((a) => (
-                    <div key={a.id} className="text-sm text-green-700 flex items-center gap-2">
-                      <span>✓</span>
-                      <span className="font-medium">{a.subject_name}</span>
-                      <span>→</span>
-                      <span>{a.class_name}</span>
+                    <div key={a.id} className="text-sm text-green-700 flex items-center gap-2 justify-between">
+                      <div className="flex items-center gap-2">
+                        <span>✓</span>
+                        <span className="font-medium">{a.subject_name}</span>
+                        <span>→</span>
+                        <span>{a.class_name}</span>
+                      </div>
+                      {onRemoveAssignment && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (confirm(`Remove ${a.subject_name} from ${a.class_name}?`)) {
+                              await onRemoveAssignment(a.id);
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs font-medium"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

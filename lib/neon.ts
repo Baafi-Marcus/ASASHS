@@ -85,7 +85,8 @@ export const db = {
     
     const result = await sql`
       SELECT u.*, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
-             t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names
+             t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
+             t.id as teacher_db_id
       FROM users u
       LEFT JOIN students s ON u.id = s.user_id
       LEFT JOIN teachers t ON u.id = t.user_id
@@ -119,6 +120,7 @@ export const db = {
       role: user.user_type,
       student_id: user.student_id,
       teacher_id: user.teacher_id,
+      teacher_db_id: user.teacher_db_id,
       admission_number: user.admission_number,
       staff_id: user.staff_id
     };
@@ -1223,6 +1225,19 @@ export const db = {
     } catch (error) {
       console.error('Error fetching teacher subjects:', error);
       return [];
+    }
+  },
+
+  async removeTeacherSubject(assignmentId: number) {
+    try {
+      await sql`
+        DELETE FROM teacher_subjects WHERE id = ${assignmentId}
+      `;
+      return { success: true };
+    } catch (error) {
+      console.error('Error removing teacher subject:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to remove subject assignment: ${errorMessage}`);
     }
   },
 
