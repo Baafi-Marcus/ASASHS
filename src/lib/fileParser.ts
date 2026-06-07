@@ -1,9 +1,9 @@
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Completely bypass the external web worker. 
-// This forces PDFJS to parse on the main thread, perfectly avoiding all Vite bundle/CORS errors in dev and production.
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+// Use the exact local worker file placed in the public directory
+// This guarantees it works on Vercel without CDN blocks or Vite bundling errors
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export const extractTextFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
