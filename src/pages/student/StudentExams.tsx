@@ -5,6 +5,17 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { ExamRunner } from './ExamRunner';
 
+function getExamStatus(exam: any): { label: string; color: string; ended: boolean } {
+  if (!exam.due_date) return { label: 'Active', color: 'text-green-600 bg-green-50', ended: false };
+  const startTime = new Date(exam.due_date).getTime();
+  const durationMs = (exam.duration_minutes || 60) * 60 * 1000;
+  const endTime = startTime + durationMs;
+  const now = Date.now();
+  if (now < startTime) return { label: 'Upcoming', color: 'text-blue-600 bg-blue-50', ended: false };
+  if (now > endTime) return { label: 'Ended', color: 'text-red-600 bg-red-50', ended: true };
+  return { label: 'Active', color: 'text-green-600 bg-green-50', ended: false };
+}
+
 export function StudentExams({ studentId, classId }: { studentId: number; classId: number }) {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,13 +66,13 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {exams.map((exam) => (
-            <PortalCard key={exam.id} className="group hover:border-school-green-300 transition-colors">
+            <PortalCard key={exam.id} className={`group hover:border-school-green-300 transition-colors ${getExamStatus(exam).ended ? 'opacity-70' : ''}`}>
               <div className="flex justify-between items-start mb-4">
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full uppercase">
                   {exam.exam_type}
                 </span>
-                <span className="text-xs font-medium text-gray-500">
-                  Due: {new Date(exam.due_date).toLocaleDateString()}
+                <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${getExamStatus(exam).color}`}>
+                  {getExamStatus(exam).label}
                 </span>
               </div>
               
@@ -77,8 +88,9 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
                 <PortalButton 
                   onClick={() => setSelectedExam(exam)}
                   className="w-full"
+                  disabled={getExamStatus(exam).ended}
                 >
-                  Enter Exam Portal
+                  {getExamStatus(exam).ended ? 'Exam Ended' : 'Enter Exam Portal'}
                 </PortalButton>
               </div>
             </PortalCard>

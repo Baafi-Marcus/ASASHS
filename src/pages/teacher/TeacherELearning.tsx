@@ -5,6 +5,107 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { QuizBuilder } from './QuizBuilder';
 
+function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) {
+  const startTime = quiz.due_date ? new Date(quiz.due_date) : null;
+  const endTime = startTime && quiz.duration_minutes ? new Date(startTime.getTime() + quiz.duration_minutes * 60 * 1000) : null;
+  const now = new Date();
+  let status = 'Always Available';
+  if (startTime && endTime) {
+    if (now < startTime) status = `Starts ${startTime.toLocaleString()}`;
+    else if (now > endTime) status = 'Ended';
+    else status = 'Active';
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b flex justify-between items-center bg-school-green-600 text-white">
+          <h2 className="text-xl font-bold">Quiz Details</h2>
+          <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
+              <p className="text-gray-900 font-medium">{quiz.title}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Subject</label>
+              <p className="text-gray-900 font-medium">{quiz.subject_name}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Class</label>
+              <p className="text-gray-900 font-medium">{quiz.class_name}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+              <p className={`font-medium ${status === 'Active' ? 'text-green-600' : status === 'Ended' ? 'text-red-600' : 'text-gray-900'}`}>{status}</p>
+            </div>
+            {startTime && (
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Scheduled Start</label>
+                <p className="text-gray-900 font-medium">{startTime.toLocaleString()}</p>
+              </div>
+            )}
+            {endTime && (
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase">Scheduled End</label>
+                <p className="text-gray-900 font-medium">{endTime.toLocaleString()}</p>
+              </div>
+            )}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Duration</label>
+              <p className="text-gray-900 font-medium">{quiz.duration_minutes || quiz.time_limit || 'N/A'} mins</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Total Points</label>
+              <p className="text-gray-900 font-medium">{quiz.total_points || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Passing Score</label>
+              <p className="text-gray-900 font-medium">{quiz.passing_score || 'N/A'}%</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Display Mode</label>
+              <p className="text-gray-900 font-medium capitalize">{quiz.display_mode?.replace(/_/g, ' ') || 'All at once'}</p>
+            </div>
+          </div>
+          {quiz.description && (
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{quiz.description}</p>
+            </div>
+          )}
+          {quiz.instructions && (
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase">Instructions</label>
+              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{quiz.instructions}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_questions ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span>Shuffle Questions: {quiz.shuffle_questions ? 'Yes' : 'No'}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_options ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span>Shuffle Options: {quiz.shuffle_options ? 'Yes' : 'No'}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`w-2 h-2 rounded-full ${quiz.show_results_immediately ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span>Show Results: {quiz.show_results_immediately ? 'Immediately' : 'After Review'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void }) {
   const [attempts, setAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +215,8 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
   const [loading, setLoading] = useState(true);
   const [showBuilder, setShowBuilder] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+  const [detailQuiz, setDetailQuiz] = useState<any | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchQuizzes();
@@ -207,10 +310,38 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
                       View Results
                     </button>
                     <button 
-                      onClick={() => toast('Edit feature coming soon!')}
+                      onClick={() => setDetailQuiz(quiz)}
                       className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
                     >
                       Details
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${quiz.title}"? This cannot be undone.`)) return;
+                        setDeletingId(quiz.id);
+                        try {
+                          await db.deleteQuiz(quiz.id);
+                          toast.success('Quiz deleted');
+                          fetchQuizzes();
+                        } catch (e) {
+                          toast.error('Failed to delete quiz');
+                        } finally {
+                          setDeletingId(null);
+                        }
+                      }}
+                      disabled={deletingId === quiz.id}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      {deletingId === quiz.id ? (
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -240,6 +371,12 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
         <QuizResultsModal 
           quiz={selectedQuiz} 
           onClose={() => setSelectedQuiz(null)} 
+        />
+      )}
+      {detailQuiz && (
+        <QuizDetailModal
+          quiz={detailQuiz}
+          onClose={() => setDetailQuiz(null)}
         />
       )}
     </div>

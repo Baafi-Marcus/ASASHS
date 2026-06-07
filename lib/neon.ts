@@ -2638,6 +2638,17 @@ export const db = {
     return quizId;
   },
 
+  async deleteQuiz(quizId: number) {
+    checkDatabaseConfig();
+    await sql`UPDATE assignments SET quiz_id = NULL WHERE quiz_id = ${quizId}`;
+    await sql`DELETE FROM quiz_correct_answers WHERE question_id IN (SELECT id FROM quiz_questions WHERE quiz_id = ${quizId})`;
+    await sql`DELETE FROM quiz_options WHERE question_id IN (SELECT id FROM quiz_questions WHERE quiz_id = ${quizId})`;
+    await sql`DELETE FROM quiz_attempts WHERE quiz_id = ${quizId}`;
+    await sql`DELETE FROM quiz_questions WHERE quiz_id = ${quizId}`;
+    await sql`DELETE FROM elearning_quizzes WHERE id = ${quizId}`;
+    return { success: true };
+  },
+
   async getQuizAttempts(filters: { student_id?: number; quiz_id?: number }) {
     let query = sql`
       SELECT a.*, q.title as quiz_title, s.name as subject_name

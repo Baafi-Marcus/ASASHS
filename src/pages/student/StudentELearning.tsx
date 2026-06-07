@@ -69,8 +69,13 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
             {quizzes.length > 0 ? (
               quizzes.map((quiz) => {
                 const hasAttempt = attempts.find(a => a.quiz_id === quiz.id && a.status === 'completed');
+                const now = Date.now();
+                const startTime = quiz.due_date ? new Date(quiz.due_date).getTime() : null;
+                const endTime = startTime ? startTime + (quiz.duration_minutes || 60) * 60 * 1000 : null;
+                const isEnded = endTime ? now > endTime : false;
+                const isUpcoming = startTime ? now < startTime : false;
                 return (
-                  <PortalCard key={quiz.id} className="group hover:border-school-green-300 transition-colors">
+                  <PortalCard key={quiz.id} className={`group hover:border-school-green-300 transition-colors ${isEnded ? 'opacity-60' : ''}`}>
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
@@ -87,6 +92,11 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                             </svg>
                             {quiz.time_limit} mins
                           </span>
+                          {startTime && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isEnded ? 'bg-red-50 text-red-600' : isUpcoming ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                              {isEnded ? 'Ended' : isUpcoming ? 'Upcoming' : 'Active'}
+                            </span>
+                          )}
                         </div>
                       </div>
                       
@@ -95,12 +105,15 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                           <div className="text-xs font-bold text-school-green-600">COMPLETED</div>
                           <div className="text-lg font-bold text-gray-900">{hasAttempt.score} pts</div>
                         </div>
+                      ) : isEnded ? (
+                        <span className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg">Ended</span>
                       ) : (
                         <PortalButton 
                           onClick={() => setSelectedQuizId(quiz.id)}
                           size="sm"
+                          disabled={isUpcoming}
                         >
-                          Start Quiz
+                          {isUpcoming ? 'Not Yet Available' : 'Start Quiz'}
                         </PortalButton>
                       )}
                     </div>

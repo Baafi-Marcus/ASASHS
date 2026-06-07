@@ -6,6 +6,27 @@ export function LegacyExamRunner({ studentId, exam, onClose }: { studentId: numb
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Schedule check
+  if (exam.due_date) {
+    const startTime = new Date(exam.due_date).getTime();
+    const durationMs = (exam.duration_minutes || 60) * 60 * 1000;
+    const endTime = startTime + durationMs;
+    if (Date.now() > endTime) {
+      return (
+        <div className="bg-white rounded-3xl shadow-xl p-12 text-center space-y-6">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Exam Has Ended</h2>
+          <p className="text-gray-500 max-w-md mx-auto">This exam ended at {new Date(endTime).toLocaleString()} and is no longer available.</p>
+          <button onClick={onClose} className="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">Back</button>
+        </div>
+      );
+    }
+  }
+
   const objQuestionsCount = exam.obj_answer_key ? exam.obj_answer_key.length : 0;
   const questions = Array.from({ length: objQuestionsCount }, (_, i) => i + 1);
 
