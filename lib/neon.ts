@@ -2667,12 +2667,12 @@ export const db = {
       const qResult = await sql`
         INSERT INTO elearning_quizzes (
           title, description, subject_id, shuffle_questions, shuffle_options,
-          show_results_immediately, allow_late_grading, display_mode
+          show_results_immediately, allow_late_grading, display_mode, time_limit
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.subject_id},
           ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
           ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
-          ${examData.display_mode || 'all_at_once'}
+          ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60}
         )
         RETURNING id
       `;
