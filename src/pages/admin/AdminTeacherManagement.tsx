@@ -713,48 +713,48 @@ export function AdminTeacherManagement() {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleViewTeacherDetails(teacher.id)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-2 py-1 rounded"
                           title="View Details"
                         >
-                          👁️
+                          View
                         </button>
                         <button
                           onClick={() => handleEditTeacher(teacher)}
-                          className="text-school-green-600 hover:text-school-green-800"
+                          className="text-school-green-600 hover:text-school-green-800 font-medium bg-green-50 px-2 py-1 rounded"
                           title="Edit Teacher"
                         >
-                          ✏️
+                          Edit
                         </button>
                         <button
                           onClick={() => handleAssignSubject(teacher)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-purple-600 hover:text-purple-800 font-medium bg-purple-50 px-2 py-1 rounded"
                           title="Assign Subject"
                         >
-                          📚
+                          Assign Subject
                         </button>
                         {teacher.is_active ? (
                           <button
                             onClick={() => handleDeactivateTeacher(teacher.id)}
-                            className="text-yellow-600 hover:text-yellow-800"
+                            className="text-yellow-600 hover:text-yellow-800 font-medium bg-yellow-50 px-2 py-1 rounded"
                             title="Deactivate Teacher"
                           >
-                            ⏸️
+                            Deactivate
                           </button>
                         ) : (
                           <button
                             onClick={() => handleReactivateTeacher(teacher.id)}
-                            className="text-green-600 hover:text-green-800"
+                            className="text-green-600 hover:text-green-800 font-medium bg-green-50 px-2 py-1 rounded"
                             title="Reactivate Teacher"
                           >
-                            ▶️
+                            Activate
                           </button>
                         )}
                         <button
                           onClick={() => handleDeleteTeacher(teacher.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 hover:text-red-800 font-medium bg-red-50 px-2 py-1 rounded"
                           title="Delete Teacher"
                         >
-                          🗑️
+                          Delete
                         </button>
                       </div>
                     </td>
