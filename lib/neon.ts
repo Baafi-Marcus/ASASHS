@@ -2732,7 +2732,29 @@ export const db = {
     return results;
   },
 
-  async getGeneralExams() {
+    async deleteGeneralExam(title: string, dueDate: string) {
+      checkDatabaseConfig();
+      try {
+        const assignments = await sql`
+          SELECT id, quiz_id FROM assignments 
+          WHERE title = ${title} AND due_date = ${dueDate} AND is_general_exam = true
+        `;
+        
+        for (const a of assignments) {
+          if (a.quiz_id) {
+            await sql`DELETE FROM elearning_quizzes WHERE id = ${a.quiz_id}`;
+          }
+        }
+        
+        await sql`DELETE FROM assignments WHERE title = ${title} AND due_date = ${dueDate} AND is_general_exam = true`;
+        return { success: true };
+      } catch (error) {
+        console.error('Error deleting general exam:', error);
+        throw new Error('Failed to delete general exam');
+      }
+    },
+
+    async getGeneralExams() {
     checkDatabaseConfig();
     return await sql`
       SELECT a.*, 

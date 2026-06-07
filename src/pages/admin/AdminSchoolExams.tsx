@@ -58,6 +58,18 @@ export function AdminSchoolExams() {
     }
   };
 
+  const handleDelete = async (title: string, dueDate: string) => {
+    if (window.confirm(`Are you sure you want to delete the exam "${title}"? This will delete it for all assigned classes and remove all submissions.`)) {
+      try {
+        await db.deleteGeneralExam(title, dueDate);
+        toast.success('Exam deleted successfully');
+        fetchData();
+      } catch (e) {
+        toast.error('Failed to delete exam');
+      }
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.subject_id || !formData.due_date || formData.selectedForms.length === 0) {
@@ -401,6 +413,7 @@ export function AdminSchoolExams() {
                   <th className="px-4 py-3">Subject</th>
                   <th className="px-4 py-3">Class</th>
                   <th className="px-4 py-3">Start Time & Duration</th>
+                  <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,6 +436,14 @@ export function AdminSchoolExams() {
                     <td className="px-4 py-3">
                       <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
                       <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button 
+                        onClick={() => handleDelete(exam.title, exam.due_date)}
+                        className="text-red-500 hover:text-red-700 text-sm font-bold"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
