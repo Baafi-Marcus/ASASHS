@@ -100,6 +100,36 @@ function ComprehensivePortalApp() {
     }
   };
 
+  // --- Standalone Quiz Mode (opened in new tab) ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const takeQuiz = urlParams.get('takeQuiz');
+  const quizIdParam = urlParams.get('quizId');
+
+  if (takeQuiz === '1' && quizIdParam) {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-school-cream-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+        </div>
+      );
+    }
+    if (!user || user.user_type !== 'student') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-school-cream-50 p-6">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">Authentication Required</h2>
+            <p className="text-gray-500">Please log in as a student to access this exam.</p>
+            <button onClick={() => window.location.href = window.location.origin + window.location.pathname} className="px-6 py-2 bg-school-green-600 text-white rounded-xl font-bold">
+              Go to Login
+            </button>
+          </div>
+        </div>
+      );
+    }
+    const studentId = user.student_db_id || 0;
+    return <QuizRunner studentId={studentId} quizId={parseInt(quizIdParam)} onClose={() => window.close()} standalone />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -194,11 +224,11 @@ function ComprehensivePortalApp() {
         { id: 'elearning', label: 'E-Learning', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> }
       ];
 
-      // Map student props correctly
+      // Map student props correctly (use student_db_id not users.id)
       const studentProp = {
         fullName: user.full_name,
         studentId: user.student_id,
-        id: user.id.toString(),
+        id: (user.student_db_id || user.id).toString(),
         course: (user as any).course || 'General Arts',
         className: (user as any).class_name || '1A1',
         current_class_id: (user as any).current_class_id || 1,

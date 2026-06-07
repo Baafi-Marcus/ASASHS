@@ -8,11 +8,12 @@ interface QuizRunnerProps {
   studentId: number;
   quizId: number;
   onClose: () => void;
+  standalone?: boolean;
 }
 
 type QuizPhase = 'cover' | 'in-progress' | 'review' | 'finished';
 
-export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
+export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunnerProps) {
   const [quiz, setQuiz] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<QuizPhase>('cover');
@@ -71,6 +72,28 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     }
     return () => { document.body.style.overflow = ''; };
   }, [phase]);
+
+  // Prevent accidental tab close while exam is in progress (standalone mode)
+  useEffect(() => {
+    if (!standalone) return;
+    if (phase === 'in-progress') {
+      const handler = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+      };
+      window.addEventListener('beforeunload', handler);
+      return () => window.removeEventListener('beforeunload', handler);
+    }
+  }, [standalone, phase]);
+
+  // In standalone mode, close tab when done
+  const handleCloseStandalone = () => {
+    if (standalone) {
+      window.close();
+    } else {
+      onClose();
+    }
+  };
 
   const fetchQuiz = async () => {
     setLoading(true);
@@ -145,7 +168,7 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     } catch (error) {
       console.error('Failed to load quiz:', error);
       toast.error('Failed to load quiz');
-      onClose();
+      handleCloseStandalone();
     }
   };
 
@@ -262,7 +285,7 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
             </div>
             <h2 className="text-2xl font-bold text-gray-900">{quiz?.title || 'Exam'}</h2>
             <p className="text-gray-600">{blocked}</p>
-            <PortalButton variant="secondary" onClick={onClose}>Return to Dashboard</PortalButton>
+            <PortalButton variant="secondary" onClick={handleCloseStandalone}>Return to Dashboard</PortalButton>
           </div>
         </PortalCard>
       </div>
@@ -313,7 +336,7 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
                 Start Assessment
               </PortalButton>
               <button
-                onClick={onClose}
+                onClick={handleCloseStandalone}
                 className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium"
               >
                 Cancel and Return
@@ -345,7 +368,7 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
               </div>
             )}
           </div>
-          <PortalButton onClick={onClose} variant="secondary" className="w-full">Close and Return</PortalButton>
+          <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
         </div>
       </div>
     );

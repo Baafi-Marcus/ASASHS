@@ -11,6 +11,7 @@ interface User {
   role: string;
   must_change_password?: boolean;
   student_id?: string;
+  student_db_id?: number;
   teacher_id?: string;
   teacher_db_id?: number;
   admission_number?: string;

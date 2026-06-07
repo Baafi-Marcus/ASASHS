@@ -84,7 +84,7 @@ export const db = {
     }
     
     const result = await sql`
-      SELECT u.*, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
+      SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
              s.current_class_id,
              t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
              t.id as teacher_db_id
@@ -120,6 +120,7 @@ export const db = {
         : (user.full_name || 'Administrator'),
       role: user.user_type,
       student_id: user.student_id,
+      student_db_id: user.student_db_id,
       teacher_id: user.teacher_id,
       teacher_db_id: user.teacher_db_id,
       admission_number: user.admission_number,
@@ -1545,6 +1546,7 @@ export const db = {
 
   async getStudentSubjects(studentId: number) {
     try {
+      // Primary: get subjects from student_subjects table
       const result = await sql`
         SELECT ss.*, s.name as subject_name, s.code as subject_code, c.class_name
         FROM student_subjects ss
@@ -1555,7 +1557,39 @@ export const db = {
         ORDER BY s.is_core DESC, s.name
       `;
       
-      return result;
+      if (result.length > 0) return result;
+
+      // Fallback: get subjects through student's class + course
+      const student = await sql`
+        SELECT s.current_class_id, c.course_id, c.class_name
+        FROM students s
+        LEFT JOIN classes c ON s.current_class_id = c.id
+        WHERE s.id = ${studentId}
+      `;
+      if (student.length === 0) return [];
+
+      const { current_class_id, course_id, class_name } = student[0];
+
+      // Get core subjects for the student's course
+      const coreSubjects = await sql`
+        SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
+               ${class_name} as class_name
+        FROM subjects s
+        WHERE s.course_id = ${course_id} AND s.is_core = true AND s.is_active = true
+      `;
+
+      // Get elective subjects for the student's class
+      const electiveSubjects = await sql`
+        SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
+               ${class_name} as class_name
+        FROM class_subjects cs
+        JOIN subjects s ON cs.subject_id = s.id
+        WHERE cs.class_id = ${current_class_id} AND s.is_active = true
+      `;
+
+      const combined = [...coreSubjects, ...electiveSubjects];
+      combined.sort((a: any, b: any) => a.subject_name?.localeCompare(b.subject_name));
+      return combined;
     } catch (error) {
       console.error('Error fetching student subjects:', error);
       return [];
