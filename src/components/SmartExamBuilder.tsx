@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { aiService, ExtractedQuestion } from '../lib/aiService';
+import { extractTextFromFile } from '../lib/fileParser';
 
 interface SmartExamBuilderProps {
   onComplete: (questions: ExtractedQuestion[]) => void;
@@ -159,12 +160,35 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
         </button>
       </div>
 
-      <textarea
-        value={rawText}
-        onChange={e => setRawText(e.target.value)}
-        placeholder="1. What is the capital of France?\nA) London\nB) Paris\nC) Berlin\nAnswer: B\n\n2. The earth is flat.\nTrue or False?"
-        className="w-full h-64 p-4 border rounded-xl bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-school-green-500 transition mb-6 font-mono text-sm resize-none"
-      />
+        <div className="mb-4">
+          <label className="block text-sm font-bold text-gray-700 mb-2">Upload Exam File (PDF, DOCX, TXT)</label>
+          <input 
+            type="file" 
+            accept=".pdf,.docx,.txt"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setIsProcessing(true);
+              try {
+                const text = await extractTextFromFile(file);
+                setRawText(text);
+                toast.success('File loaded successfully! Review the text below.');
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to parse file');
+              } finally {
+                setIsProcessing(false);
+              }
+            }}
+            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-school-green-50 file:text-school-green-700 hover:file:bg-school-green-100 cursor-pointer"
+          />
+        </div>
+
+        <textarea
+          value={rawText}
+          onChange={e => setRawText(e.target.value)}
+          placeholder="1. What is the capital of France?\nA) London\nB) Paris\nC) Berlin\nAnswer: B\n\n2. The earth is flat.\nTrue or False?"
+          className="w-full h-64 p-4 border rounded-xl bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-school-green-500 transition mb-6 font-mono text-sm resize-none"
+        />
 
       <div className="flex justify-end gap-4">
         <button onClick={onCancel} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>
