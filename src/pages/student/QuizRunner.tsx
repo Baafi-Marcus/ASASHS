@@ -201,6 +201,12 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
     if (isSubmitting || !quiz || !attemptId) return;
     setIsSubmitting(true);
 
+    const dbCall = <T,>(promise: Promise<T>, label: string, ms = 15000): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`DB timeout: ${label}`)), ms))
+      ]);
+
     try {
       let totalScore = 0;
       const responses = [];
@@ -237,13 +243,13 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
       }
 
       // Submit responses sequentially to avoid Neon HTTP connection pool limits
-      for (const resp of responses) {
-        await db.submitQuizResponse(resp);
+      for (let i = 0; i < responses.length; i++) {
+        await dbCall(db.submitQuizResponse(responses[i]), `submitResponse #${i + 1}`);
       }
 
       const totalPoints = parseFloat(quiz.total_points) || responses.length;
       const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
-      await db.completeQuizAttempt(attemptId, totalScore, percentage, tabSwitches);
+      await dbCall(db.completeQuizAttempt(attemptId, totalScore, percentage, tabSwitches), 'completeAttempt');
 
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
@@ -253,8 +259,8 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
       setPhase('finished');
       toast.success('Assessment submitted successfully!');
     } catch (error) {
-      console.error('Failed to submit quiz:', error);
-      toast.error('Failed to submit quiz');
+      console.error('submitQuiz error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit quiz');
     } finally {
       setIsSubmitting(false);
     }
