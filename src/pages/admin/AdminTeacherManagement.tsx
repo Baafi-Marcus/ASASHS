@@ -93,8 +93,7 @@ export function AdminTeacherManagement() {
     department: '',
     position_rank: '',
   });
-
-  const totalSteps = 5; // Added one more step for subject assignment
+  const totalSteps = 1; // Simplified to 1 step since it's a Lite Registration
 
   useEffect(() => {
     fetchTeachers();
@@ -194,44 +193,6 @@ export function AdminTeacherManagement() {
     });
   };
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const renderStepIndicator = () => {
-    return (
-      <div className="flex justify-center mb-8">
-        {[...Array(totalSteps)].map((_, index) => (
-          <div key={index} className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === index + 1 
-                ? 'bg-school-green-600 text-white' 
-                : index + 1 < currentStep 
-                  ? 'bg-school-green-200 text-school-green-800' 
-                  : 'bg-gray-200 text-gray-500'
-            }`}>
-              {index + 1}
-            </div>
-            {index < totalSteps - 1 && (
-              <div className={`w-16 h-1 ${
-                index + 1 < currentStep 
-                  ? 'bg-school-green-200' 
-                  : 'bg-gray-200'
-              }`}></div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const renderStepContent = () => {
     return (
@@ -300,36 +261,20 @@ export function AdminTeacherManagement() {
   };
   const renderStepButtons = () => {
     return (
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-100">
         <button
           type="button"
-          onClick={prevStep}
-          disabled={currentStep === 1}
-          className={`px-6 py-3 rounded-lg font-medium ${
-            currentStep === 1
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-          }`}
+          onClick={() => setShowForm(false)}
+          className="px-6 py-3 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
         >
-          Previous
+          Cancel
         </button>
-        
-        {currentStep < totalSteps ? (
-          <button
-            type="button"
-            onClick={nextStep}
-            className="px-6 py-3 bg-school-green-600 text-white rounded-lg font-medium hover:bg-school-green-700"
-          >
-            Next
-          </button>
-        ) : (
-          <button
-            type="submit"
-            className="px-6 py-3 bg-school-green-600 text-white rounded-lg font-medium hover:bg-school-green-700"
-          >
-            Register Teacher
-          </button>
-        )}
+        <button
+          type="submit"
+          className="px-6 py-3 rounded-lg font-bold bg-school-green-600 text-white hover:bg-school-green-700 shadow-sm"
+        >
+          Register Teacher
+        </button>
       </div>
     );
   };
@@ -530,7 +475,6 @@ export function AdminTeacherManagement() {
             </div>
             
             <div className="p-6">
-              {renderStepIndicator()}
               
               <form onSubmit={handleSubmit}>
                 {renderStepContent()}

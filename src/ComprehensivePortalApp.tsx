@@ -40,7 +40,6 @@ import { AdminProfile } from './pages/admin/AdminProfile';
 import { StudentDashboard } from './pages/student/StudentDashboard';
 
 // Teacher Portal Components
-import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 
 function ComprehensivePortalApp() {
   const { user, signIn, signOut, loading } = useContext(AuthContext);

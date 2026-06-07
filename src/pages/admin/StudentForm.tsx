@@ -208,8 +208,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           type="text"
           value={formData.admission_number}
           onChange={(e) => handleInputChange('admission_number', e.target.value)}
-          required
-          placeholder="Enter ID"
+          placeholder="Leave empty to auto-generate"
           disabled={!!student}
         />
         
