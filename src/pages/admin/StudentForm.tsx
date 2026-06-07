@@ -179,8 +179,8 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         const result = await db.createStudent(studentData);
         
         const credentials = {
-          admissionNumber: formData.admission_number,
-          password: 'temp123' // TODO: Generate secure password
+          admissionNumber: result.student_id,
+          password: result.password
         };
         
         toast.success('Student registered successfully!');

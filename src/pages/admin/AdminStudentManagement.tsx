@@ -20,6 +20,11 @@ interface ClassItem {
   stream: string | null;
 }
 
+interface StudentCredentials {
+  admissionNumber: string;
+  password: string;
+}
+
 import { StudentBulkUpload } from './StudentBulkUpload';
 
 export function AdminStudentManagement() {
@@ -27,6 +32,7 @@ export function AdminStudentManagement() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [credentials, setCredentials] = useState<StudentCredentials | null>(null);
 
   useEffect(() => {
     fetchCoursesAndClasses();
@@ -50,11 +56,74 @@ export function AdminStudentManagement() {
     }
   };
 
-  const handleStudentRegistered = () => {
-    toast.success('Student(s) processed successfully!');
-    setActiveTab('list');
-    // Refresh the student list
-    window.location.reload();
+  const handleStudentRegistered = (creds?: StudentCredentials) => {
+    if (creds) {
+      setCredentials(creds);
+    } else {
+      toast.success('Student(s) processed successfully!');
+      setActiveTab('list');
+      window.location.reload();
+    }
+  };
+
+  // Credentials success modal
+  const renderCredentialsModal = () => {
+    if (!credentials) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+          <div className="bg-school-green-700 px-6 py-4 rounded-t-2xl">
+            <h2 className="text-xl font-bold text-white">Registration Successful!</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="bg-school-cream-50 p-4 rounded-lg border border-school-cream-300">
+              <h3 className="font-semibold text-gray-800 mb-3">Login Credentials</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Student ID:</label>
+                  <div className="bg-white p-3 rounded border border-school-cream-300 font-mono font-bold text-school-green-700 mt-1">
+                    {credentials.admissionNumber}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Password:</label>
+                  <div className="bg-white p-3 rounded border border-school-cream-300 font-mono font-bold text-school-green-700 mt-1">
+                    {credentials.password}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+              <p className="text-sm text-amber-800">
+                <strong>Important:</strong> The student must change this password on first login.
+                Please share these credentials securely with the student.
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Student ID: ${credentials.admissionNumber}\nPassword: ${credentials.password}`);
+                  toast.success('Credentials copied to clipboard!');
+                }}
+                className="flex-1 bg-school-green-600 text-white py-3 px-4 rounded-lg hover:bg-school-green-700 transition-colors font-medium"
+              >
+                Copy Credentials
+              </button>
+              <button
+                onClick={() => {
+                  setCredentials(null);
+                  setActiveTab('list');
+                  window.location.reload();
+                }}
+                className="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -67,6 +136,7 @@ export function AdminStudentManagement() {
 
   return (
     <div className="space-y-6">
+      {renderCredentialsModal()}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Student Management</h2>
