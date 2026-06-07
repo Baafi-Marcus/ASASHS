@@ -85,6 +85,7 @@ export const db = {
     
     const result = await sql`
       SELECT u.*, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
+             s.current_class_id,
              t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
              t.id as teacher_db_id
       FROM users u
@@ -107,7 +108,7 @@ export const db = {
     // Update last login
     await sql`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ${user.id}`;
     
-    return {
+      return {
       id: user.id,
       user_id: user.user_id,
       user_type: user.user_type,
@@ -122,7 +123,8 @@ export const db = {
       teacher_id: user.teacher_id,
       teacher_db_id: user.teacher_db_id,
       admission_number: user.admission_number,
-      staff_id: user.staff_id
+      staff_id: user.staff_id,
+      current_class_id: user.current_class_id
     };
   },
 

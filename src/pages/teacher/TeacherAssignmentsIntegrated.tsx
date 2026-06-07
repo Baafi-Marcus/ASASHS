@@ -430,7 +430,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                   value={formData.title}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   placeholder="Assignment title"
                 />
               </div>
@@ -442,7 +442,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   placeholder="Assignment description"
                 />
               </div>
@@ -455,7 +455,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={formData.class_id}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   >
                     <option value="">Select Class</option>
                     <option value="1">General Science 1A</option>
@@ -470,7 +470,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={formData.subject_id}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   >
                     <option value="">Select Subject</option>
                     <option value="1">Mathematics</option>
@@ -487,7 +487,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={formData.assignment_type_id}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   >
                     <option value="">Select Type</option>
                     {assignmentTypes.map((type) => (
@@ -506,7 +506,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={formData.due_date}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   />
                 </div>
                 
@@ -519,7 +519,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     onChange={handleInputChange}
                     min="0"
                     step="0.1"
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -561,7 +561,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                   value={uploadFormData.title}
                   onChange={handleUploadInputChange}
                   required
-                  className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   placeholder="Material title"
                 />
               </div>
@@ -573,7 +573,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                   value={uploadFormData.description}
                   onChange={handleUploadInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   placeholder="Material description"
                 />
               </div>
@@ -586,7 +586,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={uploadFormData.class_id}
                     onChange={handleUploadInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   >
                     <option value="">Select Class</option>
                     <option value="1">General Science 1A</option>
@@ -601,7 +601,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                     value={uploadFormData.subject_id}
                     onChange={handleUploadInputChange}
                     required
-                    className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                   >
                     <option value="">Select Subject</option>
                     <option value="1">Mathematics</option>
@@ -616,7 +616,7 @@ export const TeacherAssignmentsIntegrated: React.FC<TeacherAssignmentsIntegrated
                   name="material_type"
                   value={uploadFormData.material_type}
                   onChange={handleUploadInputChange}
-                  className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 text-gray-900 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
                 >
                   <option value="lesson_notes">Lesson Notes</option>
                   <option value="assignment">Assignment</option>

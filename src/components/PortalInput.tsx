@@ -66,7 +66,7 @@ export const PortalInput: React.FC<PortalInputProps> = ({
             onChange={onChange}
             required={required}
             disabled={disabled}
-            className={`${classes} py-3 px-4`}
+            className={`${classes} py-3 px-4 text-gray-900`}
           >
             {children}
           </select>

@@ -15,6 +15,7 @@ interface User {
   teacher_db_id?: number;
   admission_number?: string;
   staff_id?: string;
+  current_class_id?: number;
 }
 
 interface AuthContextProps {
