@@ -66,6 +66,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
     date_of_birth: '2005-01-01', // Default dummy DOB if not provided
     gender: 'Male', // Default to avoid constraint errors
     programme_id: '',
+    current_class_id: '',
     form: ''
   });
 
@@ -93,6 +94,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         date_of_birth: formatDateForInput(student.date_of_birth),
         gender: student.gender === 'Female' ? 'Female' : 'Male', // Strict enforcement
         programme_id: student.course_id?.toString() || '',
+        current_class_id: student.current_class_id?.toString() || '',
         form: '' 
       });
     }
@@ -130,7 +132,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         const studentData = {
           admission_number: formData.admission_number,
           programme_id: parseInt(formData.programme_id),
-          current_class_id: student.current_class_id || 1, // Keep existing class
+          current_class_id: formData.current_class_id ? parseInt(formData.current_class_id) : (classes.length > 0 ? classes[0].id : 1), 
           surname: formData.surname,
           other_names: formData.other_names,
           date_of_birth: formData.date_of_birth,
@@ -164,7 +166,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         const studentData = {
           admission_number: formData.admission_number,
           programme_id: parseInt(formData.programme_id),
-          current_class_id: 1, // Default class
+          current_class_id: formData.current_class_id ? parseInt(formData.current_class_id) : (classes.length > 0 ? classes[0].id : 1), 
           surname: formData.surname,
           other_names: formData.other_names,
           date_of_birth: formData.date_of_birth,
@@ -263,6 +265,23 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
             {programmes.map(programme => (
               <option key={programme.id} value={programme.id}>
                 {programme.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Current Class</label>
+          <select
+            value={formData.current_class_id}
+            onChange={(e) => handleInputChange('current_class_id', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            required
+          >
+            <option value="">Select Class</option>
+            {classes.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.class_name} (Form {c.form})
               </option>
             ))}
           </select>
