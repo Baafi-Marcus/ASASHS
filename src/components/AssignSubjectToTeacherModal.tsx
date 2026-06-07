@@ -16,14 +16,24 @@ interface Subject {
   id: number;
   name: string;
   code: string;
+  course_id: number | null;
   is_core: boolean;
 }
 
 interface Class {
   id: number;
   class_name: string;
+  course_id: number;
   form: number;
   stream: string | null;
+}
+
+interface ExistingAssignment {
+  id: number;
+  subject_id: number;
+  class_id: number;
+  subject_name: string;
+  class_name: string;
 }
 
 interface AssignSubjectToTeacherModalProps {
@@ -32,6 +42,7 @@ interface AssignSubjectToTeacherModalProps {
   teacher: Teacher;
   subjects: Subject[];
   classes: Class[];
+  existingAssignments?: ExistingAssignment[];
   onAssign: (subjectId: number, classId: number) => Promise<void>;
 }
 
@@ -41,17 +52,35 @@ export function AssignSubjectToTeacherModal({
   teacher, 
   subjects, 
   classes,
+  existingAssignments = [],
   onAssign
 }: AssignSubjectToTeacherModalProps) {
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const selectedSubject = subjects.find(s => s.id === parseInt(selectedSubjectId));
+
+  const filteredClasses = selectedSubject
+    ? selectedSubject.is_core
+      ? classes
+      : classes.filter(c => c.course_id === selectedSubject.course_id)
+    : classes;
+
+  const alreadyAssigned = existingAssignments.some(
+    a => a.subject_id === parseInt(selectedSubjectId) && a.class_id === parseInt(selectedClassId)
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedSubjectId || !selectedClassId) {
       toast.error('Please select both a subject and a class');
+      return;
+    }
+    
+    if (alreadyAssigned) {
+      toast.error('This subject is already assigned to this teacher for this class');
       return;
     }
     
@@ -83,6 +112,22 @@ export function AssignSubjectToTeacherModal({
               <p className="text-sm text-gray-600">{teacher.department}</p>
             </div>
             
+            {existingAssignments.length > 0 && (
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 className="text-sm font-semibold text-green-800 mb-2">Currently Assigned</h4>
+                <div className="space-y-1">
+                  {existingAssignments.map((a) => (
+                    <div key={a.id} className="text-sm text-green-700 flex items-center gap-2">
+                      <span>✓</span>
+                      <span className="font-medium">{a.subject_name}</span>
+                      <span>→</span>
+                      <span>{a.class_name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
               <select
@@ -109,7 +154,7 @@ export function AssignSubjectToTeacherModal({
                 required
               >
                 <option value="">Select Class</option>
-                {classes.map((classItem) => (
+                {filteredClasses.map((classItem) => (
                   <option key={classItem.id} value={classItem.id}>
                     {classItem.class_name} (Form {classItem.form}{classItem.stream ? ` ${classItem.stream}` : ''})
                   </option>

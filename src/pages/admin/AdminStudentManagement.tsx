@@ -15,6 +15,7 @@ interface Course {
 interface ClassItem {
   id: number;
   class_name: string;
+  course_id: number;
   form: number;
   stream: string | null;
 }

@@ -66,6 +66,7 @@ export function AdminTeacherManagement() {
   // Add state for subject assignment
   const [showSubjectAssignmentModal, setShowSubjectAssignmentModal] = useState(false);
   const [selectedTeacherForAssignment, setSelectedTeacherForAssignment] = useState<Teacher | null>(null);
+  const [teacherExistingAssignments, setTeacherExistingAssignments] = useState<any[]>([]);
 
   // Add state for teacher details modal
   const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
@@ -351,6 +352,13 @@ export function AdminTeacherManagement() {
   const handleAssignSubject = async (teacher: Teacher) => {
     // Fetch updated subjects and classes before opening the modal
     await fetchSubjectsAndClasses();
+    // Fetch existing assignments for this teacher
+    try {
+      const existing = await db.getTeacherSubjects(teacher.id);
+      setTeacherExistingAssignments(existing);
+    } catch {
+      setTeacherExistingAssignments([]);
+    }
     setSelectedTeacherForAssignment(teacher);
     setShowSubjectAssignmentModal(true);
   };
@@ -528,19 +536,25 @@ export function AdminTeacherManagement() {
           teacher={selectedTeacherForAssignment}
           subjects={subjects}
           classes={classes}
+          existingAssignments={teacherExistingAssignments}
           isOpen={showSubjectAssignmentModal}
           onClose={() => {
             setShowSubjectAssignmentModal(false);
             setSelectedTeacherForAssignment(null);
+            setTeacherExistingAssignments([]);
           }}
           onAssign={async (subjectId: number, classId: number) => {
             try {
-              await db.assignSubjectToTeacher(
+              const result = await db.assignSubjectToTeacher(
                 selectedTeacherForAssignment.id,
                 subjectId,
                 classId
               );
-              toast.success('Subject assigned to teacher successfully!');
+              if (result && result.alreadyAssigned) {
+                toast('This assignment already exists', { icon: 'ℹ️' });
+              } else {
+                toast.success('Subject assigned to teacher successfully!');
+              }
               setShowSubjectAssignmentModal(false);
               setSelectedTeacherForAssignment(null);
               fetchData(); // Refresh the teacher list

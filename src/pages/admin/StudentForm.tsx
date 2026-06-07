@@ -13,6 +13,7 @@ interface Programme {
 interface ClassItem {
   id: number;
   class_name: string;
+  course_id: number;
   form: number;
   stream: string | null;
 }
@@ -254,10 +255,31 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         </div>
         
         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Form</label>
+          <select
+            value={formData.form}
+            onChange={(e) => {
+              handleInputChange('form', e.target.value);
+              handleInputChange('current_class_id', '');
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            required
+          >
+            <option value="">Select Form</option>
+            <option value="1">Form 1</option>
+            <option value="2">Form 2</option>
+            <option value="3">Form 3</option>
+          </select>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programme</label>
           <select
             value={formData.programme_id}
-            onChange={(e) => handleInputChange('programme_id', e.target.value)}
+            onChange={(e) => {
+              handleInputChange('programme_id', e.target.value);
+              handleInputChange('current_class_id', '');
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
             required
           >
@@ -279,12 +301,20 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
             required
           >
             <option value="">Select Class</option>
-            {classes.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.class_name} (Form {c.form})
-              </option>
-            ))}
+            {classes
+              .filter(c => 
+                (!formData.form || c.form === parseInt(formData.form)) &&
+                (!formData.programme_id || c.course_id === parseInt(formData.programme_id))
+              )
+              .map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.class_name}
+                </option>
+              ))}
           </select>
+          {(!formData.form || !formData.programme_id) && (
+            <p className="text-xs text-gray-500 mt-1">Select Form and Programme first</p>
+          )}
         </div>
       </div>
 

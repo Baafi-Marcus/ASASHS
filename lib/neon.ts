@@ -1192,8 +1192,13 @@ export const db = {
       const result = await sql`
         INSERT INTO teacher_subjects (teacher_id, subject_id, class_id, academic_year)
         VALUES (${teacherId}, ${subjectId}, ${classId}, ${academicYear})
+        ON CONFLICT (teacher_id, subject_id, class_id, academic_year) DO NOTHING
         RETURNING *
       `;
+      
+      if (result.length === 0) {
+        return { alreadyAssigned: true };
+      }
       
       return result[0];
     } catch (error) {

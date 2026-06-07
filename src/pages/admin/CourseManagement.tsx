@@ -234,36 +234,9 @@ export function CourseManagement() {
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Auto-generate stream if not provided
-      let stream = classFormData.stream;
-      if (!stream) {
-        // Get the next available stream letter for this course and form
-        const classesResult = await db.getClasses();
-        const sameCourseFormClasses = classesResult.filter(
-          (c: any) => c.course_id === parseInt(classFormData.course_id) && c.form === classFormData.form && c.semester === classFormData.semester
-        );
-        
-        if (sameCourseFormClasses.length > 0) {
-          // Get the highest stream letter and increment
-          const streams = sameCourseFormClasses
-            .map((c: any) => c.stream)
-            .filter((s: string) => s)
-            .sort();
-          
-          const lastStream = streams[streams.length - 1];
-          if (lastStream) {
-            stream = String.fromCharCode(lastStream.charCodeAt(0) + 1);
-          } else {
-            stream = 'A';
-          }
-        } else {
-          stream = 'A';
-        }
-      }
-      
       await db.createClass({
         ...classFormData,
-        stream,
+        stream: classFormData.stream || null,
         course_id: parseInt(classFormData.course_id)
       });
       toast.success('Class created successfully!');

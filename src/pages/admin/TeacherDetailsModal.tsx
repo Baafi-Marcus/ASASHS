@@ -55,7 +55,16 @@ export function TeacherDetailsModal({
   isEditing,
   setIsEditing
 }: TeacherDetailsModalProps) {
+interface TeacherSubjectAssignment {
+  id: number;
+  subject_name: string;
+  class_name: string;
+  form: number;
+  stream: string;
+}
+
   const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [assignments, setAssignments] = useState<TeacherSubjectAssignment[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Teacher>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +72,7 @@ export function TeacherDetailsModal({
   useEffect(() => {
     if (isOpen && teacherId) {
       fetchTeacherDetails();
+      fetchTeacherAssignments();
     }
   }, [isOpen, teacherId]);
 
@@ -84,6 +94,16 @@ export function TeacherDetailsModal({
       onClose();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeacherAssignments = async () => {
+    try {
+      const result = await db.getTeacherSubjects(teacherId);
+      setAssignments(result);
+    } catch (error) {
+      console.error('Failed to fetch teacher assignments:', error);
+      setAssignments([]);
     }
   };
 
@@ -261,6 +281,23 @@ export function TeacherDetailsModal({
                         <p>{teacher.emergency_phone || 'N/A'}</p>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-3">Assigned Subjects & Classes</h3>
+                    {assignments.length > 0 ? (
+                      <div className="space-y-2">
+                        {assignments.map((a) => (
+                          <div key={a.id} className="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+                            <span className="font-medium text-green-800">{a.subject_name}</span>
+                            <span className="text-green-600 mx-2">→</span>
+                            <span className="text-green-800">{a.class_name} (Form {a.form}{a.stream ? ` ${a.stream}` : ''})</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No subjects assigned yet.</p>
+                    )}
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
