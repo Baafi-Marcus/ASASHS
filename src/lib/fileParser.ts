@@ -1,11 +1,9 @@
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure the worker for pdfjs using Vite's URL resolution
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Completely bypass the external web worker. 
+// This forces PDFJS to parse on the main thread, perfectly avoiding all Vite bundle/CORS errors in dev and production.
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
 export const extractTextFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -55,8 +53,8 @@ const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => 
     }
     
     return fullText;
-  } catch (error) {
+  } catch (error: any) {
     console.error('PDF parsing error:', error);
-    throw new Error('Could not extract text from PDF');
+    throw new Error(`PDF Error: ${error?.message || 'Unknown parsing error'}`);
   }
 };
