@@ -386,6 +386,44 @@ export const db = {
     };
   },
 
+  async resetStudentPassword(studentDbId: number) {
+    try {
+      const tempPassword = generateRandomPassword(8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      const result = await sql`
+        UPDATE users 
+        SET password_hash = ${hashedPassword}, 
+            temp_password = ${tempPassword},
+            must_change_password = true,
+            updated_at = CURRENT_TIMESTAMP
+        FROM students
+        WHERE students.id = ${studentDbId} AND users.id = students.user_id
+        RETURNING users.user_id, users.temp_password
+      `;
+
+      if (result.length === 0) {
+        const studentResult = await sql`SELECT student_id FROM students WHERE id = ${studentDbId}`;
+        if (studentResult.length === 0) throw new Error('Student not found');
+        const studentId = studentResult[0].student_id;
+        await sql`
+          UPDATE users 
+          SET password_hash = ${hashedPassword}, 
+              temp_password = ${tempPassword},
+              must_change_password = true,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE user_id = ${studentId}
+        `;
+      }
+
+      return { student_id: '', password: tempPassword };
+    } catch (error) {
+      console.error('Error resetting student password:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      throw new Error(`Failed to reset password: ${errorMessage}`);
+    }
+  },
+
   async getStudentById(studentId: number) {
     try {
       const result = await sql`

@@ -296,6 +296,26 @@ export function StudentDetailsModal({
                         Close
                       </PortalButton>
                       <PortalButton
+                        onClick={() => {
+                          const creds = prompt('Enter new password for student (leave empty to generate):');
+                          if (creds === null) return;
+                          const reset = async () => {
+                            try {
+                              const result = await db.resetStudentPassword(studentId);
+                              const password = creds || result.password;
+                              alert(`Student ID: ${student.student_id}\nPassword: ${password}\n\nSave these credentials. The student must change password on first login.`);
+                              toast.success('Password reset successfully');
+                            } catch (e) {
+                              toast.error('Failed to reset password');
+                            }
+                          };
+                          reset();
+                        }}
+                        variant="secondary"
+                      >
+                        Reset Password
+                      </PortalButton>
+                      <PortalButton
                         onClick={() => setIsEditing(true)}
                         variant="primary"
                       >

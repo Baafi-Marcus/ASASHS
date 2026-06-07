@@ -327,6 +327,24 @@ export function StudentList() {
                         >
                           ✏️
                         </button>
+                        <button
+                          onClick={async () => {
+                            const creds = prompt('Enter new password (leave empty to generate):');
+                            if (creds === null) return;
+                            try {
+                              const result = await db.resetStudentPassword(s.id);
+                              const password = creds || result.password;
+                              alert(`Student ID: ${s.student_id}\nPassword: ${password}\n\nSave these credentials. The student must change password on first login.`);
+                              toast.success('Password reset successfully');
+                            } catch (e) {
+                              toast.error('Failed to reset password');
+                            }
+                          }}
+                          className="text-purple-600 hover:text-purple-800"
+                          title="View/Reset Password"
+                        >
+                          🔑
+                        </button>
                         {s.is_active ? (
                           <button
                             onClick={() => handleDeactivateStudent(s.id)}
