@@ -1,9 +1,13 @@
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Use the exact local worker file placed in the public directory
-// This guarantees it works on Vercel without CDN blocks or Vite bundling errors
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+// Explicitly instantiate the Web Worker using Vite's native worker syntax.
+// This guarantees Vite fully bundles the worker and prevents pdf.js from dynamically fetching from a CDN fallback.
+const pdfWorker = new Worker(
+  new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url),
+  { type: 'module' }
+);
+pdfjsLib.GlobalWorkerOptions.workerPort = pdfWorker;
 
 export const extractTextFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
