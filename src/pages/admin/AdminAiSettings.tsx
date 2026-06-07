@@ -115,10 +115,11 @@ export function AdminAiSettings() {
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
-                <select value={formData.provider} onChange={e => setFormData({...formData, provider: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-school-green-500 focus:ring-2 focus:ring-school-green-200 outline-none">
-                  <option value="gemini">Google Gemini (Gemini-1.5-Flash)</option>
-                  <option value="openai">OpenAI (GPT-4o-Mini)</option>
-                </select>
+                  <select value={formData.provider} onChange={e => setFormData({...formData, provider: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-school-green-500 focus:ring-2 focus:ring-school-green-200 outline-none">
+                    <option value="gemini">Google Gemini (Gemini-1.5-Flash)</option>
+                    <option value="openai">OpenAI (GPT-4o-Mini)</option>
+                    <option value="github">GitHub Models (GPT-4o)</option>
+                  </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>

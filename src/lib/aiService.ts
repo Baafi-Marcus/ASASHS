@@ -30,6 +30,8 @@ export const aiService = {
           return await this.callGemini(key.key_value, rawText);
         } else if (key.provider === 'openai') {
           return await this.callOpenAI(key.key_value, rawText);
+        } else if (key.provider === 'github') {
+          return await this.callGithub(key.key_value, rawText);
         }
       } catch (error) {
         console.error(`AI extraction failed for provider ${key.provider}:`, error);
@@ -102,6 +104,42 @@ export const aiService = {
     if (parsed.questions && Array.isArray(parsed.questions)) return parsed.questions;
     
     return parsed;
+  },
+
+  async callGithub(apiKey: string, text: string): Promise<ExtractedQuestion[]> {
+    const prompt = this.getPromptSystemInstructions();
+    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: text }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`GitHub Models API Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    let resultText = data.choices[0].message.content;
+    
+    // Clean up markdown block if present
+    if (resultText.startsWith('```json')) {
+      resultText = resultText.replace(/```json\n?/, '').replace(/```\n?$/, '');
+    } else if (resultText.startsWith('```')) {
+      resultText = resultText.replace(/```\n?/, '').replace(/```\n?$/, '');
+    }
+
+    const parsed = JSON.parse(resultText.trim());
+    
+    return parsed.questions ? parsed.questions : parsed;
   },
 
   getPromptSystemInstructions() {
