@@ -2644,6 +2644,7 @@ export const db = {
     exam_type: string;
     subject_id: number;
     due_date: string;
+    duration_minutes?: number;
     max_score: number;
     has_obj: boolean;
     has_theory: boolean;
@@ -2711,12 +2712,12 @@ export const db = {
       const result = await sql`
         INSERT INTO assignments (
           title, description, exam_type, is_general_exam, subject_id, class_id, 
-          due_date, max_score, assignment_type_id, is_active,
+          due_date, duration_minutes, max_score, assignment_type_id, is_active,
           has_obj, has_theory, theory_content_url, obj_answer_key, quiz_id,
           shuffle_questions, shuffle_options, show_results_immediately, allow_late_grading, display_mode
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.exam_type}, true,
-          ${examData.subject_id}, ${classId}, ${examData.due_date}, ${examData.max_score}, 
+          ${examData.subject_id}, ${classId}, ${examData.due_date}, ${examData.duration_minutes || 60}, ${examData.max_score}, 
           ${assignmentTypeId}, true,
           ${examData.has_obj}, ${examData.has_theory}, ${examData.theory_content_url || null}, 
           ${examData.obj_answer_key || null}, ${quizId},

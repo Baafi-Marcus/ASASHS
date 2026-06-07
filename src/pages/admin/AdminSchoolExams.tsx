@@ -17,6 +17,7 @@ export function AdminSchoolExams() {
     exam_type: 'End of Semester',
     subject_id: '',
     due_date: '',
+    duration_minutes: 60,
     max_score: 100,
     has_obj: true,
     has_theory: false,
@@ -93,6 +94,7 @@ export function AdminSchoolExams() {
         exam_type: formData.exam_type,
         subject_id: parseInt(formData.subject_id),
         due_date: formData.due_date,
+        duration_minutes: Number(formData.duration_minutes),
         max_score: Number(formData.max_score),
         has_obj: formData.has_obj,
         has_theory: formData.has_theory,
@@ -185,11 +187,22 @@ export function AdminSchoolExams() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date & Time *</label>
                 <input 
                   type="datetime-local" 
                   value={formData.due_date} 
                   onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-xl"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
+                <input 
+                  type="number" 
+                  min="1"
+                  value={formData.duration_minutes} 
+                  onChange={(e) => setFormData({...formData, duration_minutes: Number(e.target.value)})}
                   className="w-full px-4 py-2 border rounded-xl"
                   required
                 />
@@ -387,7 +400,7 @@ export function AdminSchoolExams() {
                   <th className="px-4 py-3">Structure</th>
                   <th className="px-4 py-3">Subject</th>
                   <th className="px-4 py-3">Class</th>
-                  <th className="px-4 py-3">Due Date</th>
+                  <th className="px-4 py-3">Start Time & Duration</th>
                 </tr>
               </thead>
               <tbody>
@@ -407,7 +420,10 @@ export function AdminSchoolExams() {
                     </td>
                     <td className="px-4 py-3">{exam.subject_name}</td>
                     <td className="px-4 py-3">{exam.class_name} (Form {exam.form})</td>
-                    <td className="px-4 py-3">{new Date(exam.due_date).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
+                    </td>
                   </tr>
                 ))}
                 {exams.length === 0 && (
