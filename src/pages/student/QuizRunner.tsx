@@ -25,6 +25,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const [result, setResult] = useState<any>(null);
   const [tabSwitches, setTabSwitches] = useState(0);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   useEffect(() => {
     fetchQuiz();
@@ -262,6 +263,31 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  // Custom submit confirm modal (avoids window.confirm which exits fullscreen)
+  if (showSubmitConfirm) {
+    return (
+      <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center space-y-6">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">Submit Assessment?</h3>
+          <p className="text-gray-500">Are you sure you want to submit your quiz? This action cannot be undone.</p>
+          <div className="flex gap-3 justify-center">
+            <PortalButton variant="secondary" onClick={() => setShowSubmitConfirm(false)}>
+              Cancel
+            </PortalButton>
+            <PortalButton onClick={() => { setShowSubmitConfirm(false); submitQuiz(); }}>
+              Submit
+            </PortalButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-school-cream-50">
@@ -388,7 +414,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
               <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
                 Back to Editing
               </PortalButton>
-              <PortalButton onClick={() => { if (window.confirm('Are you sure you want to submit your quiz?')) submitQuiz(); }} disabled={isSubmitting}>
+              <PortalButton onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting}>
                 {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
               </PortalButton>
             </div>
@@ -433,7 +459,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
             <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
               Back to Editing
             </PortalButton>
-            <PortalButton onClick={() => { if (window.confirm('Are you sure you want to submit your quiz?')) submitQuiz(); }} disabled={isSubmitting}>
+            <PortalButton onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
             </PortalButton>
           </div>
