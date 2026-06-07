@@ -115,7 +115,7 @@ export const db = {
         ? `${user.student_surname}, ${user.student_other_names}`
         : user.user_type === 'teacher'
         ? `${user.teacher_surname}, ${user.teacher_other_names}`
-        : 'Administrator',
+        : (user.full_name || 'Administrator'),
       role: user.user_type,
       student_id: user.student_id,
       teacher_id: user.teacher_id,
