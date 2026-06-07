@@ -42,6 +42,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     pendingGrades: 0,
     upcomingExams: 0
   });
+  const [assignedClasses, setAssignedClasses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +55,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       
       const teacherSubjectsResult = await db.getTeacherSubjects(teacher.teacherDbId);
       const teacherSubjects = Array.isArray(teacherSubjectsResult) ? teacherSubjectsResult : [];
+      
+      // Populate assigned class names for display
+      const classMap = new Map<number, string>();
+      teacherSubjects.forEach((s: any) => {
+        const cid = Number(s?.class_id);
+        if (!isNaN(cid) && s?.class_name) {
+          classMap.set(cid, s.class_name);
+        }
+      });
+      setAssignedClasses(Array.from(classMap.values()));
       
       // Get unique class IDs
       const classIdSet = new Set<number>();
@@ -150,7 +161,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               </div>
               <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
                 <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Assigned Classes</span>
-                <div className="font-bold text-lg">{teacher?.classes?.length || 0}</div>
+                <div className="font-bold text-lg">{assignedClasses.length || 0}</div>
+                {assignedClasses.length > 0 && (
+                  <div className="text-xs text-school-green-200 mt-1">{assignedClasses.join(', ')}</div>
+                )}
               </div>
             </div>
           </div>

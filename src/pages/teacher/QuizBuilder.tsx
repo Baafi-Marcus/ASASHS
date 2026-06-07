@@ -175,7 +175,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
               label="Select Class"
               as="select"
               value={quizInfo.class_id}
-              onChange={e => setQuizInfo({ ...quizInfo, class_id: e.target.value })}
+              onChange={e => setQuizInfo({ ...quizInfo, class_id: e.target.value, subject_id: '' })}
             >
               <option value="">Select Class</option>
               {classes.map(c => (
@@ -276,6 +276,17 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                         {idx + 1}
                       </span>
                       <span className="text-xs font-bold uppercase text-gray-400">{q.question_type}</span>
+                      <div className="ml-auto flex items-center space-x-1">
+                        <span className="text-xs text-gray-400">Points:</span>
+                        <input
+                          type="number"
+                          min="0.5"
+                          step="0.5"
+                          className="w-16 px-2 py-1 border rounded text-sm font-bold text-center"
+                          value={q.points || 1}
+                          onChange={e => updateQuestion(idx, { ...q, points: parseFloat(e.target.value) || 1 })}
+                        />
+                      </div>
                     </div>
                     <textarea
                       className="w-full p-2 border-b font-medium focus:outline-none focus:border-school-green-500"
