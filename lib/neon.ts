@@ -2578,7 +2578,7 @@ export const db = {
   async getSubAdmins() {
     checkDatabaseConfig();
     return await sql`
-      SELECT id, user_id, full_name, created_at 
+      SELECT id, user_id, full_name, is_active, created_at 
       FROM users 
       WHERE user_type = 'admin' AND user_id != 'ADMIN001'
       ORDER BY created_at DESC
@@ -2608,6 +2608,30 @@ export const db = {
     // Prevent deleting ADMIN001
     await sql`
       DELETE FROM users 
+      WHERE id = ${id} AND user_id != 'ADMIN001' AND user_type = 'admin'
+    `;
+    return true;
+  },
+
+  async resetSubAdminPassword(id: number) {
+    checkDatabaseConfig();
+    const tempPassword = 'admin' + Math.floor(100 + Math.random() * 900);
+    const hash = await bcrypt.hash(tempPassword, 10);
+    
+    const result = await sql`
+      UPDATE users 
+      SET password_hash = ${hash}, temp_password = ${tempPassword}, must_change_password = true
+      WHERE id = ${id} AND user_id != 'ADMIN001' AND user_type = 'admin'
+      RETURNING user_id, temp_password
+    `;
+    return result[0];
+  },
+
+  async toggleSubAdminStatus(id: number) {
+    checkDatabaseConfig();
+    await sql`
+      UPDATE users 
+      SET is_active = NOT is_active
       WHERE id = ${id} AND user_id != 'ADMIN001' AND user_type = 'admin'
     `;
     return true;
