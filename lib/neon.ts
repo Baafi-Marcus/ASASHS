@@ -2679,11 +2679,27 @@ export const db = {
   },
 
   async completeQuizAttempt(attemptId: number, score: number, percentage: number, tabSwitches: number = 0) {
-    await sql`
-      UPDATE quiz_attempts 
-      SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
-      WHERE id = ${attemptId}
-    `;
+    try {
+      await sql`
+        UPDATE quiz_attempts 
+        SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
+        WHERE id = ${attemptId}
+      `;
+    } catch (e: any) {
+      // If percentage column is missing, add it and retry
+      if (String(e?.message || '').includes('column "percentage" of relation "quiz_attempts" does not exist')) {
+        try {
+          await sql`ALTER TABLE quiz_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5,2) DEFAULT 0`;
+        } catch {}
+        await sql`
+          UPDATE quiz_attempts 
+          SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
+          WHERE id = ${attemptId}
+        `;
+      } else {
+        throw e;
+      }
+    }
   },
 
   async getDetailedQuizAttempts(quizId: number) {
