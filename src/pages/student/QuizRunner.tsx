@@ -10,18 +10,20 @@ interface QuizRunnerProps {
   onClose: () => void;
 }
 
+type QuizPhase = 'cover' | 'in-progress' | 'review' | 'finished';
+
 export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
   const [quiz, setQuiz] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isStarting, setIsStarting] = useState(false); // For Cover Page
+  const [phase, setPhase] = useState<QuizPhase>('cover');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [blocked, setBlocked] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuiz();
@@ -29,28 +31,24 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
 
   // Cheating Detection: Tab Switch
   useEffect(() => {
-    if (!isStarting && !isFinished && attemptId) {
+    if (phase === 'in-progress' && attemptId) {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
           setTabSwitches(prev => {
             const newVal = prev + 1;
-            toast.error(`⚠️ WARNING: Tab switch detected! (${newVal}) This incident is being logged. Stay on this page.`, { 
-              duration: 5000,
-              icon: '🚨' 
-            });
+            toast.error(`WARNING: Tab switch detected! (${newVal}) Stay on this page.`, { duration: 5000 });
             return newVal;
           });
         }
       };
-
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
-  }, [isStarting, isFinished, attemptId]);
+  }, [phase, attemptId]);
 
   // Timer logic
   useEffect(() => {
-    if (!isStarting && timeLeft > 0 && !isFinished) {
+    if (phase === 'in-progress' && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -62,29 +60,87 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [timeLeft, isFinished, isStarting]);
+  }, [timeLeft, phase]);
+
+  // Full window: hide body scrollbar when exam is active
+  useEffect(() => {
+    if (phase === 'in-progress' || phase === 'review') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [phase]);
 
   const fetchQuiz = async () => {
     setLoading(true);
     try {
       const quizData = await db.getQuizById(quizId);
       if (!quizData) throw new Error('Quiz not found');
-      
-      // Handle Shuffling
-      if (quizData.shuffle_questions) {
-        quizData.questions.sort(() => Math.random() - 0.5);
+
+      // Check fixed schedule if due_date is set
+      if (quizData.due_date) {
+        const now = new Date();
+        const startTime = new Date(quizData.due_date);
+        const durationMs = (quizData.duration_minutes || 60) * 60 * 1000;
+        const endTime = new Date(startTime.getTime() + durationMs);
+
+        if (now < startTime) {
+          setBlocked(`This exam starts at ${startTime.toLocaleString()}. Please wait until then.`);
+          setQuiz(quizData);
+          setLoading(false);
+          return;
+        }
+        if (now > endTime) {
+          setBlocked('This exam has ended. It is no longer available.');
+          setQuiz(quizData);
+          setLoading(false);
+          return;
+        }
+        // Time window: use fixed duration instead of time_limit
+        const remainingSeconds = Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 1000));
+        setTimeLeft(remainingSeconds);
+        quizData._useFixedSchedule = true;
+      } else {
+        setTimeLeft(quizData.time_limit * 60);
       }
-      
+
+      // Group-aware shuffling
+      if (quizData.shuffle_questions && quizData.questions) {
+        const groups: Record<string, any[]> = {};
+        quizData.questions.forEach((q: any) => {
+          const gid = String(q.group_id || 0);
+          if (!groups[gid]) groups[gid] = [];
+          groups[gid].push(q);
+        });
+        const groupKeys = Object.keys(groups);
+        // shuffle the groups themselves
+        for (let i = groupKeys.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [groupKeys[i], groupKeys[j]] = [groupKeys[j], groupKeys[i]];
+        }
+        const shuffled: any[] = [];
+        for (const key of groupKeys) {
+          const groupQuestions = [...groups[key]];
+          // keep order within each group stable so follow-ups stay with parent
+          shuffled.push(...groupQuestions);
+        }
+        quizData.questions = shuffled;
+      }
+
       if (quizData.shuffle_options) {
         quizData.questions.forEach((q: any) => {
           if (q.options && Array.isArray(q.options)) {
-            q.options.sort(() => Math.random() - 0.5);
+            for (let i = q.options.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
+            }
           }
         });
       }
 
       setQuiz(quizData);
-      setIsStarting(true); // Start with cover page
+      setPhase('cover');
       setLoading(false);
     } catch (error) {
       console.error('Failed to load quiz:', error);
@@ -95,17 +151,14 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
 
   const handleStartQuiz = async () => {
     try {
-      // 1. Fullscreen
+      document.body.style.overflow = 'hidden';
       if (document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen();
+        await document.documentElement.requestFullscreen().catch(() => {});
       }
 
-      // 2. Start Attempt in DB
       const newAttemptId = await db.startQuizAttempt(studentId, quizId);
-      
       setAttemptId(newAttemptId);
-      setTimeLeft(quiz.time_limit * 60);
-      setIsStarting(false);
+      setPhase('in-progress');
       toast.success('Quiz started! Good luck.');
     } catch (error) {
       console.error('Failed to start quiz attempt:', error);
@@ -114,18 +167,17 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
   };
 
   const handleAutoSubmit = () => {
-    if (!isFinished) {
+    if (phase !== 'finished') {
       toast.error('Time is up! Submitting your quiz automatically...', { duration: 5000 });
       submitQuiz();
     }
   };
 
-  const submitQuiz = async () => {
+  const submitQuiz = useCallback(async () => {
     if (isSubmitting || !quiz || !attemptId) return;
     setIsSubmitting(true);
 
     try {
-      // Exit fullscreen if active
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
@@ -139,22 +191,26 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
         let pointsEarned = 0;
 
         if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
-          const selectedOption = question.options.find((o: any) => o.option_text === studentAnswer);
+          const opts = question.options || [];
+          const selectedOption = opts.find((o: any) => o.option_text === studentAnswer);
           isCorrect = selectedOption?.is_correct || false;
         } else if (question.question_type === 'short_answer') {
-          const correctVariations = question.correct_answers.map((a: any) => a.answer_text.toLowerCase().trim());
+          const correctVariations = (question.correct_answers || []).map((a: any) => {
+            const text = typeof a === 'string' ? a : (a.answer_text || '');
+            return text.toLowerCase().trim();
+          });
           isCorrect = correctVariations.includes(studentAnswer.toLowerCase());
         }
 
         if (isCorrect) {
-          pointsEarned = parseFloat(question.points);
+          pointsEarned = parseFloat(question.points) || 1;
           totalScore += pointsEarned;
         }
 
         responses.push({
           attempt_id: attemptId,
           question_id: question.id,
-          response_text: studentAnswer,
+          response_text: studentAnswer || '(no answer)',
           is_correct: isCorrect,
           points_earned: pointsEarned
         });
@@ -164,11 +220,12 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
         await db.submitQuizResponse(resp);
       }
 
-      const percentage = (totalScore / quiz.total_points) * 100;
+      const totalPoints = parseFloat(quiz.total_points) || responses.length;
+      const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
       await db.completeQuizAttempt(attemptId, totalScore, percentage, tabSwitches);
 
-      setResult({ score: totalScore, percentage, totalPoints: quiz.total_points });
-      setIsFinished(true);
+      setResult({ score: totalScore, percentage, totalPoints });
+      setPhase('finished');
       toast.success('Assessment submitted successfully!');
     } catch (error) {
       console.error('Failed to submit quiz:', error);
@@ -176,7 +233,7 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, quiz, attemptId, answers, tabSwitches]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -192,15 +249,35 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     );
   }
 
+  // BLOCKED PAGE (before start / after end)
+  if (blocked) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <PortalCard className="max-w-lg w-full shadow-2xl">
+          <div className="p-8 text-center space-y-6">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">{quiz?.title || 'Exam'}</h2>
+            <p className="text-gray-600">{blocked}</p>
+            <PortalButton variant="secondary" onClick={onClose}>Return to Dashboard</PortalButton>
+          </div>
+        </PortalCard>
+      </div>
+    );
+  }
+
   // COVER PAGE
-  if (isStarting) {
+  if (phase === 'cover') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <PortalCard className="max-w-2xl w-full shadow-2xl">
           <div className="p-8 space-y-8">
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{quiz.title}</h1>
-              <p className="text-school-green-600 font-bold">{quiz.subject_name} | {quiz.class_name}</p>
+              <p className="text-school-green-600 font-bold">{quiz.subject_name || ''}</p>
             </div>
 
             <div className="bg-amber-50 border-l-4 border-amber-400 p-6 space-y-4 rounded-r-xl">
@@ -208,34 +285,34 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                Examination Rules & instructions
+                Examination Rules & Instructions
               </h3>
               <div className="text-amber-900 text-sm whitespace-pre-wrap leading-relaxed">
-                {quiz.instructions || "No specific instructions provided. Good luck!"}
+                {quiz.instructions || "No specific instructions provided."}
               </div>
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-amber-200">
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-amber-700">Time Limit</div>
-                  <div className="font-bold">{quiz.time_limit} Minutes</div>
+                  <div className="text-[10px] uppercase font-bold text-amber-700">Duration</div>
+                  <div className="font-bold">{quiz.duration_minutes || quiz.time_limit} Minutes</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-amber-700">Total Questions</div>
-                  <div className="font-bold">{quiz.questions.length}</div>
+                  <div className="text-[10px] uppercase font-bold text-amber-700">Questions</div>
+                  <div className="font-bold">{quiz.questions?.length || 0}</div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="text-xs text-gray-500 text-center italic">
-                By clicking "Start Assessment", you agree to follow the rules above. The browser will enter fullscreen mode.
+                By clicking "Start Assessment", the browser will enter fullscreen mode and tab switching will be logged.
               </div>
-              <PortalButton 
-                className="w-full py-4 text-lg font-bold shadow-lg shadow-school-green-100" 
+              <PortalButton
+                className="w-full py-4 text-lg font-bold shadow-lg shadow-school-green-100"
                 onClick={handleStartQuiz}
               >
                 Start Assessment
               </PortalButton>
-              <button 
+              <button
                 onClick={onClose}
                 className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium"
               >
@@ -248,60 +325,136 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     );
   }
 
-  if (isFinished) {
+  // FINISHED / RESULT PAGE
+  if (phase === 'finished') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 animate-in fade-in zoom-in duration-500">
-        <div className={`w-24 h-24 rounded-full flex items-center justify-center ${result.percentage >= 50 ? 'bg-school-green-100 text-school-green-600' : 'bg-red-100 text-red-600'}`}>
-          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={result.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
-          </svg>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
+        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-lg w-full text-center space-y-6">
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto ${result?.percentage >= 50 ? 'bg-school-green-100 text-school-green-600' : 'bg-red-100 text-red-600'}`}>
+            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={result?.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
+            </svg>
+          </div>
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-gray-900">Assessment Completed!</h2>
+            <p className="text-gray-500">You scored {result?.score} out of {result?.totalPoints}</p>
+            <div className="text-5xl font-black text-school-green-600">{Math.round(result?.percentage || 0)}%</div>
+            {tabSwitches > 0 && (
+              <div className="text-xs text-red-500 font-bold uppercase py-1 px-3 bg-red-50 rounded-full inline-block">
+                {tabSwitches} TAB SWITCHES LOGGED
+              </div>
+            )}
+          </div>
+          <PortalButton onClick={onClose} variant="secondary" className="w-full">Close and Return</PortalButton>
         </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-gray-900">Assessment Completed!</h2>
-          <p className="text-gray-500">You scored {result.score} out of {result.totalPoints}</p>
-          <div className="text-5xl font-black text-school-green-600">{Math.round(result.percentage)}%</div>
-          {tabSwitches > 0 && (
-             <div className="text-xs text-red-500 font-bold uppercase py-1 px-3 bg-red-50 rounded-full inline-block">
-               {tabSwitches} TAB SWITCHES LOGGED
-             </div>
-          )}
-        </div>
-        <PortalButton onClick={onClose} variant="secondary">Close and Return</PortalButton>
       </div>
     );
   }
+
+  // REVIEW PAGE (before final submission)
+  if (phase === 'review') {
+    const answeredCount = quiz.questions.filter((q: any) => !!answers[q.id]?.trim()).length;
+
+    return (
+      <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
+          <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Review Your Answers</h2>
+              <p className="text-gray-500">{answeredCount} of {quiz.questions.length} questions answered</p>
+            </div>
+            <div className="flex gap-3">
+              <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
+                Back to Editing
+              </PortalButton>
+              <PortalButton onClick={() => { if (window.confirm('Are you sure you want to submit your quiz?')) submitQuiz(); }} disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+              </PortalButton>
+            </div>
+          </div>
+
+          {quiz.questions.map((q: any, idx: number) => {
+            const answer = answers[q.id] || '';
+            return (
+              <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-school-cream-200 overflow-hidden border-l-4" style={{ borderLeftColor: answer ? '#16a34a' : '#d1d5db' }}>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-gray-800 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold">
+                        {idx + 1}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">{q.question_type}</span>
+                      {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
+                    </div>
+                    <span className="text-xs font-bold text-gray-300">{q.points || 1} POINTS</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-4">{q.question_text}</p>
+                  {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
+                    <div className="flex flex-wrap gap-2">
+                      {(q.options || []).map((opt: any) => (
+                        <div key={opt.id} className={`px-4 py-2 rounded-xl text-sm font-medium border-2 ${answer === opt.option_text ? 'border-school-green-600 bg-school-green-50 text-school-green-800' : 'border-gray-200 text-gray-500'}`}>
+                          {opt.option_text}
+                          {answer === opt.option_text && <span className="ml-2 text-green-600">✓</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 bg-gray-50 rounded-xl text-lg font-medium">
+                      {answer || <span className="text-gray-400 italic">No answer provided</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="flex justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky bottom-4">
+            <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
+              Back to Editing
+            </PortalButton>
+            <PortalButton onClick={() => { if (window.confirm('Are you sure you want to submit your quiz?')) submitQuiz(); }} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+            </PortalButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- IN-PROGRESS (answering questions) ---
+  const isOneByOne = quiz.display_mode === 'one_by_one';
+  const allQuestionsAnswered = quiz.questions.every((q: any) => !!answers[q.id]?.trim());
 
   const renderQuestion = (q: any, idx: number) => (
     <PortalCard key={q.id} className="overflow-hidden border-none shadow-xl bg-white flex flex-col mb-6">
       <div className="p-8 space-y-8 flex-1">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {idx + 1} of {quiz.questions.length}</span>
-            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points} POINTS</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {idx + 1} of {quiz.questions.length}</span>
+              {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
+            </div>
+            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} POINTS</span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 leading-tight">
-            {q.question_text}
-          </h3>
+          <h3 className="text-2xl font-bold text-gray-900 leading-tight">{q.question_text}</h3>
         </div>
 
         <div className="space-y-4 pt-6">
           {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
             <div className="grid grid-cols-1 gap-3">
-              {q.options.map((option: any) => (
+              {(q.options || []).map((option: any) => (
                 <button
                   key={option.id}
                   onClick={() => setAnswers({ ...answers, [q.id]: option.option_text })}
                   className={`group p-5 rounded-2xl border-2 text-left transition-all ${
-                    answers[q.id] === option.option_text 
-                      ? 'border-school-green-600 bg-school-green-50 text-school-green-900 shadow-md' 
+                    answers[q.id] === option.option_text
+                      ? 'border-school-green-600 bg-school-green-50 text-school-green-900 shadow-md'
                       : 'border-gray-50 bg-gray-50 hover:border-gray-300'
                   }`}
                 >
                   <div className="flex items-center">
                     <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${answers[q.id] === option.option_text ? 'border-school-green-600 bg-school-green-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
-                      {answers[q.id] === option.option_text && (
-                        <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
-                      )}
+                      {answers[q.id] === option.option_text && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
                     </div>
                     <span className="text-lg font-medium">{option.option_text}</span>
                   </div>
@@ -310,17 +463,12 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <input 
+              <input
                 type="text"
                 className="w-full p-6 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:border-school-green-600 focus:bg-white outline-none transition-all text-xl font-medium"
-                placeholder="Type your final answer here..."
+                placeholder="Type your answer here..."
                 value={answers[q.id] || ''}
                 onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                onKeyPress={(e) => {
-                   if (e.key === 'Enter' && quiz.display_mode === 'one_by_one' && currentQuestionIdx < quiz.questions.length - 1) {
-                     setCurrentQuestionIdx(prev => prev + 1);
-                   }
-                }}
               />
             </div>
           )}
@@ -329,43 +477,21 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
     </PortalCard>
   );
 
-  const isOneByOne = quiz.display_mode === 'one_by_one';
-
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12 transition-all">
+    <div className="fixed inset-0 z-[100] bg-white flex flex-col">
       {/* LOCKED HUD */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-lg rounded-b-2xl px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-lg px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-4">
           <div className="bg-school-green-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
-            {quiz.subject_name}
+            {quiz.subject_name || 'Exam'}
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-gray-900 truncate max-w-[200px]">{quiz.title}</h2>
-          </div>
+          <h2 className="text-sm font-bold text-gray-900 truncate max-w-[200px]">{quiz.title}</h2>
         </div>
 
-        {/* QUESTION NAVIGATOR BOX (Only for one-by-one) */}
+        {/* Progress indicator (simple text, no clickable grid) */}
         {isOneByOne && (
-          <div className="flex flex-wrap justify-center gap-1.5 p-2 bg-gray-100 rounded-xl max-w-sm">
-            {quiz.questions.map((q: any, idx: number) => {
-              const isAnswered = !!answers[q.id];
-              const isCurrent = idx === currentQuestionIdx;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentQuestionIdx(idx)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
-                    isCurrent 
-                      ? 'bg-school-green-600 text-white ring-4 ring-school-green-100 shadow-md transform scale-110' 
-                      : isAnswered 
-                        ? 'bg-school-green-100 text-school-green-700' 
-                        : 'bg-white text-gray-400 hover:bg-gray-200'
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              );
-            })}
+          <div className="text-sm text-gray-500 font-medium">
+            {currentQuestionIdx + 1} / {quiz.questions.length}
           </div>
         )}
 
@@ -377,67 +503,63 @@ export function QuizRunner({ studentId, quizId, onClose }: QuizRunnerProps) {
         </div>
       </div>
 
-      {/* Progress Line */}
+      {/* Progress Line (visual only) */}
       {isOneByOne && (
-        <div className="w-full bg-gray-200 rounded-full h-1">
-          <div 
-            className="bg-school-green-600 h-1 rounded-full transition-all duration-500" 
+        <div className="w-full bg-gray-200 h-1">
+          <div
+            className="bg-school-green-600 h-1 transition-all duration-500"
             style={{ width: `${((currentQuestionIdx + 1) / quiz.questions.length) * 100}%` }}
           ></div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6">
-        {isOneByOne ? (
-          renderQuestion(quiz.questions[currentQuestionIdx], currentQuestionIdx)
-        ) : (
-          quiz.questions.map((q: any, idx: number) => renderQuestion(q, idx))
-        )}
-
-        {/* FOOTER ACTIONS */}
-        <div className="flex justify-between items-center py-4 bg-white p-6 rounded-2xl shadow-sm">
+      {/* Question content - scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto p-6 pb-32">
           {isOneByOne ? (
-            <PortalButton
-              variant="secondary"
-              onClick={() => {
-                setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              disabled={currentQuestionIdx === 0}
-              className="px-8"
-            >
-              ← Previous
-            </PortalButton>
+            renderQuestion(quiz.questions[currentQuestionIdx], currentQuestionIdx)
           ) : (
-            <div></div> // empty spacer
-          )}
-          
-          {(quiz.display_mode === 'all_at_once' || currentQuestionIdx === quiz.questions.length - 1) ? (
-            <PortalButton
-              variant="primary"
-              onClick={() => {
-                if (window.confirm('Are you sure you want to finish and submit your quiz?')) {
-                  submitQuiz();
-                }
-              }}
-              disabled={isSubmitting}
-              className="px-12 py-4 bg-school-green-700 shadow-xl"
-            >
-              {isSubmitting ? 'Submitting...' : 'Finish & Submit Assessment'}
-            </PortalButton>
-          ) : (
-            <PortalButton
-              variant="primary"
-              onClick={() => {
-                setCurrentQuestionIdx(prev => Math.min(quiz.questions.length - 1, prev + 1));
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="px-8"
-            >
-              Next →
-            </PortalButton>
+            quiz.questions.map((q: any, idx: number) => renderQuestion(q, idx))
           )}
         </div>
+      </div>
+
+      {/* FOOTER ACTIONS - fixed at bottom */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-between items-center shrink-0">
+        {isOneByOne ? (
+          <PortalButton
+            variant="secondary"
+            onClick={() => {
+              setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
+            }}
+            disabled={currentQuestionIdx === 0}
+            className="px-8"
+          >
+            ← Previous
+          </PortalButton>
+        ) : (
+          <div></div>
+        )}
+
+        {isOneByOne && currentQuestionIdx < quiz.questions.length - 1 ? (
+          <PortalButton
+            variant="primary"
+            onClick={() => {
+              setCurrentQuestionIdx(prev => Math.min(quiz.questions.length - 1, prev + 1));
+            }}
+            className="px-8"
+          >
+            Next →
+          </PortalButton>
+        ) : (
+          <PortalButton
+            variant="primary"
+            onClick={() => setPhase('review')}
+            className="px-12 py-4 bg-school-green-700 shadow-xl"
+          >
+            Review Answers
+          </PortalButton>
+        )}
       </div>
     </div>
   );

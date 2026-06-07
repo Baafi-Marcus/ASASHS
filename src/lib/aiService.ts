@@ -4,8 +4,10 @@ export interface ExtractedQuestion {
   question_text: string;
   question_type: 'multiple_choice' | 'true_false' | 'short_answer';
   points: number;
+  order_index?: number;
   options?: { option_text: string; is_correct: boolean }[];
   correct_answers?: string[];
+  group_id?: number;
 }
 
 interface AiProviderConfig {

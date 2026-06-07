@@ -14,9 +14,17 @@ CREATE TABLE IF NOT EXISTS elearning_quizzes (
     subject_id INTEGER REFERENCES subjects(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    instructions TEXT,
     time_limit INTEGER DEFAULT 30, -- in minutes
     passing_score INTEGER DEFAULT 50, -- in percentage
     total_points DECIMAL(10,2) DEFAULT 0,
+    shuffle_questions BOOLEAN DEFAULT false,
+    shuffle_options BOOLEAN DEFAULT false,
+    show_results_immediately BOOLEAN DEFAULT true,
+    display_mode VARCHAR(20) DEFAULT 'all_at_once',
+    allow_late_grading BOOLEAN DEFAULT false,
+    due_date TIMESTAMP,
+    duration_minutes INTEGER DEFAULT 60,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -30,6 +38,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     question_type VARCHAR(50) NOT NULL, -- 'mcq', 'tf', 'fill_in'
     points DECIMAL(5,2) DEFAULT 1.00,
     order_index INTEGER DEFAULT 0,
+    group_id INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

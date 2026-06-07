@@ -268,8 +268,8 @@ export const StudentDashboard: React.FC<{
       case 'downloads': return <StudentDownloads />;
       case 'messages': return <StudentMessages />;
       case 'voting': return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;
-      case 'exams': return <StudentExams studentId={parseInt(student.id)} classId={student.current_class_id} />;
-      case 'elearning': return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id} />;
+      case 'exams': return <StudentExams studentId={parseInt(student.id)} classId={student.current_class_id || 0} />;
+      case 'elearning': return <StudentELearning studentId={parseInt(student.id)} classId={student.current_class_id || 0} />;
       default: return renderOverview();
     }
   };

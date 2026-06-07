@@ -2565,8 +2565,8 @@ export const db = {
     
     for (const q of data.questions) {
       const qResult = await sql`
-        INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index)
-        VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points}, ${q.order_index})
+        INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index, group_id)
+        VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points}, ${q.order_index}, ${q.group_id || 0})
         RETURNING id
       `;
       const qId = qResult[0].id;
@@ -2723,16 +2723,22 @@ export const db = {
 
     // If there are extracted questions, create a master elearning_quiz record
     if (examData.has_obj && examData.extractedQuestions && examData.extractedQuestions.length > 0) {
+      // Calculate total points
+      const totalPoints = examData.extractedQuestions.reduce((sum: number, q: any) => sum + (q.points || 1), 0);
+
       // Create master quiz (no specific class/teacher since it's general)
       const qResult = await sql`
         INSERT INTO elearning_quizzes (
           title, description, subject_id, shuffle_questions, shuffle_options,
-          show_results_immediately, allow_late_grading, display_mode, time_limit
+          show_results_immediately, allow_late_grading, display_mode, time_limit,
+          due_date, duration_minutes, total_points
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.subject_id},
           ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
           ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
-          ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60}
+          ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60},
+          ${examData.due_date}, ${examData.duration_minutes || 60},
+          ${totalPoints}
         )
         RETURNING id
       `;
@@ -2742,8 +2748,8 @@ export const db = {
       for (let i = 0; i < examData.extractedQuestions.length; i++) {
         const q = examData.extractedQuestions[i];
         const questionResult = await sql`
-          INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index)
-          VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points || 1}, ${i})
+          INSERT INTO quiz_questions (quiz_id, question_text, question_type, points, order_index, group_id)
+          VALUES (${quizId}, ${q.question_text}, ${q.question_type}, ${q.points || 1}, ${i}, ${q.group_id || 0})
           RETURNING id
         `;
         const questionId = questionResult[0].id;
