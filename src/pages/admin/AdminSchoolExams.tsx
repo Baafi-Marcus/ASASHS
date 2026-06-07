@@ -4,12 +4,97 @@ import toast from 'react-hot-toast';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
 
+function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loadingQ, setLoadingQ] = useState(false);
+  const related = allExams.filter(e => e.title === exam.title && e.due_date === exam.due_date);
+  const targetClasses = [...new Set(related.map(e => `${e.class_name} (Form ${e.form})`))];
+
+  useEffect(() => {
+    if (exam.quiz_id) {
+      setLoadingQ(true);
+      db.getQuizById(exam.quiz_id)
+        .then(data => { if (data) setQuestions(data.questions || []); })
+        .catch(() => toast.error('Failed to load questions'))
+        .finally(() => setLoadingQ(false));
+    }
+  }, [exam.quiz_id]);
+
+  const start = exam.due_date ? new Date(exam.due_date) : null;
+  const end = start ? new Date(start.getTime() + (exam.duration_minutes || 60) * 60000) : null;
+  const ended = end ? Date.now() > end.getTime() : false;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b flex justify-between items-center bg-school-green-600 text-white shrink-0">
+          <h2 className="text-xl font-bold">{exam.title}</h2>
+          <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Type</label><p className="font-medium">{exam.exam_type || 'General'}</p></div>
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Subject</label><p className="font-medium">{exam.subject_name}</p></div>
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Status</label><p className={`font-bold ${ended ? 'text-red-600' : 'text-green-600'}`}>{ended ? 'Ended' : 'Active'}</p></div>
+            {start && <div><label className="text-[10px] font-bold text-gray-500 uppercase">Start</label><p className="font-medium">{start.toLocaleString()}</p></div>}
+            {end && <div><label className="text-[10px] font-bold text-gray-500 uppercase">End</label><p className="font-medium">{end.toLocaleString()}</p></div>}
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Duration</label><p className="font-medium">{exam.duration_minutes || 60} mins</p></div>
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Max Score</label><p className="font-medium">{exam.max_score || 100}</p></div>
+            <div className="col-span-2"><label className="text-[10px] font-bold text-gray-500 uppercase">Target Classes</label><p className="font-medium">{targetClasses.join(', ') || 'N/A'}</p></div>
+          </div>
+          <div className="flex gap-2">
+            {exam.has_obj && <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-200">Objective</span>}
+            {exam.has_theory && <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold border border-purple-200">Theory</span>}
+          </div>
+          {exam.instructions && (
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Instructions</label><p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{exam.instructions}</p></div>
+          )}
+          {(exam.shuffle_questions || exam.shuffle_options) && (
+            <div className="flex gap-4 text-sm">
+              {exam.shuffle_questions && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Shuffle Questions</span>}
+              {exam.shuffle_options && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Shuffle Options</span>}
+            </div>
+          )}
+          {loadingQ && <p className="text-gray-500 text-sm">Loading questions...</p>}
+          {questions.length > 0 && (
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase">Questions ({questions.length})</label>
+              <div className="space-y-2 mt-2 max-h-64 overflow-y-auto">
+                {questions.map((q: any, i: number) => (
+                  <div key={q.id} className="bg-gray-50 p-3 rounded-xl border text-sm">
+                    <span className="font-bold text-school-green-600 mr-2">Q{i + 1}.</span>
+                    {q.question_text}
+                    <span className="text-xs text-gray-400 ml-2">({q.points || 1}pts)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatDateForInput(dateStr: string) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function AdminSchoolExams() {
   const [exams, setExams] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewExam, setViewExam] = useState<any | null>(null);
+  const [editingExam, setEditingExam] = useState<any | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -30,7 +115,7 @@ export function AdminSchoolExams() {
     show_results_immediately: true,
     display_mode: 'all_at_once',
     selectedForms: [] as number[], 
-    selectedCourses: [] as number[], // Empty means ALL courses
+    selectedCourses: [] as number[], 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAiBuilder, setShowAiBuilder] = useState(false);
@@ -57,6 +142,50 @@ export function AdminSchoolExams() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = async (exam: any) => {
+    setEditingExam(exam);
+    // Load questions if using AI builder
+    let questions: ExtractedQuestion[] = [];
+    if (exam.quiz_id) {
+      const data = await db.getQuizById(exam.quiz_id).catch(() => null);
+      if (data?.questions) questions = data.questions;
+    }
+    setFormData({
+      title: exam.title,
+      description: exam.description || '',
+      instructions: exam.instructions || '',
+      exam_type: exam.exam_type || 'End of Semester',
+      subject_id: exam.subject_id.toString(),
+      due_date: formatDateForInput(exam.due_date),
+      duration_minutes: exam.duration_minutes || 60,
+      max_score: exam.max_score || 100,
+      has_obj: exam.has_obj,
+      has_theory: exam.has_theory,
+      theory_content_url: exam.theory_content_url || '',
+      obj_answer_key: exam.obj_answer_key || '',
+      extractedQuestions: questions,
+      shuffle_questions: exam.shuffle_questions || false,
+      shuffle_options: exam.shuffle_options || false,
+      show_results_immediately: exam.show_results_immediately !== false,
+      display_mode: exam.display_mode || 'all_at_once',
+      selectedForms: [exam.form],
+      selectedCourses: exam.course_id ? [exam.course_id] : [],
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingExam(null);
+    setFormData({
+      title: '', description: '', instructions: '', exam_type: 'End of Semester',
+      subject_id: '', due_date: '', duration_minutes: 60, max_score: 100,
+      has_obj: true, has_theory: false, theory_content_url: '', obj_answer_key: '',
+      extractedQuestions: [], shuffle_questions: false, shuffle_options: false,
+      show_results_immediately: true, display_mode: 'all_at_once',
+      selectedForms: [], selectedCourses: [],
+    });
   };
 
   const handleDelete = async (title: string, dueDate: string) => {
@@ -86,6 +215,11 @@ export function AdminSchoolExams() {
     try {
       setIsSubmitting(true);
       
+      // If editing, delete old exam first
+      if (editingExam) {
+        await db.deleteGeneralExam(editingExam.title, editingExam.due_date);
+      }
+
       // Filter classes by Form and Course
       const targetClasses = classes.filter(c => {
         const matchesForm = formData.selectedForms.includes(c.form);
@@ -121,14 +255,11 @@ export function AdminSchoolExams() {
         display_mode: formData.display_mode
       }, classIds);
 
-      toast.success(`Exam distributed successfully to ${classIds.length} classes!`);
-      setFormData({ 
-        ...formData, title: '', description: '', instructions: '', theory_content_url: '', 
-        obj_answer_key: '', extractedQuestions: [] 
-      });
+      toast.success(editingExam ? 'Exam updated successfully!' : `Exam distributed successfully to ${classIds.length} classes!`);
+      cancelEdit();
       fetchData();
     } catch (error) {
-      toast.error('Failed to create exams');
+      toast.error(editingExam ? 'Failed to update exam' : 'Failed to create exams');
     } finally {
       setIsSubmitting(false);
     }
@@ -155,7 +286,14 @@ export function AdminSchoolExams() {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold mb-6">Schedule School-Wide Exam</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">{editingExam ? 'Edit Exam' : 'Schedule School-Wide Exam'}</h2>
+          {editingExam && (
+            <button type="button" onClick={cancelEdit} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+              Cancel Editing
+            </button>
+          )}
+        </div>
         <form onSubmit={handleCreate} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -403,7 +541,7 @@ export function AdminSchoolExams() {
                 disabled={isSubmitting}
                 className="px-8 py-3 bg-school-green-600 text-white font-bold rounded-xl hover:bg-school-green-700 disabled:opacity-50"
               >
-                {isSubmitting ? 'Distributing Exam...' : 'Create & Distribute Exam'}
+                {isSubmitting ? 'Saving...' : editingExam ? 'Update Exam' : 'Create & Distribute Exam'}
               </button>
             </div>
           )}
@@ -450,12 +588,11 @@ export function AdminSchoolExams() {
                       <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button 
-                        onClick={() => handleDelete(exam.title, exam.due_date)}
-                        className="text-red-500 hover:text-red-700 text-sm font-bold"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => setViewExam(exam)} className="text-school-green-600 hover:text-school-green-800 text-sm font-bold">View</button>
+                        <button onClick={() => handleEdit(exam)} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Edit</button>
+                        <button onClick={() => handleDelete(exam.title, exam.due_date)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -469,6 +606,14 @@ export function AdminSchoolExams() {
           </div>
         )}
       </div>
+
+      {viewExam && (
+        <ViewExamModal
+          exam={viewExam}
+          allExams={exams}
+          onClose={() => setViewExam(null)}
+        />
+      )}
     </div>
   );
 }
