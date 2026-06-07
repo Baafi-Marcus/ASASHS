@@ -14,6 +14,7 @@ export function AdminSchoolExams() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    instructions: '',
     exam_type: 'End of Semester',
     subject_id: '',
     due_date: '',
@@ -103,6 +104,7 @@ export function AdminSchoolExams() {
       await db.createGeneralExam({
         title: formData.title,
         description: formData.description,
+        instructions: formData.instructions,
         exam_type: formData.exam_type,
         subject_id: parseInt(formData.subject_id),
         due_date: formData.due_date,
@@ -121,7 +123,7 @@ export function AdminSchoolExams() {
 
       toast.success(`Exam distributed successfully to ${classIds.length} classes!`);
       setFormData({ 
-        ...formData, title: '', description: '', theory_content_url: '', 
+        ...formData, title: '', description: '', instructions: '', theory_content_url: '', 
         obj_answer_key: '', extractedQuestions: [] 
       });
       fetchData();
@@ -169,6 +171,16 @@ export function AdminSchoolExams() {
                   className="w-full px-4 py-2 border rounded-xl"
                   placeholder="e.g. End of Semester Core Math"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Examination Rules & Instructions</label>
+                <textarea
+                  value={formData.instructions}
+                  onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+                  className="w-full px-4 py-2 border rounded-xl"
+                  rows={4}
+                  placeholder="List the rules for this exam (e.g., 1. No cheating...)"
                 />
               </div>
               <div>

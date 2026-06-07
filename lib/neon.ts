@@ -1546,20 +1546,7 @@ export const db = {
 
   async getStudentSubjects(studentId: number) {
     try {
-      // Primary: get subjects from student_subjects table
-      const result = await sql`
-        SELECT ss.*, s.name as subject_name, s.code as subject_code, c.class_name
-        FROM student_subjects ss
-        JOIN subjects s ON ss.subject_id = s.id
-        JOIN students st ON ss.student_id = st.id
-        LEFT JOIN classes c ON st.current_class_id = c.id
-        WHERE ss.student_id = ${studentId} AND ss.is_active = true
-        ORDER BY s.is_core DESC, s.name
-      `;
-      
-      if (result.length > 0) return result;
-
-      // Fallback: get subjects through student's class + course
+      // Get student's class and course info
       const student = await sql`
         SELECT s.current_class_id, c.course_id, c.class_name
         FROM students s
@@ -1570,26 +1557,56 @@ export const db = {
 
       const { current_class_id, course_id, class_name } = student[0];
 
-      // Get core subjects for the student's course
+      // Merge subjects from all sources, deduplicated by subject_id
+      const seen = new Set<number>();
+      const allSubjects: any[] = [];
+
+      // 1. Core subjects for the student's course
       const coreSubjects = await sql`
         SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
-               ${class_name} as class_name
+               s.is_core, ${class_name} as class_name
         FROM subjects s
         WHERE s.course_id = ${course_id} AND s.is_core = true AND s.is_active = true
       `;
+      for (const sub of coreSubjects) {
+        if (!seen.has(sub.subject_id)) {
+          seen.add(sub.subject_id);
+          allSubjects.push(sub);
+        }
+      }
 
-      // Get elective subjects for the student's class
+      // 2. Elective subjects for the student's class
       const electiveSubjects = await sql`
         SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
-               ${class_name} as class_name
+               s.is_core, ${class_name} as class_name
         FROM class_subjects cs
         JOIN subjects s ON cs.subject_id = s.id
         WHERE cs.class_id = ${current_class_id} AND s.is_active = true
       `;
+      for (const sub of electiveSubjects) {
+        if (!seen.has(sub.subject_id)) {
+          seen.add(sub.subject_id);
+          allSubjects.push(sub);
+        }
+      }
 
-      const combined = [...coreSubjects, ...electiveSubjects];
-      combined.sort((a: any, b: any) => a.subject_name?.localeCompare(b.subject_name));
-      return combined;
+      // 3. Any extra subjects from student_subjects (custom enrollments)
+      const extraSubjects = await sql`
+        SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
+               s.is_core, ${class_name} as class_name
+        FROM student_subjects ss
+        JOIN subjects s ON ss.subject_id = s.id
+        WHERE ss.student_id = ${studentId} AND ss.is_active = true
+      `;
+      for (const sub of extraSubjects) {
+        if (!seen.has(sub.subject_id)) {
+          seen.add(sub.subject_id);
+          allSubjects.push(sub);
+        }
+      }
+
+      allSubjects.sort((a: any, b: any) => a.subject_name?.localeCompare(b.subject_name));
+      return allSubjects;
     } catch (error) {
       console.error('Error fetching student subjects:', error);
       return [];
@@ -2547,10 +2564,10 @@ export const db = {
   // eLearning Quizzes
   async getQuizzes(filters?: { class_id?: number; teacher_id?: number; subject_id?: number }) {
     let query = sql`
-      SELECT q.*, t.surname as teacher_surname, t.other_names as teacher_other_names, 
+      SELECT q.*, t.surname as teacher_surname, t.other_names as teacher_other_names,
              s.name as subject_name, c.class_name
       FROM elearning_quizzes q
-      JOIN teachers t ON q.teacher_id = t.id
+      LEFT JOIN teachers t ON q.teacher_id = t.id
       JOIN subjects s ON q.subject_id = s.id
       JOIN classes c ON q.class_id = c.id
       WHERE q.is_active = true
@@ -2582,16 +2599,17 @@ export const db = {
   async createQuiz(data: any) {
     const result = await sql`
       INSERT INTO elearning_quizzes (
-        teacher_id, class_id, subject_id, title, description, instructions, time_limit, 
-        passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately, 
-        display_mode, allow_late_grading
+        teacher_id, class_id, subject_id, title, description, instructions, time_limit,
+        passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately,
+        display_mode, allow_late_grading, due_date, duration_minutes
       )
       VALUES (
-        ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description}, 
+        ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description},
         ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points},
-        ${data.shuffle_questions || false}, ${data.shuffle_options || false}, 
+        ${data.shuffle_questions || false}, ${data.shuffle_options || false},
         ${data.show_results_immediately !== undefined ? data.show_results_immediately : true},
-        ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false}
+        ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false},
+        ${data.due_date || null}, ${data.duration_minutes || null}
       )
       RETURNING id
     `;
@@ -2735,6 +2753,7 @@ export const db = {
   async createGeneralExam(examData: {
     title: string;
     description?: string;
+    instructions?: string;
     exam_type: string;
     subject_id: number;
     due_date: string;
@@ -2763,11 +2782,12 @@ export const db = {
       // Create master quiz (no specific class/teacher since it's general)
       const qResult = await sql`
         INSERT INTO elearning_quizzes (
-          title, description, subject_id, shuffle_questions, shuffle_options,
+          title, description, instructions, subject_id, shuffle_questions, shuffle_options,
           show_results_immediately, allow_late_grading, display_mode, time_limit,
           due_date, duration_minutes, total_points
         ) VALUES (
-          ${examData.title}, ${examData.description || null}, ${examData.subject_id},
+          ${examData.title}, ${examData.description || null}, ${examData.instructions || null},
+          ${examData.subject_id},
           ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
           ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
           ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60},

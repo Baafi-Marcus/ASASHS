@@ -25,6 +25,8 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     instructions: '',
     class_id: '',
     subject_id: '',
+    due_date: '',
+    duration_minutes: 60,
     time_limit: 30,
     passing_score: 50,
     shuffle_questions: false,
@@ -191,6 +193,19 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </PortalInput>
+            <PortalInput
+              label="Scheduled Start Date & Time"
+              type="datetime-local"
+              value={quizInfo.due_date}
+              onChange={e => setQuizInfo({ ...quizInfo, due_date: e.target.value })}
+            />
+            <PortalInput
+              label="Duration (Minutes)"
+              type="number"
+              min="1"
+              value={quizInfo.duration_minutes}
+              onChange={e => setQuizInfo({ ...quizInfo, duration_minutes: parseInt(e.target.value) || 60 })}
+            />
             <PortalInput
               label="Time Limit (Minutes)"
               type="number"

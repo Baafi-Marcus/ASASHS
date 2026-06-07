@@ -68,6 +68,7 @@ export const StudentDashboard: React.FC<{
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [activeElections, setActiveElections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [academicYear, setAcademicYear] = useState(new Date().getFullYear().toString());
   const [semester, setSemester] = useState(1);
   const [term, setTerm] = useState(1);
@@ -173,7 +174,9 @@ export const StudentDashboard: React.FC<{
           { title: 'Graded Results', value: results?.filter(r => r?.grade)?.length || 0, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50' },
           { title: 'Active Assignments', value: assignments?.length || 0, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', color: 'from-purple-500 to-pink-500', bg: 'bg-purple-50' },
         ].map((stat, idx) => (
-          <div key={idx} className="group relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer">
+          <div key={idx} className="group relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
+            onClick={() => { if (idx === 0) setShowSubjectModal(true); }}
+          >
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.color} opacity-10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`}></div>
             <div className="relative z-10 flex items-center space-x-5">
               <div className={`${stat.bg} p-4 rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
@@ -191,6 +194,33 @@ export const StudentDashboard: React.FC<{
       </div>
     </div>
   );
+
+  // Subject List Modal
+  const renderSubjectModal = () => {
+    if (!showSubjectModal) return null;
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowSubjectModal(false)}>
+        <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Enrolled Subjects ({subjects.length})</h3>
+            <button onClick={() => setShowSubjectModal(false)} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {subjects.length > 0 ? subjects.map((s: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                <span className="font-medium text-gray-800">{s.subject_name || s.name}</span>
+                <span className="text-xs text-gray-500 font-mono">{s.subject_code || s.code}</span>
+              </div>
+            )) : (
+              <p className="text-center text-gray-500 py-8">No subjects found.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -316,6 +346,7 @@ export const StudentDashboard: React.FC<{
           </div>
         </div>
       )}
+      {renderSubjectModal()}
     </div>
   );
 };

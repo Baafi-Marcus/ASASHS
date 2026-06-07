@@ -201,10 +201,6 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
     setIsSubmitting(true);
 
     try {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-
       let totalScore = 0;
       const responses = [];
 
@@ -239,13 +235,15 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
         });
       }
 
-      for (const resp of responses) {
-        await db.submitQuizResponse(resp);
-      }
+      await Promise.all(responses.map(resp => db.submitQuizResponse(resp)));
 
       const totalPoints = parseFloat(quiz.total_points) || responses.length;
       const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
       await db.completeQuizAttempt(attemptId, totalScore, percentage, tabSwitches);
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
 
       setResult({ score: totalScore, percentage, totalPoints });
       setPhase('finished');
