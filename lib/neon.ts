@@ -1759,7 +1759,7 @@ export const db = {
         JOIN classes c ON a.class_id = c.id
         JOIN subjects s ON a.subject_id = s.id
         JOIN assignment_types at ON a.assignment_type_id = at.id
-        WHERE a.teacher_id = ${teacherId} AND a.is_active = true
+        WHERE a.teacher_id = ${teacherId} AND a.is_active = true AND a.is_general_exam IS NOT TRUE
         ORDER BY a.created_at DESC
       `;
       
@@ -1778,7 +1778,7 @@ export const db = {
         JOIN classes c ON a.class_id = c.id
         JOIN subjects s ON a.subject_id = s.id
         JOIN assignment_types at ON a.assignment_type_id = at.id
-        WHERE a.class_id = ${classId} AND a.is_active = true
+        WHERE a.class_id = ${classId} AND a.is_active = true AND a.is_general_exam IS NOT TRUE
         ORDER BY a.created_at DESC
       `;
       
