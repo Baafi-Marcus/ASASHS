@@ -16,6 +16,12 @@ export default function SystemOversight() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceToggling, setMaintenanceToggling] = useState(false);
+
+  useEffect(() => {
+    db.getMaintenanceMode().then(setMaintenanceMode).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -205,6 +211,38 @@ export default function SystemOversight() {
             })}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6 mb-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Maintenance Mode</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-gray-700 font-medium">System Maintenance</p>
+            <p className="text-sm text-gray-500">When enabled, only administrators can access the system. All other users will see a maintenance notice.</p>
+          </div>
+          <button
+            onClick={async () => {
+              setMaintenanceToggling(true);
+              try {
+                const newMode = await db.setMaintenanceMode(!maintenanceMode);
+                setMaintenanceMode(newMode);
+              } catch (e) {
+                console.error('Failed to toggle maintenance mode:', e);
+              } finally {
+                setMaintenanceToggling(false);
+              }
+            }}
+            disabled={maintenanceToggling}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${maintenanceMode ? 'bg-red-500' : 'bg-gray-300'} ${maintenanceToggling ? 'opacity-50' : ''}`}
+          >
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${maintenanceMode ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {maintenanceMode && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 font-medium">Maintenance mode is ACTIVE. Non-admin users cannot access the system.</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

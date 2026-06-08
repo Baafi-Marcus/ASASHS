@@ -49,6 +49,7 @@ function ComprehensivePortalApp() {
   const [showCalendarPage, setShowCalendarPage] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hasActiveElection, setHasActiveElection] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     // Reset active tab when user role changes or user logs in
@@ -68,6 +69,18 @@ function ComprehensivePortalApp() {
       setShowLandingPage(false);
       return;
     }
+  }, []);
+
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const mode = await db.getMaintenanceMode();
+        setMaintenanceMode(mode);
+      } catch (error) {
+        console.error('Failed to check maintenance mode:', error);
+      }
+    };
+    checkMaintenance();
   }, []);
 
   useEffect(() => {
@@ -140,6 +153,24 @@ function ComprehensivePortalApp() {
 
   // --- LOGGED IN VIEW ---
   if (user) {
+    // --- MAINTENANCE MODE GATE ---
+    if (maintenanceMode && user.user_type !== 'admin') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-school-cream-50 p-6">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center space-y-4">
+            <div className="flex justify-center">
+              <svg className="w-16 h-16 text-school-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">System Under Maintenance</h2>
+            <p className="text-gray-500">ASASHS is currently undergoing scheduled maintenance. Please check back later.</p>
+            <button onClick={signOut} className="px-6 py-2 bg-school-green-600 text-white rounded-xl font-bold hover:bg-school-green-700 transition-colors">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     let sidebarItems: any[] = [];
     let portalName: 'Admin' | 'Teacher' | 'Student' = 'Student';
     let content = null;

@@ -2885,6 +2885,32 @@ export const db = {
     return true;
   },
 
+    // --- System Maintenance ---
+
+  async ensureSystemConfigTable() {
+    try {
+      await sql`CREATE TABLE IF NOT EXISTS system_config (key VARCHAR PRIMARY KEY, value TEXT NOT NULL)`;
+      await sql`INSERT INTO system_config (key, value) VALUES ('maintenance_mode', 'false') ON CONFLICT (key) DO NOTHING`;
+    } catch (e) {
+      console.error('Failed to ensure system_config table:', e);
+    }
+  },
+
+  async getMaintenanceMode(): Promise<boolean> {
+    try {
+      const result = await sql`SELECT value FROM system_config WHERE key = 'maintenance_mode'`;
+      return result[0]?.value === 'true';
+    } catch {
+      return false;
+    }
+  },
+
+  async setMaintenanceMode(enabled: boolean) {
+    await this.ensureSystemConfigTable();
+    await sql`INSERT INTO system_config (key, value) VALUES ('maintenance_mode', ${enabled ? 'true' : 'false'}) ON CONFLICT (key) DO UPDATE SET value = ${enabled ? 'true' : 'false'}`;
+    return enabled;
+  },
+
   // --- General Exams Management ---
   async createGeneralExam(examData: {
     title: string;
