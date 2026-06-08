@@ -266,7 +266,7 @@ function ComprehensivePortalApp() {
         studentId: user.student_id,
         id: (user.student_db_id || user.id).toString(),
         course: (user as any).course || 'General Arts',
-        className: (user as any).class_name || '1A1',
+        className: (user as any).class_name || '',
         current_class_id: (user as any).current_class_id || 1,
         registration_status: (user as any).registration_status || 'complete'
       };

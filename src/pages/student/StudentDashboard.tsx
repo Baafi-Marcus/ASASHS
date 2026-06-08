@@ -72,6 +72,7 @@ export const StudentDashboard: React.FC<{
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [academicYear, setAcademicYear] = useState('');
   const [term, setTerm] = useState(1);
+  const [className, setClassName] = useState(student.className || '');
   const [submissions, setSubmissions] = useState<Record<number, any>>({});
   const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
@@ -83,9 +84,14 @@ export const StudentDashboard: React.FC<{
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [ay, sem] = await Promise.all([db.getCurrentAcademicYear(), db.getCurrentSemester()]);
+      const [ay, sem, studentDetails] = await Promise.all([
+        db.getCurrentAcademicYear(),
+        db.getCurrentSemester(),
+        db.getStudentById(parseInt(student.id)).catch(() => null)
+      ]);
       if (ay) setAcademicYear(ay);
       if (sem) setTerm(sem);
+      if (studentDetails?.class_name) setClassName(studentDetails.class_name);
       const studentDbId = parseInt(student.id);
       const studentSubjectsResult = await db.getStudentSubjects(studentDbId);
       const studentSubjects = Array.isArray(studentSubjectsResult) ? studentSubjectsResult : [];
@@ -224,7 +230,7 @@ export const StudentDashboard: React.FC<{
   const renderContent = () => {
     switch (activeTab) {
       case 'overview': return renderOverview();
-      case 'profile': return <StudentProfile student={student as any} onLogout={onLogout} />;
+      case 'profile': return <StudentProfile student={{ ...student, className } as any} onLogout={onLogout} />;
       case 'grades': return (
         <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
           <h3 className="text-xl font-bold text-gray-800 mb-6">My Grades</h3>
