@@ -193,7 +193,7 @@ function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void })
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                        {new Date(attempt.end_time).toLocaleString()}
+                        {attempt.end_time ? new Date(attempt.end_time).toLocaleString() : 'In progress'}
                       </td>
                     </tr>
                   ))}

@@ -2708,43 +2708,14 @@ export const db = {
   },
 
   async getDetailedQuizAttempts(quizId: number) {
-    try {
-      return await sql`
-        SELECT a.*, u.user_id as student_admission_number, s.surname, s.other_names
-        FROM quiz_attempts a
-        JOIN students s ON a.student_id = s.id
-        JOIN users u ON s.user_id = u.id
-        WHERE a.quiz_id = ${quizId} AND a.status = 'completed'
-        ORDER BY a.end_time DESC, a.id DESC
-      `;
-    } catch (e: any) {
-      // Auto-fix missing columns and retry
-      const msg = String(e?.message || '');
-      const colMatch = msg.match(/column "([^"]+)" of relation "([^"]+)" does not exist/);
-      if (colMatch) {
-        const [, colName, relName] = colMatch;
-        const typeMap: Record<string, string> = {
-          end_time: 'TIMESTAMP',
-          percentage: 'DECIMAL(5,2) DEFAULT 0',
-          tab_switches: 'INTEGER DEFAULT 0',
-          points: 'DECIMAL(10,2) DEFAULT 0',
-          submission_type: "VARCHAR(50) DEFAULT 'auto'",
-        };
-        const colType = typeMap[colName] || 'TEXT';
-        try {
-          await sql`ALTER TABLE ${sql.unsafe(relName)} ADD COLUMN IF NOT EXISTS ${sql.unsafe(colName)} ${sql.unsafe(colType)}`;
-        } catch {}
-        return await sql`
-          SELECT a.*, u.user_id as student_admission_number, s.surname, s.other_names
-          FROM quiz_attempts a
-          JOIN students s ON a.student_id = s.id
-          JOIN users u ON s.user_id = u.id
-          WHERE a.quiz_id = ${quizId} AND a.status = 'completed'
-          ORDER BY a.end_time DESC, a.id DESC
-        `;
-      }
-      throw e;
-    }
+    return await sql`
+      SELECT a.*, u.user_id as student_admission_number, s.surname, s.other_names
+      FROM quiz_attempts a
+      JOIN students s ON a.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      WHERE a.quiz_id = ${quizId} AND a.status = 'completed'
+      ORDER BY a.id DESC
+    `;
   },
 
   // --- Sub-Admins Management ---
