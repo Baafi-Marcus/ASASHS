@@ -881,7 +881,7 @@ export const db = {
   },
   async getClassWithSubjects(classId?: number, courseId?: number, form?: number, semester?: number) {
     if (classId) {
-      const classInfo = await sql`
+       const classInfo = await sql`
         SELECT c.*, 
                COALESCE(
                  json_agg(
@@ -893,7 +893,7 @@ export const db = {
                      'is_elective', cs.is_elective
                    )
                  ) FILTER (WHERE s.id IS NOT NULL), 
-                 '[]'
+                 '[]'::json
                ) as subjects
         FROM classes c
         LEFT JOIN class_subjects cs ON c.id = cs.class_id
@@ -916,7 +916,7 @@ export const db = {
                    'is_elective', cs.is_elective
                  )
                ) FILTER (WHERE s.id IS NOT NULL), 
-               '[]'
+               '[]'::json
              ) as subjects
       FROM classes c
       LEFT JOIN class_subjects cs ON c.id = cs.class_id
