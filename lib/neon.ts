@@ -86,10 +86,12 @@ export const db = {
     const result = await sql`
       SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
              s.current_class_id,
+             c.class_name as student_class_name,
              t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
              t.id as teacher_db_id
       FROM users u
       LEFT JOIN students s ON u.id = s.user_id
+      LEFT JOIN classes c ON s.current_class_id = c.id
       LEFT JOIN teachers t ON u.id = t.user_id
       WHERE u.user_id = ${userId} AND u.is_active = true
     `;
@@ -125,7 +127,8 @@ export const db = {
       teacher_db_id: user.teacher_db_id,
       admission_number: user.admission_number,
       staff_id: user.staff_id,
-      current_class_id: user.current_class_id
+      current_class_id: user.current_class_id,
+      class_name: user.student_class_name
     };
   },
 

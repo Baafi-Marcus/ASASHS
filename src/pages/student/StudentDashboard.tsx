@@ -70,16 +70,18 @@ export const StudentDashboard: React.FC<{
   const [activeElections, setActiveElections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
-  const [academicYear, setAcademicYear] = useState(new Date().getFullYear().toString());
-  const [semester, setSemester] = useState(1);
-  const [term, setTerm] = useState(1);
+  const computeAcademicYear = () => {
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+    return { year: m >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`, term: m >= 8 ? 1 : m >= 4 ? 2 : 3 };
+  };
+  const initial = computeAcademicYear();
+  const [academicYear, setAcademicYear] = useState(initial.year);
+  const [term, setTerm] = useState(initial.term);
   const [submissions, setSubmissions] = useState<Record<number, any>>({});
   const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
-
-  useEffect(() => {
-    setTerm(semester);
-  }, [semester]);
 
   useEffect(() => {
     fetchData();
@@ -157,11 +159,11 @@ export const StudentDashboard: React.FC<{
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
               <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
                 <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Student ID</span>
-                <div className="font-bold text-lg">{student.student_id || student.id}</div>
+                <div className="font-bold text-lg">{student.studentId || student.id}</div>
               </div>
               <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
                 <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Academic Year</span>
-                <div className="font-bold text-lg">{academicYear} - Term {term}</div>
+                <div className="font-bold text-lg">{academicYear} (Term {term})</div>
               </div>
             </div>
           </div>
