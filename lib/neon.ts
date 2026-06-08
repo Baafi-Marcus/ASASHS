@@ -2651,7 +2651,8 @@ export const db = {
 
   async getQuizAttempts(filters: { student_id?: number; quiz_id?: number }) {
     let query = sql`
-      SELECT a.*, q.title as quiz_title, s.name as subject_name
+      SELECT a.*, q.title as quiz_title, s.name as subject_name,
+             q.show_results_immediately
       FROM quiz_attempts a
       JOIN elearning_quizzes q ON a.quiz_id = q.id
       JOIN subjects s ON q.subject_id = s.id
@@ -2707,7 +2708,20 @@ export const db = {
     }
   },
 
-  async getDetailedQuizAttempts(quizId: number) {
+  async getDetailedQuizAttempts(quizId: number, classId?: number) {
+    if (classId) {
+      // Return ALL students in the class with attempt data (or null if not submitted)
+      return await sql`
+        SELECT s.id as student_id, s.surname, s.other_names,
+               u.user_id as student_admission_number,
+               a.id as attempt_id, a.score, a.percentage, a.tab_switches, a.status, a.end_time, a.start_time
+        FROM students s
+        JOIN users u ON s.user_id = u.id
+        LEFT JOIN quiz_attempts a ON a.student_id = s.id AND a.quiz_id = ${quizId} AND a.status = 'completed'
+        WHERE s.current_class_id = ${classId} AND s.is_active = true
+        ORDER BY s.surname, s.other_names
+      `;
+    }
     return await sql`
       SELECT a.*, u.user_id as student_admission_number, s.surname, s.other_names
       FROM quiz_attempts a

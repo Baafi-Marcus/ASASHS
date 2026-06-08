@@ -117,7 +117,7 @@ function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void })
 
   const fetchResults = async () => {
     try {
-      const data = await db.getDetailedQuizAttempts(quiz.id);
+      const data = await db.getDetailedQuizAttempts(quiz.id, quiz.class_id);
       setAttempts(data);
     } catch (error) {
       toast.error('Failed to load results');
@@ -160,49 +160,62 @@ function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void })
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {attempts.map((attempt) => (
-                    <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
+                  {attempts.map((attempt) => {
+                    const submitted = attempt.attempt_id != null;
+                    return (
+                    <tr key={attempt.student_id} className={`hover:bg-gray-50 transition-colors ${submitted ? '' : 'opacity-60'}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {attempt.surname}, {attempt.other_names}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                         {attempt.student_admission_number}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                        {attempt.score} pts
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <span className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
-                            {Math.round(attempt.percentage)}%
-                          </span>
-                          <div className="ml-2 w-16 bg-gray-200 rounded-full h-1.5 hidden md:block">
-                            <div className={`h-1.5 rounded-full ${attempt.percentage >= 50 ? 'bg-school-green-600' : 'bg-red-600'}`} style={{ width: `${attempt.percentage}%` }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {attempt.tab_switches > 0 ? (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold flex items-center w-fit">
-                            <span className="mr-1">🚨</span> {attempt.tab_switches} Switches
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold flex items-center w-fit">
-                            <span className="mr-1">✅</span> Clean
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                        {attempt.end_time ? new Date(attempt.end_time).toLocaleString() : 'In progress'}
-                      </td>
+                      {submitted ? (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                            {attempt.score} pts
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
+                                {Math.round(attempt.percentage)}%
+                              </span>
+                              <div className="ml-2 w-16 bg-gray-200 rounded-full h-1.5 hidden md:block">
+                                <div className={`h-1.5 rounded-full ${attempt.percentage >= 50 ? 'bg-school-green-600' : 'bg-red-600'}`} style={{ width: `${attempt.percentage}%` }}></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {attempt.tab_switches > 0 ? (
+                              <span className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold flex items-center w-fit">
+                                {attempt.tab_switches} Switches
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold flex items-center w-fit">
+                                Clean
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                            {attempt.end_time ? new Date(attempt.end_time).toLocaleString() : 'In progress'}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 italic" colSpan={4}>
+                            Not submitted
+                          </td>
+                        </>
+                      )}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           ) : (
             <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed">
-              <p className="text-gray-500">No students have completed this quiz yet.</p>
+              <p className="text-gray-500">No students found in this class.</p>
             </div>
           )}
         </div>

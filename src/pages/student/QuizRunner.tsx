@@ -379,24 +379,39 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
 
   // FINISHED / RESULT PAGE
   if (phase === 'finished') {
+    const showScore = quiz?.show_results_immediately !== false;
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-lg w-full text-center space-y-6">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto ${result?.percentage >= 50 ? 'bg-school-green-100 text-school-green-600' : 'bg-red-100 text-red-600'}`}>
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={result?.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
-            </svg>
-          </div>
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-gray-900">Assessment Completed!</h2>
-            <p className="text-gray-500">You scored {result?.score} out of {result?.totalPoints}</p>
-            <div className="text-5xl font-black text-school-green-600">{Math.round(result?.percentage || 0)}%</div>
-            {tabSwitches > 0 && (
-              <div className="text-xs text-red-500 font-bold uppercase py-1 px-3 bg-red-50 rounded-full inline-block">
-                {tabSwitches} TAB SWITCHES LOGGED
+          {showScore ? (
+            <>
+              <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto ${result?.percentage >= 50 ? 'bg-school-green-100 text-school-green-600' : 'bg-red-100 text-red-600'}`}>
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={result?.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
+                </svg>
               </div>
-            )}
-          </div>
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl font-bold text-gray-900">Assessment Completed!</h2>
+                <p className="text-gray-500">You scored {result?.score} out of {result?.totalPoints}</p>
+                <div className="text-5xl font-black text-school-green-600">{Math.round(result?.percentage || 0)}%</div>
+                {tabSwitches > 0 && (
+                  <div className="text-xs text-red-500 font-bold uppercase py-1 px-3 bg-red-50 rounded-full inline-block">
+                    {tabSwitches} TAB SWITCHES LOGGED
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center space-y-4">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-school-green-100 text-school-green-600">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Submitted Successfully!</h2>
+              <p className="text-gray-500">Your answers have been recorded. Results will be available once released by your teacher.</p>
+            </div>
+          )}
           <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
         </div>
       </div>

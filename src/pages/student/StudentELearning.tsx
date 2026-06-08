@@ -103,7 +103,11 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                       {hasAttempt ? (
                         <div className="text-right">
                           <div className="text-xs font-bold text-school-green-600">COMPLETED</div>
-                          <div className="text-lg font-bold text-gray-900">{hasAttempt.score} pts</div>
+                          {hasAttempt.show_results_immediately !== false ? (
+                            <div className="text-lg font-bold text-gray-900">{hasAttempt.score} pts</div>
+                          ) : (
+                            <div className="text-[10px] text-gray-400 italic">Results pending</div>
+                          )}
                         </div>
                       ) : isEnded ? (
                         <span className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg">Ended</span>
@@ -134,19 +138,25 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
               {attempts.length > 0 ? (
                 <div className="space-y-4">
                   {attempts.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((attempt) => (
-                    <div key={attempt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">{attempt.quiz_title}</div>
-                        <div className="text-[10px] text-gray-500 uppercase">{attempt.subject_name}</div>
-                        <div className="text-[10px] text-gray-400">{new Date(attempt.created_at).toLocaleDateString()}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
-                          {attempt.percentage}%
+                      <div key={attempt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <div>
+                          <div className="text-sm font-bold text-gray-900">{attempt.quiz_title}</div>
+                          <div className="text-[10px] text-gray-500 uppercase">{attempt.subject_name}</div>
+                          <div className="text-[10px] text-gray-400">{new Date(attempt.created_at).toLocaleDateString()}</div>
                         </div>
-                        <div className="text-[10px] text-gray-500">{attempt.score} points</div>
+                        <div className="text-right">
+                          {attempt.show_results_immediately !== false ? (
+                            <>
+                              <div className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
+                                {attempt.percentage}%
+                              </div>
+                              <div className="text-[10px] text-gray-500">{attempt.score} points</div>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">Results pending</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
                   ))}
                 </div>
               ) : (
