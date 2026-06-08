@@ -3,6 +3,7 @@ import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
+import { parseDate, getScheduleStatus } from '../../lib/dates';
 
 function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -20,9 +21,9 @@ function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]
     }
   }, [exam.quiz_id]);
 
-  const start = exam.due_date ? new Date(exam.due_date) : null;
+  const start = parseDate(exam.due_date);
   const end = start ? new Date(start.getTime() + (exam.duration_minutes || 60) * 60000) : null;
-  const ended = end ? Date.now() > end.getTime() : false;
+  const status = getScheduleStatus(exam.due_date, exam.duration_minutes);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -39,7 +40,7 @@ function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div><label className="text-[10px] font-bold text-gray-500 uppercase">Type</label><p className="font-medium">{exam.exam_type || 'General'}</p></div>
             <div><label className="text-[10px] font-bold text-gray-500 uppercase">Subject</label><p className="font-medium">{exam.subject_name}</p></div>
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Status</label><p className={`font-bold ${ended ? 'text-red-600' : 'text-green-600'}`}>{ended ? 'Ended' : 'Active'}</p></div>
+            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Status</label><p className={`font-bold ${status === 'ended' ? 'text-red-600' : status === 'upcoming' ? 'text-blue-600' : 'text-green-600'}`}>{status === 'ended' ? 'Ended' : status === 'upcoming' ? 'Upcoming' : 'Active'}</p></div>
             {start && <div><label className="text-[10px] font-bold text-gray-500 uppercase">Start</label><p className="font-medium">{start.toLocaleString()}</p></div>}
             {end && <div><label className="text-[10px] font-bold text-gray-500 uppercase">End</label><p className="font-medium">{end.toLocaleString()}</p></div>}
             <div><label className="text-[10px] font-bold text-gray-500 uppercase">Duration</label><p className="font-medium">{exam.duration_minutes || 60} mins</p></div>

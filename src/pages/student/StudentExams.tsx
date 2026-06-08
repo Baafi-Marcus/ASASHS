@@ -4,16 +4,16 @@ import toast from 'react-hot-toast';
 import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { ExamRunner } from './ExamRunner';
+import { getScheduleStatus, getStatusColor } from '../../lib/dates';
 
 function getExamStatus(exam: any): { label: string; color: string; ended: boolean } {
-  if (!exam.due_date) return { label: 'Active', color: 'text-green-600 bg-green-50', ended: false };
-  const startTime = new Date(exam.due_date).getTime();
-  const durationMs = (exam.duration_minutes || 60) * 60 * 1000;
-  const endTime = startTime + durationMs;
-  const now = Date.now();
-  if (now < startTime) return { label: 'Upcoming', color: 'text-blue-600 bg-blue-50', ended: false };
-  if (now > endTime) return { label: 'Ended', color: 'text-red-600 bg-red-50', ended: true };
-  return { label: 'Active', color: 'text-green-600 bg-green-50', ended: false };
+  const status = getScheduleStatus(exam.due_date, exam.duration_minutes);
+  const color = getStatusColor(exam.due_date, exam.duration_minutes);
+  const ended = status === 'ended';
+  if (status === 'unscheduled') return { label: 'Active', color: 'text-green-600 bg-green-50', ended: false };
+  if (status === 'upcoming') return { label: 'Upcoming', color, ended: false };
+  if (status === 'ended') return { label: 'Ended', color, ended: true };
+  return { label: 'Active', color, ended: false };
 }
 
 export function StudentExams({ studentId, classId }: { studentId: number; classId: number }) {

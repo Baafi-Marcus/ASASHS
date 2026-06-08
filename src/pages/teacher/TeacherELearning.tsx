@@ -4,18 +4,14 @@ import { db } from '../../../lib/neon';
 import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { QuizBuilder } from './QuizBuilder';
+import { getScheduleStatus, parseDate } from '../../lib/dates';
 
 function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) {
-  const startTime = quiz.due_date ? new Date(quiz.due_date) : null;
+  const startTime = parseDate(quiz.due_date);
   const dur = quiz.duration_minutes || 60;
   const endTime = startTime ? new Date(startTime.getTime() + dur * 60 * 1000) : null;
-  const now = new Date();
-  let status = 'Always Available';
-  if (startTime && endTime) {
-    if (now < startTime) status = `Starts ${startTime.toLocaleString()}`;
-    else if (now > endTime) status = 'Ended';
-    else status = 'Active';
-  }
+  const status = getScheduleStatus(quiz.due_date, quiz.duration_minutes);
+  const statusLabel = status === 'unscheduled' ? 'Always Available' : status === 'upcoming' ? `Starts ${startTime?.toLocaleString()}` : status === 'ended' ? 'Ended' : 'Active';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -44,7 +40,7 @@ function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) 
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
-              <p className={`font-medium ${status === 'Active' ? 'text-green-600' : status === 'Ended' ? 'text-red-600' : 'text-gray-900'}`}>{status}</p>
+              <p className={`font-medium ${status === 'active' ? 'text-green-600' : status === 'ended' ? 'text-red-600' : 'text-gray-900'}`}>{statusLabel}</p>
             </div>
             {startTime && (
               <div>

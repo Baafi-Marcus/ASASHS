@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
+import { parseDate } from '../../lib/dates';
 
 interface QuizRunnerProps {
   studentId: number;
@@ -107,27 +108,28 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
 
       // Check fixed schedule if due_date is set
       if (quizData.due_date) {
-        const now = new Date();
-        const startTime = new Date(quizData.due_date);
+        const now = Date.now();
+        const startTime = parseDate(quizData.due_date);
         const durationMs = (quizData.duration_minutes || 60) * 60 * 1000;
-        const endTime = new Date(startTime.getTime() + durationMs);
+        const endTime = startTime ? startTime.getTime() + durationMs : null;
 
-        if (now < startTime) {
+        if (!startTime || !endTime) {
+          setTimeLeft((quizData.duration_minutes || quizData.time_limit || 30) * 60);
+        } else if (now < startTime.getTime()) {
           setBlocked(`This exam starts at ${startTime.toLocaleString()}. Please wait until then.`);
           setQuiz(quizData);
           setLoading(false);
           return;
-        }
-        if (now > endTime) {
+        } else if (now > endTime) {
           setBlocked('This exam has ended. It is no longer available.');
           setQuiz(quizData);
           setLoading(false);
           return;
+        } else {
+          const remainingSeconds = Math.max(0, Math.floor((endTime - now) / 1000));
+          setTimeLeft(remainingSeconds);
+          quizData._useFixedSchedule = true;
         }
-        // Time window: use fixed duration instead of time_limit
-        const remainingSeconds = Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 1000));
-        setTimeLeft(remainingSeconds);
-        quizData._useFixedSchedule = true;
       } else {
         setTimeLeft((quizData.duration_minutes || quizData.time_limit || 30) * 60);
       }

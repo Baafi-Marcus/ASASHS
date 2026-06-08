@@ -4,6 +4,7 @@ import { db } from '../../../lib/neon';
 import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { QuizRunner } from './QuizRunner';
+import { isEnded, isUpcoming } from '../../lib/dates';
 
 export function StudentELearning({ studentId, classId }: { studentId: number; classId?: number }) {
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -69,13 +70,10 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
             {quizzes.length > 0 ? (
               quizzes.map((quiz) => {
                 const hasAttempt = attempts.find(a => a.quiz_id === quiz.id && a.status === 'completed');
-                const now = Date.now();
-                const startTime = quiz.due_date ? new Date(quiz.due_date).getTime() : null;
-                const endTime = startTime ? startTime + (quiz.duration_minutes || 60) * 60 * 1000 : null;
-                const isEnded = endTime ? now > endTime : false;
-                const isUpcoming = startTime ? now < startTime : false;
+                const ended = isEnded(quiz.due_date, quiz.duration_minutes);
+                const upcoming = isUpcoming(quiz.due_date, quiz.duration_minutes);
                 return (
-                  <PortalCard key={quiz.id} className={`group hover:border-school-green-300 transition-colors ${isEnded ? 'opacity-60' : ''}`}>
+                  <PortalCard key={quiz.id} className={`group hover:border-school-green-300 transition-colors ${ended ? 'opacity-60' : ''}`}>
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
@@ -92,9 +90,9 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                             </svg>
                             {quiz.duration_minutes || quiz.time_limit || 'N/A'} mins
                           </span>
-                          {startTime && (
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isEnded ? 'bg-red-50 text-red-600' : isUpcoming ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
-                              {isEnded ? 'Ended' : isUpcoming ? 'Upcoming' : 'Active'}
+                          {quiz.due_date && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${ended ? 'bg-red-50 text-red-600' : upcoming ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                              {ended ? 'Ended' : upcoming ? 'Upcoming' : 'Active'}
                             </span>
                           )}
                         </div>
@@ -109,15 +107,15 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                             <div className="text-[10px] text-gray-400 italic">Results pending</div>
                           )}
                         </div>
-                      ) : isEnded ? (
+                      ) : ended ? (
                         <span className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg">Ended</span>
                       ) : (
                         <PortalButton 
                           onClick={() => setSelectedQuizId(quiz.id)}
                           size="sm"
-                          disabled={isUpcoming}
+                          disabled={upcoming}
                         >
-                          {isUpcoming ? 'Not Yet Available' : 'Start Quiz'}
+                          {upcoming ? 'Not Yet Available' : 'Start Quiz'}
                         </PortalButton>
                       )}
                     </div>
