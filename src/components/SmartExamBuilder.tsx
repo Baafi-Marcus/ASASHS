@@ -155,19 +155,26 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                         <div className="ml-12 space-y-2">
                           <label className="text-xs font-bold text-gray-500 block">Options (Check the correct answer)</label>
                           {q.options.map((opt, optIndex) => (
-                            <div key={optIndex} className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                checked={opt.is_correct}
-                                onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].is_correct = e.target.checked; setQuestions(nq); }}
-                                className="w-4 h-4 text-school-green-600"
-                              />
-                              <input
-                                type="text"
-                                value={opt.option_text}
-                                onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].option_text = e.target.value; setQuestions(nq); }}
-                                className="flex-1 px-3 py-1 border rounded text-sm font-mono"
-                              />
+                            <div key={optIndex}>
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={opt.is_correct}
+                                  onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].is_correct = e.target.checked; setQuestions(nq); }}
+                                  className="w-4 h-4 text-school-green-600 shrink-0"
+                                />
+                                <input
+                                  type="text"
+                                  value={opt.option_text}
+                                  onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].option_text = e.target.value; setQuestions(nq); }}
+                                  className="flex-1 px-3 py-1 border rounded text-sm font-mono"
+                                />
+                              </div>
+                              {opt.option_text && /\$\$/.test(opt.option_text) && (
+                                <div className="ml-9 mt-1 text-sm text-gray-500">
+                                  <MathText text={opt.option_text} />
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
