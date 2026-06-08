@@ -275,7 +275,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                       </span>
                       <span className="text-xs font-bold uppercase text-gray-400">{q.question_type}</span>
                       <div className="ml-auto flex items-center space-x-1">
-                        <span className="text-xs text-gray-400">Points:</span>
+                        <span className="text-xs text-gray-400">Marks:</span>
                         <input
                           type="number"
                           min="0.5"
@@ -400,7 +400,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                     <span className="font-bold">{questions.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Total Points</span>
+                    <span className="text-gray-600">Total Marks</span>
                     <span className="font-bold">{questions.reduce((sum, q) => sum + (q.points || 1), 0)}</span>
                   </div>
                 </div>

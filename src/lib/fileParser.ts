@@ -1,8 +1,6 @@
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Explicitly instantiate the Web Worker using Vite's native worker syntax.
-// This guarantees Vite fully bundles the worker and prevents pdf.js from dynamically fetching from a CDN fallback.
 const pdfWorker = new Worker(
   new URL('pdfjs-dist/build/pdf.worker.mjs', import.meta.url),
   { type: 'module' }
@@ -27,7 +25,6 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
           const result = await mammoth.extractRawText({ arrayBuffer });
           resolve(result.value);
         } else if (file.type === 'text/plain') {
-          // It's a text file, just read it as text
           const textReader = new FileReader();
           textReader.onload = (e) => resolve(e.target?.result as string);
           textReader.readAsText(file);
@@ -60,5 +57,29 @@ const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => 
   } catch (error: any) {
     console.error('PDF parsing error:', error);
     throw new Error(`PDF Error: ${error?.message || 'Unknown parsing error'}`);
+  }
+};
+
+// Render PDF pages to images for vision-based AI extraction
+export const extractImagesFromPdf = async (arrayBuffer: ArrayBuffer, maxPages: number = 20): Promise<Blob[]> => {
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages: Blob[] = [];
+    const numPages = Math.min(pdf.numPages, maxPages);
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
+      const canvas = new OffscreenCanvas(viewport.width, viewport.height);
+      const ctx = canvas.getContext('2d')!;
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+      pages.push(blob);
+    }
+
+    return pages;
+  } catch (error: any) {
+    console.error('PDF image extraction error:', error);
+    throw new Error(`PDF Image Error: ${error?.message || 'Failed to render PDF pages'}`);
   }
 };

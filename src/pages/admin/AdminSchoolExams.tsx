@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
 import { parseDate, getScheduleStatus } from '../../lib/dates';
+import { MathText } from '../../components/MathText';
 
 function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -68,8 +69,8 @@ function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]
                 {questions.map((q: any, i: number) => (
                   <div key={q.id} className="bg-gray-50 p-3 rounded-xl border text-sm">
                     <span className="font-bold text-school-green-600 mr-2">Q{i + 1}.</span>
-                    {q.question_text}
-                    <span className="text-xs text-gray-400 ml-2">({q.points || 1}pts)</span>
+                    <MathText text={q.question_text} />
+                    <span className="text-xs text-gray-400 ml-2">({q.points || 1} marks)</span>
                   </div>
                 ))}
               </div>

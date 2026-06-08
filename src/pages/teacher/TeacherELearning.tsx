@@ -60,7 +60,7 @@ function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) 
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Total Points</label>
-              <p className="text-gray-900 font-medium">{quiz.total_points || 'N/A'}</p>
+              <p className="text-gray-900 font-medium">{quiz.total_points || 'N/A'} marks</p>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Passing Score</label>
@@ -169,7 +169,7 @@ function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void })
                       {submitted ? (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                            {attempt.score} pts
+                            {attempt.score} marks
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">

@@ -15,9 +15,20 @@ interface AiProviderConfig {
   key_value: string;
 }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export const aiService = {
   async extractQuestions(rawText: string): Promise<ExtractedQuestion[]> {
-    // 1. Fetch available API keys
     const keys = await db.getAiApiKeys();
     const activeKeys = keys.filter((k: any) => k.is_active);
     
@@ -25,7 +36,6 @@ export const aiService = {
       throw new Error('No active AI API keys found. Please ask the Admin to configure them in System Settings.');
     }
 
-    // Attempt providers in order of priority
     for (const key of activeKeys) {
       try {
         if (key.provider === 'gemini') {
@@ -37,42 +47,127 @@ export const aiService = {
         }
       } catch (error) {
         console.error(`AI extraction failed for provider ${key.provider}:`, error);
-        // Mark as failed in DB
         await db.markApiKeyFailed(key.id);
-        // Continue to next key
       }
     }
 
     throw new Error('All configured AI API providers failed to process the request.');
   },
 
+  async extractQuestionsFromImages(images: Blob[]): Promise<ExtractedQuestion[]> {
+    const keys = await db.getAiApiKeys();
+    const activeKeys = keys.filter((k: any) => k.is_active);
+
+    if (activeKeys.length === 0) {
+      throw new Error('No active AI API keys found.');
+    }
+
+    for (const key of activeKeys) {
+      try {
+        if (key.provider === 'gemini') {
+          return await this.callGeminiWithImages(key.key_value, images);
+        } else if (key.provider === 'openai' || key.provider === 'github') {
+          return await this.callVisionAI(key.key_value, images);
+        }
+      } catch (error) {
+        console.error(`Vision extraction failed for provider ${key.provider}:`, error);
+        await db.markApiKeyFailed(key.id);
+      }
+    }
+
+    throw new Error('All AI providers failed vision-based extraction.');
+  },
+
   async callGemini(apiKey: string, text: string): Promise<ExtractedQuestion[]> {
     const prompt = this.getPromptSystemInstructions();
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `${prompt}\n\nRaw Text:\n${text}` }]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-        }
+        contents: [{
+          role: "user",
+          parts: [{ text: `${prompt}\n\nRaw Text:\n${text}` }]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Gemini API Error: ${response.statusText}`);
 
     const data = await response.json();
     const resultText = data.candidates[0].content.parts[0].text;
     return JSON.parse(resultText);
+  },
+
+  async callGeminiWithImages(apiKey: string, images: Blob[]): Promise<ExtractedQuestion[]> {
+    const prompt = this.getVisionPromptSystemInstructions();
+    const parts: any[] = [{ text: prompt }];
+
+    for (const img of images) {
+      const b64 = await blobToBase64(img);
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: b64
+        }
+      });
+    }
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
+    });
+
+    if (!response.ok) throw new Error(`Gemini Vision API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    const resultText = data.candidates[0].content.parts[0].text;
+    return JSON.parse(resultText);
+  },
+
+  async callVisionAI(apiKey: string, images: Blob[]): Promise<ExtractedQuestion[]> {
+    const prompt = this.getVisionPromptSystemInstructions();
+    const content: any[] = [{ type: 'text', text: prompt }];
+
+    for (const img of images) {
+      const b64 = await blobToBase64(img);
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${b64}` }
+      });
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content }],
+        max_tokens: 16384
+      })
+    });
+
+    if (!response.ok) throw new Error(`Vision API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    let resultText = data.choices[0].message.content;
+
+    if (resultText.startsWith('```json')) {
+      resultText = resultText.replace(/```json\n?/, '').replace(/```\n?$/, '');
+    } else if (resultText.startsWith('```')) {
+      resultText = resultText.replace(/```\n?/, '').replace(/```\n?$/, '');
+    }
+
+    const parsed = JSON.parse(resultText.trim());
+    return parsed.questions ? parsed.questions : parsed;
   },
 
   async callOpenAI(apiKey: string, text: string): Promise<ExtractedQuestion[]> {
@@ -93,15 +188,12 @@ export const aiService = {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API Error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`OpenAI API Error: ${response.statusText}`);
 
     const data = await response.json();
     const resultText = data.choices[0].message.content;
     const parsed = JSON.parse(resultText);
     
-    // Handle case where OpenAI wraps the array in an object due to json_object requirement
     if (Array.isArray(parsed)) return parsed;
     if (parsed.questions && Array.isArray(parsed.questions)) return parsed.questions;
     
@@ -125,14 +217,11 @@ export const aiService = {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`GitHub Models API Error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`GitHub Models API Error: ${response.statusText}`);
 
     const data = await response.json();
     let resultText = data.choices[0].message.content;
     
-    // Clean up markdown block if present
     if (resultText.startsWith('```json')) {
       resultText = resultText.replace(/```json\n?/, '').replace(/```\n?$/, '');
     } else if (resultText.startsWith('```')) {
@@ -149,25 +238,82 @@ export const aiService = {
 Read the provided raw text thoroughly. Identify all the questions, their type, the options provided, and the correct answer if indicated.
 If no correct answer is indicated in the text, guess it if it's obvious, or leave it blank.
 
+For mathematical expressions, use LaTeX notation enclosed in $$ or \( \) delimiters:
+- Matrices: $$\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$$
+- Fractions: $$\\frac{1}{2}$$
+- Square roots: $$\\sqrt{3}$$
+- Exponents: $$x^2$$
+- Subscripts: $$x_1$$
+- Summation: $$\\sum_{i=1}^n$$
+- Integrals: $$\\int_a^b$$
+- Sets: $$\\{ x \\mid x > 0 \\}$$
+- Greek letters: $$\\alpha, \\beta, \\pi$$
+- Arrows: $$\\rightarrow, \\Rightarrow$$
+- Comparison: $$\\leq, \\geq, \\neq, \\approx$$
+
 Output exactly a JSON array of objects conforming to this schema. DO NOT wrap the array in any object.
 [
   {
-    "question_text": "string",
+    "question_text": "string (use LaTeX $$...$$ for math)",
     "question_type": "multiple_choice" | "true_false" | "short_answer",
     "points": number (default to 1),
-    "options": [ // ONLY for multiple_choice or true_false
+    "options": [
       {
-        "option_text": "string",
+        "option_text": "string (use LaTeX for math in options too)",
         "is_correct": boolean
       }
     ],
-    "correct_answers": ["string"] // ONLY for short_answer
+    "correct_answers": ["string"]
   }
 ]
 
 IMPORTANT:
 - Read thoroughly. Do not skip any questions.
 - For short_answer, correct_answers is an array of acceptable string answers.
-- The output MUST be valid JSON.`;
+- The output MUST be valid JSON.
+- Preserve ALL mathematical notation using LaTeX.`;
+  },
+
+  getVisionPromptSystemInstructions() {
+    return `You are an educational assistant analyzing exam pages from a PDF.
+Look at each page image carefully. Identify ALL questions, their options, and correct answers.
+
+For ANY mathematical notation including matrices, use LaTeX:
+- Matrices: $$\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$$  or  $$\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$$
+- Matrices with brackets: use pmatrix or bmatrix
+- System of equations: $$\\begin{cases} x + y = 5 \\\\ 2x - y = 3 \\end{cases}$$
+- Fractions: $$\\frac{1}{2}$$
+- Square roots: $$\\sqrt{3}$$
+- Exponents: $$x^2$$
+- Subscripts: $$x_1$$
+- Summation: $$\\sum_{i=1}^n$$
+- Integrals: $$\\int_a^b$$
+- Greek letters: $$\\alpha, \\beta, \\pi, \\theta$$
+- Arrows: $$\\rightarrow, \\Rightarrow, \\Leftrightarrow$$
+- Comparison: $$\\leq, \\geq, \\neq, \\approx$$
+
+If you see a diagram, table, or image, describe it clearly in words within the question text.
+If you see ruled lines or answer spaces, note them as "_____" in the question.
+
+Output exactly a JSON object with a "questions" key containing an array:
+{
+  "questions": [
+    {
+      "question_text": "string (use LaTeX $$...$$ for all math)",
+      "question_type": "multiple_choice" | "true_false" | "short_answer",
+      "points": 1,
+      "options": [
+        { "option_text": "string", "is_correct": boolean }
+      ],
+      "correct_answers": ["string"]
+    }
+  ]
+}
+
+IMPORTANT:
+- DO NOT skip any questions on any page
+- Preserve ALL mathematical notation precisely using LaTeX
+- For diagrams, describe what you see
+- The output MUST be valid JSON`;
   }
 };

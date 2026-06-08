@@ -102,7 +102,7 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                         <div className="text-right">
                           <div className="text-xs font-bold text-school-green-600">COMPLETED</div>
                           {hasAttempt.show_results_immediately !== false ? (
-                            <div className="text-lg font-bold text-gray-900">{hasAttempt.score} pts</div>
+                            <div className="text-lg font-bold text-gray-900">{hasAttempt.score} marks</div>
                           ) : (
                             <div className="text-[10px] text-gray-400 italic">Results pending</div>
                           )}
@@ -148,7 +148,7 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                               <div className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
                                 {attempt.percentage}%
                               </div>
-                              <div className="text-[10px] text-gray-500">{attempt.score} points</div>
+                              <div className="text-[10px] text-gray-500">{attempt.score} marks</div>
                             </>
                           ) : (
                             <span className="text-xs text-gray-400 italic">Results pending</span>

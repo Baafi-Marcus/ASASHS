@@ -4,6 +4,7 @@ import { db } from '../../../lib/neon';
 import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { parseDate } from '../../lib/dates';
+import { MathText } from '../../components/MathText';
 
 interface QuizRunnerProps {
   studentId: number;
@@ -392,7 +393,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
             <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Answer Review</h2>
-                <p className="text-gray-500">{result?.score} / {result?.totalPoints} points ({Math.round(result?.percentage || 0)}%)</p>
+                <p className="text-gray-500">{result?.score} / {result?.totalPoints} marks ({Math.round(result?.percentage || 0)}%)</p>
               </div>
               <PortalButton variant="secondary" onClick={() => setShowAnswerReview(false)}>
                 Back
@@ -409,10 +410,10 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Question {idx + 1}</span>
                     <span className={`text-xs font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {isCorrect ? '+' + (q.points || 1) + ' pts' : '0 pts'}
+                      {isCorrect ? '+' + (q.points || 1) + ' marks' : '0 marks'}
                     </span>
                   </div>
-                  <p className="text-lg font-bold text-gray-900 mb-4">{q.question_text}</p>
+                  <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-500">Your answer:</span>
@@ -513,14 +514,14 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
                       <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">{q.question_type}</span>
                       {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
                     </div>
-                    <span className="text-xs font-bold text-gray-300">{q.points || 1} POINTS</span>
+                    <span className="text-xs font-bold text-gray-300">{q.points || 1} MARKS</span>
                   </div>
-                  <p className="text-lg font-bold text-gray-900 mb-4">{q.question_text}</p>
+                  <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
                   {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
                     <div className="flex flex-wrap gap-2">
                       {(q.options || []).map((opt: any) => (
                         <div key={opt.id} className={`px-4 py-2 rounded-xl text-sm font-medium border-2 ${answer === opt.option_text ? 'border-school-green-600 bg-school-green-50 text-school-green-800' : 'border-gray-200 text-gray-500'}`}>
-                          {opt.option_text}
+                          <MathText text={opt.option_text} />
                           {answer === opt.option_text && <span className="ml-2 text-green-600">✓</span>}
                         </div>
                       ))}
@@ -561,9 +562,9 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
               <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {idx + 1} of {quiz.questions.length}</span>
               {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
             </div>
-            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} POINTS</span>
+            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} MARKS</span>
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 leading-tight">{q.question_text}</h3>
+          <MathText text={q.question_text} className="text-2xl font-bold text-gray-900 leading-tight" />
         </div>
 
         <div className="space-y-4 pt-6">
@@ -579,11 +580,11 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
                       : 'border-gray-50 bg-gray-50 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex items-center">
+                    <div className="flex items-center">
                     <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${answers[q.id] === option.option_text ? 'border-school-green-600 bg-school-green-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
                       {answers[q.id] === option.option_text && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
                     </div>
-                    <span className="text-lg font-medium">{option.option_text}</span>
+                    <MathText text={option.option_text} className="text-lg font-medium" />
                   </div>
                 </button>
               ))}

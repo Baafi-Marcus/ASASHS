@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { aiService, ExtractedQuestion } from '../lib/aiService';
-import { extractTextFromFile } from '../lib/fileParser';
+import { extractTextFromFile, extractImagesFromPdf } from '../lib/fileParser';
+import { MathText } from './MathText';
 
 interface SmartExamBuilderProps {
   onComplete: (questions: ExtractedQuestion[]) => void;
@@ -12,6 +13,37 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
   const [rawText, setRawText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [questions, setQuestions] = useState<ExtractedQuestion[] | null>(null);
+  const [useVision, setUseVision] = useState(false);
+  const [fileName, setFileName] = useState('');
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setIsProcessing(true);
+
+    try {
+      if (useVision && file.type === 'application/pdf') {
+        toast.loading('Rendering PDF pages for AI analysis...', { id: 'vision' });
+        const arrayBuffer = await file.arrayBuffer();
+        const images = await extractImagesFromPdf(arrayBuffer);
+        toast.loading(`Analyzing ${images.length} page(s) with AI vision...`, { id: 'vision' });
+        const extracted = await aiService.extractQuestionsFromImages(images);
+        setQuestions(extracted);
+        toast.success(`Extracted ${extracted.length} questions via vision AI!`, { id: 'vision' });
+      } else {
+        toast.loading('Extracting text from file...', { id: 'extract' });
+        const text = await extractTextFromFile(file);
+        setRawText(text);
+        toast.success('Text extracted! Click "Extract Questions" to continue.', { id: 'extract' });
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to process file', { id: 'vision' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleExtract = async () => {
     if (!rawText.trim()) return toast.error('Please enter exam text first');
@@ -56,8 +88,11 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                     newQ[i].question_text = e.target.value;
                     setQuestions(newQ);
                   }}
-                  className="flex-1 px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-school-green-500" 
+                  className="flex-1 px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-school-green-500 font-mono text-sm" 
                 />
+              </div>
+              <div className="ml-12 mb-2">
+                <MathText text={q.question_text} className="text-sm text-gray-600 italic block" />
               </div>
               
               <div className="ml-12 grid grid-cols-2 gap-4">
@@ -78,7 +113,7 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                   </select>
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Points</label>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Marks</label>
                   <input 
                     type="number" 
                     value={q.points || 1} 
@@ -92,7 +127,6 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                 </div>
               </div>
 
-              {/* Options mapping for MCQ / TF */}
               {(q.question_type === 'multiple_choice' || q.question_type === 'true_false') && q.options && (
                 <div className="ml-12 mt-4 space-y-2">
                   <label className="text-xs font-bold text-gray-500 block">Options (Check the correct answer)</label>
@@ -103,7 +137,6 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                         checked={opt.is_correct} 
                         onChange={e => {
                           const newQ = [...questions];
-                          // If it's single choice, we might want to uncheck others, but checkbox allows multiple correct if needed
                           newQ[i].options![optIndex].is_correct = e.target.checked;
                           setQuestions(newQ);
                         }}
@@ -117,28 +150,17 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
                           newQ[i].options![optIndex].option_text = e.target.value;
                           setQuestions(newQ);
                         }}
-                        className="flex-1 px-3 py-1 border rounded text-sm"
+                        className="flex-1 px-3 py-1 border rounded text-sm font-mono"
                       />
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Short Answer mapping */}
               {q.question_type === 'short_answer' && (
-                <div className="ml-12 mt-4 space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block">Correct Answers (Comma separated)</label>
-                  <input 
-                    type="text" 
-                    value={q.correct_answers?.join(', ') || ''} 
-                    onChange={e => {
-                      const newQ = [...questions];
-                      newQ[i].correct_answers = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                      setQuestions(newQ);
-                    }}
-                    placeholder="e.g. Paris, paris, PARIS"
-                    className="w-full px-3 py-2 border rounded text-sm"
-                  />
+                <div className="ml-12 mt-4">
+                  <label className="text-xs font-bold text-gray-500 block">Correct Answers</label>
+                  <p className="text-sm text-gray-700 mt-1">{q.correct_answers?.join(', ') || '(not set)'}</p>
                 </div>
               )}
             </div>
@@ -151,58 +173,68 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
   return (
     <div className="bg-white rounded-2xl border p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-xl font-bold">Smart Exam Builder (AI)</h3>
-          <p className="text-sm text-gray-500">Paste raw exam text (questions, options, answers). The AI will automatically structure it.</p>
-        </div>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
+        <h3 className="text-xl font-bold">Smart Exam Builder</h3>
+        <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
       </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-bold text-gray-700 mb-2">Upload Exam File (PDF, DOCX, TXT)</label>
-          <input 
-            type="file" 
-            accept=".pdf,.docx,.txt"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setIsProcessing(true);
-              try {
-                const text = await extractTextFromFile(file);
-                setRawText(text);
-                toast.success('File loaded successfully! Review the text below.');
-              } catch (err: any) {
-                toast.error(err.message || 'Failed to parse file');
-              } finally {
-                setIsProcessing(false);
-              }
-            }}
-            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-school-green-50 file:text-school-green-700 hover:file:bg-school-green-100 cursor-pointer"
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
+          <input
+            type="checkbox"
+            id="useVision"
+            checked={useVision}
+            onChange={e => setUseVision(e.target.checked)}
+            className="w-4 h-4 text-school-green-600"
           />
+          <label htmlFor="useVision" className="text-sm font-medium text-blue-900">
+            Use Vision AI (better for math, matrices, diagrams, and symbols)
+          </label>
         </div>
 
-        <textarea
-          value={rawText}
-          onChange={e => setRawText(e.target.value)}
-          placeholder="1. What is the capital of France?\nA) London\nB) Paris\nC) Berlin\nAnswer: B\n\n2. The earth is flat.\nTrue or False?"
-          className="w-full h-64 p-4 border rounded-xl bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-school-green-500 transition mb-6 font-mono text-sm resize-none"
-        />
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-school-green-400 transition-colors">
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="fileUpload"
+            disabled={isProcessing}
+          />
+          <label htmlFor="fileUpload" className="cursor-pointer block">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-gray-600 font-medium">
+              {isProcessing ? 'Processing...' : 'Click to upload a PDF, DOCX, or TXT file'}
+            </p>
+            {fileName && <p className="text-xs text-gray-400 mt-1">{fileName}</p>}
+          </label>
+        </div>
 
-      <div className="flex justify-end gap-4">
-        <button onClick={onCancel} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>
-        <button 
-          onClick={handleExtract} 
-          disabled={isProcessing || !rawText.trim()}
-          className="px-6 py-3 font-bold text-white bg-gradient-to-r from-school-green-600 to-emerald-500 rounded-xl hover:from-school-green-700 hover:to-emerald-600 transition flex items-center gap-2 disabled:opacity-50"
-        >
-          {isProcessing ? (
-            <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Analyzing...</>
-          ) : (
-            <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Extract with AI</>
-          )}
-        </button>
+        {!useVision && (
+          <>
+            <div className="text-center text-sm text-gray-400">- OR -</div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-2">Paste exam text directly</label>
+              <textarea
+                value={rawText}
+                onChange={e => setRawText(e.target.value)}
+                rows={8}
+                className="w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-school-green-500 outline-none resize-y"
+                placeholder="Paste your exam questions here..."
+              />
+            </div>
+
+            <button
+              onClick={handleExtract}
+              disabled={isProcessing || !rawText.trim()}
+              className="w-full px-6 py-3 bg-school-green-600 text-white rounded-xl font-bold hover:bg-school-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {isProcessing ? 'Extracting...' : 'Extract Questions'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
