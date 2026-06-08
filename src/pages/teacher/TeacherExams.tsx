@@ -101,18 +101,22 @@ export function TeacherExams({ teacherId }: { teacherId: number }) {
                 {submissions.map((sub, i) => (
                   <tr key={i} className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium">{sub.surname}, {sub.other_names}</td>
-                    <td className="px-4 py-3 text-gray-600">{sub.obj_score !== null ? sub.obj_score : 'N/A'}</td>
+                    <td className="px-4 py-3 text-gray-600">{sub.obj_score !== null ? sub.obj_score : (sub.score !== null ? 'Auto' : 'N/A')}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="number"
-                          defaultValue={sub.theory_score !== null ? sub.theory_score : ''}
-                          onBlur={(e) => updateTheoryScore(sub.submission_id, sub.student_id, e.target.value)}
-                          className="w-24 px-3 py-1 border rounded-lg focus:ring-2 focus:ring-school-green-500"
-                          placeholder="Score"
-                        />
-                        {saving[sub.student_id] && <span className="text-xs text-blue-500">Saving...</span>}
-                      </div>
+                      {sub.obj_score === null && sub.score !== null ? (
+                        <span className="text-green-600 text-sm font-medium">N/A (Quiz-based)</span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="number"
+                            defaultValue={sub.theory_score !== null ? sub.theory_score : ''}
+                            onBlur={(e) => updateTheoryScore(sub.submission_id, sub.student_id, e.target.value)}
+                            className="w-24 px-3 py-1 border rounded-lg focus:ring-2 focus:ring-school-green-500"
+                            placeholder="Score"
+                          />
+                          {saving[sub.student_id] && <span className="text-xs text-blue-500">Saving...</span>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 font-bold">{sub.score !== null ? sub.score : '-'}</td>
                     <td className="px-4 py-3">

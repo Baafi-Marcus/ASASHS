@@ -3090,13 +3090,18 @@ export const db = {
   async getExamReports(title: string, dueDate: string) {
     checkDatabaseConfig();
     return await sql`
-      SELECT sub.id as submission_id, sub.score, sub.obj_score, sub.theory_score, sub.status,
-             st.student_id as admission_number, st.surname, st.other_names,
-             c.class_name
-      FROM assignment_submissions sub
-      JOIN assignments a ON sub.assignment_id = a.id
-      JOIN students st ON sub.student_id = st.id
+      SELECT 
+        COALESCE(sub.id, qa.id) as submission_id,
+        COALESCE(sub.score, qa.score) as score,
+        sub.obj_score, sub.theory_score,
+        COALESCE(sub.status, qa.status) as status,
+        st.student_id as admission_number, st.surname, st.other_names,
+        c.class_name
+      FROM assignments a
       JOIN classes c ON a.class_id = c.id
+      JOIN students st ON st.current_class_id = c.id
+      LEFT JOIN assignment_submissions sub ON sub.assignment_id = a.id AND sub.student_id = st.id
+      LEFT JOIN quiz_attempts qa ON qa.quiz_id = a.quiz_id AND qa.student_id = st.id
       WHERE a.title = ${title} 
         AND a.due_date = ${dueDate}
         AND a.is_general_exam = true
@@ -3158,11 +3163,16 @@ export const db = {
   async getExamSubmissionsByAssignment(assignmentId: number) {
     checkDatabaseConfig();
     return await sql`
-      SELECT sub.id as submission_id, sub.score, sub.obj_score, sub.theory_score, sub.status,
-             st.id as student_id, st.surname, st.other_names, st.student_id as admission_number
+      SELECT 
+        COALESCE(sub.id, qa.id) as submission_id,
+        COALESCE(sub.score, qa.score) as score,
+        sub.obj_score, sub.theory_score,
+        COALESCE(sub.status, qa.status) as status,
+        st.id as student_id, st.surname, st.other_names, st.student_id as admission_number
       FROM students st
       JOIN assignments a ON a.id = ${assignmentId}
       LEFT JOIN assignment_submissions sub ON sub.student_id = st.id AND sub.assignment_id = a.id
+      LEFT JOIN quiz_attempts qa ON qa.quiz_id = a.quiz_id AND qa.student_id = st.id
       WHERE st.current_class_id = a.class_id
       ORDER BY st.surname, st.other_names
     `;
