@@ -126,6 +126,13 @@ export function CourseManagement() {
     is_core: false
   });
 
+  const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+  const [currentSemester, setCurrentSemester] = useState(1);
+  const [promotionFromForm, setPromotionFromForm] = useState(1);
+  const [promotionFromSemester, setPromotionFromSemester] = useState(1);
+  const [promotionToForm, setPromotionToForm] = useState(2);
+  const [promotionToSemester, setPromotionToSemester] = useState(1);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -133,15 +140,19 @@ export function CourseManagement() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [coursesData, classesData, subjectsData] = await Promise.all([
+      const [coursesData, classesData, subjectsData, ay, sem] = await Promise.all([
         db.getCourses(),
         db.getClasses(),
-        db.getSubjects()
+        db.getSubjects(),
+        db.getCurrentAcademicYear(),
+        db.getCurrentSemester()
       ]);
       
       setCourses(coursesData as Course[]);
       setClasses(classesData as Class[]);
       setSubjects(subjectsData as Subject[]);
+      if (ay) setCurrentAcademicYear(ay);
+      if (sem) setCurrentSemester(sem);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to load data');
@@ -302,33 +313,24 @@ export function CourseManagement() {
     }
   };
 
-  const handlePromoteStudents = async () => {
-    if (window.confirm('This will promote all form 1 semester 2 students to form 2 semester 1. Are you sure?')) {
-      try {
-        // Get current and next academic year
-        const currentYear = new Date().getFullYear();
-        const currentAcademicYear = `${currentYear}/${currentYear + 1}`;
-        const nextAcademicYear = `${currentYear + 1}/${currentYear + 2}`;
-        
-        const result = await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 1, 2, 2, 1);
-        toast.success(result.message);
-        fetchData();
-      } catch (error) {
-        console.error('Failed to promote students:', error);
-        toast.error('Failed to promote students: ' + (error as Error).message);
-      }
-    }
-  };
-  
   const handlePromoteSemester = async () => {
-    if (window.confirm('This will promote all form 1 semester 1 students to form 1 semester 2. Are you sure?')) {
+    if (!currentAcademicYear) { toast.error('Academic year not set.'); return; }
+    const ay = currentAcademicYear;
+    if (window.confirm(`Promote all students ${currentSemester === 1 ? 'Semester 1 → Semester 2' : 'Semester 2 → next form'} for ${ay}?`)) {
       try {
-        // Get current academic year
-        const currentYear = new Date().getFullYear();
-        const currentAcademicYear = `${currentYear}/${currentYear + 1}`;
-        
-        const result = await db.promoteStudentsToNextForm(currentAcademicYear, currentAcademicYear, 1, 1, 1, 2);
-        toast.success(result.message);
+        if (currentSemester === 1) {
+          await db.promoteStudentsToNextForm(ay, ay, 1, 1, 1, 2);
+          await db.promoteStudentsToNextForm(ay, ay, 2, 1, 2, 2);
+          await db.promoteStudentsToNextForm(ay, ay, 3, 1, 3, 2);
+          await db.setCurrentSemester(2);
+        } else {
+          const nextAy = `${parseInt(ay.split('/')[0]) + 1}/${parseInt(ay.split('/')[1]) + 1}`;
+          await db.promoteStudentsToNextForm(ay, nextAy, 1, 2, 2, 1);
+          await db.promoteStudentsToNextForm(ay, nextAy, 2, 2, 3, 1);
+          await db.setCurrentAcademicYear(nextAy);
+          await db.setCurrentSemester(1);
+        }
+        toast.success('Semester promotion completed.');
         fetchData();
       } catch (error) {
         console.error('Failed to promote students:', error);
@@ -338,23 +340,19 @@ export function CourseManagement() {
   };
   
   const handleAcademicYearEnd = async () => {
-    if (window.confirm('This will end the current academic year and start a new one. All students will be promoted accordingly. Are you sure?')) {
+    if (!currentAcademicYear) { toast.error('Academic year not set.'); return; }
+    const ay = currentAcademicYear;
+    const nextAy = `${parseInt(ay.split('/')[0]) + 1}/${parseInt(ay.split('/')[1]) + 1}`;
+    if (window.confirm(`End academic year ${ay} and start ${nextAy}? All students will be promoted.`)) {
       try {
-        // Get current and next academic year
-        const currentYear = new Date().getFullYear();
-        const currentAcademicYear = `${currentYear}/${currentYear + 1}`;
-        const nextAcademicYear = `${currentYear + 1}/${currentYear + 2}`;
-        
-        // First promote semester 2 students to next form
-        await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 1, 2, 2, 1);
-        await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 2, 2, 3, 1);
-        
-        // Then promote semester 1 students to semester 2
-        await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 1, 1, 1, 2);
-        await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 2, 1, 2, 2);
-        await db.promoteStudentsToNextForm(currentAcademicYear, nextAcademicYear, 3, 1, 3, 2);
-        
-        toast.success('Academic year ended successfully. All students promoted.');
+        await db.promoteStudentsToNextForm(ay, nextAy, 1, 2, 2, 1);
+        await db.promoteStudentsToNextForm(ay, nextAy, 2, 2, 3, 1);
+        await db.promoteStudentsToNextForm(ay, nextAy, 1, 1, 1, 2);
+        await db.promoteStudentsToNextForm(ay, nextAy, 2, 1, 2, 2);
+        await db.promoteStudentsToNextForm(ay, nextAy, 3, 1, 3, 2);
+        await db.setCurrentAcademicYear(nextAy);
+        await db.setCurrentSemester(1);
+        toast.success('Academic year ended. All students promoted.');
         fetchData();
       } catch (error) {
         console.error('Failed to end academic year:', error);
@@ -363,14 +361,12 @@ export function CourseManagement() {
     }
   };
   
-  const handleManualPromotion = async (fromForm: number, fromSemester: number, toForm: number, toSemester: number) => {
+  const handleManualPromotion = async () => {
+    if (!currentAcademicYear) { toast.error('Academic year not set.'); return; }
+    const ay = currentAcademicYear;
+    const targetAy = promotionFromSemester === 2 && promotionToSemester === 1 ? `${parseInt(ay.split('/')[0]) + 1}/${parseInt(ay.split('/')[1]) + 1}` : ay;
     try {
-      // Get current and next academic year
-      const currentYear = new Date().getFullYear();
-      const currentAcademicYear = `${currentYear}/${currentYear + 1}`;
-      const targetAcademicYear = fromSemester === 2 && toSemester === 1 ? `${currentYear + 1}/${currentYear + 2}` : `${currentYear}/${currentYear + 1}`;
-      
-      const result = await db.promoteStudentsToNextForm(currentAcademicYear, targetAcademicYear, fromForm, fromSemester, toForm, toSemester);
+      const result = await db.promoteStudentsToNextForm(ay, targetAy, promotionFromForm, promotionFromSemester, promotionToForm, promotionToSemester);
       toast.success(result.message);
       fetchData();
     } catch (error) {
@@ -1209,7 +1205,7 @@ export function CourseManagement() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-gray-800">Academic Promotions</h3>
-                <p className="text-gray-600">Manage student promotions between semesters and academic years</p>
+                <p className="text-gray-600">Current: {currentAcademicYear} (Semester {currentSemester})</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1221,39 +1217,19 @@ export function CourseManagement() {
                     </div>
                     <div>
                       <h4 className="font-bold text-lg text-gray-800">Semester Promotion</h4>
-                      <p className="text-gray-600 text-sm">Form 1 S1 → Form 1 S2</p>
+                      <p className="text-gray-600 text-sm">{currentSemester === 1 ? 'S1 → S2 for all forms' : 'S2 → next form for all forms'}</p>
                     </div>
                   </div>
                   <p className="text-gray-600 mb-4 text-sm">
-                    Promote all students from Semester 1 to Semester 2 within the same academic year.
+                    {currentSemester === 1
+                      ? `Advance all students from Semester 1 to Semester 2 within ${currentAcademicYear}.`
+                      : `Advance all students from Semester 2 to the next form for the next academic year.`}
                   </p>
                   <button
                     onClick={handlePromoteSemester}
                     className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                   >
-                    Promote Semester
-                  </button>
-                </div>
-
-                {/* Promote Form 1 Semester 2 to Form 2 Semester 1 */}
-                <div className="bg-white border border-school-cream-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-purple-100 p-3 rounded-lg mr-4">
-                      <span className="text-purple-600 text-xl">⬆️</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-lg text-gray-800">Form Promotion</h4>
-                      <p className="text-gray-600 text-sm">Form 1 S2 → Form 2 S1</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 mb-4 text-sm">
-                    Promote students from Form 1 Semester 2 to Form 2 Semester 1 for the next academic year.
-                  </p>
-                  <button
-                    onClick={handlePromoteStudents}
-                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  >
-                    Promote Students
+                    {currentSemester === 1 ? 'Promote S1 → S2' : 'Promote S2 → Next Form'}
                   </button>
                 </div>
 
@@ -1265,90 +1241,69 @@ export function CourseManagement() {
                     </div>
                     <div>
                       <h4 className="font-bold text-lg text-gray-800">End Academic Year</h4>
-                      <p className="text-gray-600 text-sm">Complete Year Process</p>
+                      <p className="text-gray-600 text-sm">{currentAcademicYear} → next year</p>
                     </div>
                   </div>
                   <p className="text-gray-600 mb-4 text-sm">
-                    Complete all promotions for the academic year: S1→S2 and F1S2→F2S1.
+                    Complete all promotions: promote all forms and advance to the next academic year.
                   </p>
                   <button
                     onClick={handleAcademicYearEnd}
                     className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium"
                   >
-                    End Academic Year
+                    End {currentAcademicYear}
                   </button>
                 </div>
 
                 {/* Manual Promotion Card */}
-                <div className="bg-white border border-school-cream-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-3">
+                <div className="bg-white border border-school-cream-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center mb-4">
                     <div className="bg-green-100 p-3 rounded-lg mr-4">
                       <span className="text-green-600 text-xl">⚙️</span>
                     </div>
                     <div>
                       <h4 className="font-bold text-lg text-gray-800">Manual Promotion</h4>
-                      <p className="text-gray-600 text-sm">Custom promotion between forms/semesters</p>
+                      <p className="text-gray-600 text-sm">Custom promotion</p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">From Form</label>
-                      <select 
-                        className="w-full px-3 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                        // Add state and handler for fromForm
-                      >
-                        <option value="1">Form 1</option>
-                        <option value="2">Form 2</option>
-                        <option value="3">Form 3</option>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">From Form</label>
+                      <select value={promotionFromForm} onChange={e => setPromotionFromForm(parseInt(e.target.value))}
+                        className="w-full px-2 py-2 border border-school-cream-300 rounded-lg text-sm focus:ring-2 focus:ring-school-green-500">
+                        <option value="1">Form 1</option><option value="2">Form 2</option><option value="3">Form 3</option>
                       </select>
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">From Semester</label>
-                      <select 
-                        className="w-full px-3 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                        // Add state and handler for fromSemester
-                      >
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">From Semester</label>
+                      <select value={promotionFromSemester} onChange={e => setPromotionFromSemester(parseInt(e.target.value))}
+                        className="w-full px-2 py-2 border border-school-cream-300 rounded-lg text-sm focus:ring-2 focus:ring-school-green-500">
+                        <option value="1">Sem 1</option><option value="2">Sem 2</option>
                       </select>
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">To Form</label>
-                      <select 
-                        className="w-full px-3 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                        // Add state and handler for toForm
-                      >
-                        <option value="1">Form 1</option>
-                        <option value="2">Form 2</option>
-                        <option value="3">Form 3</option>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">To Form</label>
+                      <select value={promotionToForm} onChange={e => setPromotionToForm(parseInt(e.target.value))}
+                        className="w-full px-2 py-2 border border-school-cream-300 rounded-lg text-sm focus:ring-2 focus:ring-school-green-500">
+                        <option value="1">Form 1</option><option value="2">Form 2</option><option value="3">Form 3</option>
                       </select>
                     </div>
-                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">To Semester</label>
-                      <select 
-                        className="w-full px-3 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-                        // Add state and handler for toSemester
-                      >
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">To Semester</label>
+                      <select value={promotionToSemester} onChange={e => setPromotionToSemester(parseInt(e.target.value))}
+                        className="w-full px-2 py-2 border border-school-cream-300 rounded-lg text-sm focus:ring-2 focus:ring-school-green-500">
+                        <option value="1">Sem 1</option><option value="2">Sem 2</option>
                       </select>
                     </div>
                   </div>
                   
                   <button
-                    // onClick={handleManualPromotion}
+                    onClick={handleManualPromotion}
                     className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
-                    disabled
                   >
                     Execute Manual Promotion
                   </button>
-                  <p className="text-gray-500 text-xs mt-2">
-                    Note: Manual promotions require custom implementation. Contact system administrator for setup.
-                  </p>
                 </div>
               </div>
 
@@ -1356,10 +1311,10 @@ export function CourseManagement() {
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
                 <h4 className="font-bold text-lg text-blue-800 mb-2">About Academic Promotions</h4>
                 <ul className="list-disc pl-5 space-y-1 text-blue-700 text-sm">
-                  <li>Semester promotions move students within the same form and academic year</li>
-                  <li>Form promotions move students to the next form for the next academic year</li>
-                  <li>End Academic Year performs all required promotions automatically</li>
-                  <li>Always backup data before performing promotions</li>
+                  <li>Semester promotion: all students advance one semester within the same academic year</li>
+                  <li>End Academic Year: promotes all forms and advances to the next year</li>
+                  <li>Manual: custom promotion between any form/semester combination</li>
+                  <li>Set the current academic year and semester in <strong>System → Academic Year Settings</strong></li>
                 </ul>
               </div>
             </div>
