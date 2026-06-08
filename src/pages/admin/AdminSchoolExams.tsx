@@ -3,7 +3,7 @@ import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
-import { parseDate, getScheduleStatus } from '../../lib/dates';
+import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { MathText } from '../../components/MathText';
 
 function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
@@ -565,6 +565,7 @@ export function AdminSchoolExams() {
                   <th className="px-4 py-3">Subject</th>
                   <th className="px-4 py-3">Class</th>
                   <th className="px-4 py-3">Start Time & Duration</th>
+                  <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
                 </tr>
               </thead>
@@ -589,6 +590,9 @@ export function AdminSchoolExams() {
                       <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
                       <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
                     </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => setViewExam(exam)} className="text-school-green-600 hover:text-school-green-800 text-sm font-bold">View</button>
@@ -600,7 +604,7 @@ export function AdminSchoolExams() {
                 ))}
                 {exams.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No general exams scheduled</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">No general exams scheduled</td>
                   </tr>
                 )}
               </tbody>

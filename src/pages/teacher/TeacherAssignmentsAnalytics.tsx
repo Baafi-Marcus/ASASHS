@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 
 interface Assignment {
   id: number;
@@ -177,7 +178,9 @@ export const TeacherAssignmentsAnalytics: React.FC<TeacherAssignmentsAnalyticsPr
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Assignments</h3>
           <div className="space-y-4">
-            {recentAssignments.map(assignment => (
+            {recentAssignments.map(assignment => {
+              const status = getScheduleStatus(assignment.created_at, assignment.due_date);
+              return (
               <div key={assignment.id} className="flex items-center p-3 hover:bg-school-cream-50 rounded-lg">
                 <div className="flex-shrink-0 w-10 h-10 bg-school-green-100 rounded-lg flex items-center justify-center">
                   <span className="text-school-green-800 font-bold">A</span>
@@ -186,11 +189,17 @@ export const TeacherAssignmentsAnalytics: React.FC<TeacherAssignmentsAnalyticsPr
                   <div className="text-sm font-medium text-gray-900">{assignment.title}</div>
                   <div className="text-sm text-gray-500">{assignment.class_name} • {assignment.subject_name}</div>
                 </div>
-                <div className="text-sm text-gray-500">
-                  {new Date(assignment.created_at).toLocaleDateString()}
+                <div className="flex items-center space-x-3">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                    {getStatusLabel(status)}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {new Date(assignment.created_at).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -223,6 +232,7 @@ export const TeacherAssignmentsAnalytics: React.FC<TeacherAssignmentsAnalyticsPr
                   const today = new Date();
                   const timeDiff = dueDate.getTime() - today.getTime();
                   const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                  const status = getScheduleStatus(assignment.created_at, assignment.due_date);
                   
                   return (
                     <tr key={assignment.id} className="hover:bg-school-cream-50 transition-colors">
@@ -240,12 +250,17 @@ export const TeacherAssignmentsAnalytics: React.FC<TeacherAssignmentsAnalyticsPr
                         {dueDate.toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`font-medium ${
-                          daysLeft <= 3 ? 'text-red-600' : 
-                          daysLeft <= 7 ? 'text-yellow-600' : 'text-green-600'
-                        }`}>
-                          {daysLeft} days
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className={`font-medium ${
+                            daysLeft <= 3 ? 'text-red-600' : 
+                            daysLeft <= 7 ? 'text-yellow-600' : 'text-green-600'
+                          }`}>
+                            {daysLeft} days
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                            {getStatusLabel(status)}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   );

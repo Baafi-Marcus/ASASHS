@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 
 interface Assignment {
   id: number;
@@ -233,11 +234,16 @@ export const TeacherAssignmentsCalendar: React.FC<TeacherAssignmentsCalendarProp
               </thead>
               <tbody className="divide-y divide-school-cream-200">
                 {getAssignmentsForDate(selectedDate).length > 0 ? (
-                  getAssignmentsForDate(selectedDate).map((assignment) => (
+                  getAssignmentsForDate(selectedDate).map((assignment) => {
+                    const status = getScheduleStatus(assignment.created_at, assignment.due_date);
+                    return (
                     <tr key={assignment.id} className="hover:bg-school-cream-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">{assignment.title}</div>
                         <div className="text-sm text-gray-500 line-clamp-1">{assignment.description}</div>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                          {getStatusLabel(status)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{assignment.class_name}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{assignment.subject_name}</td>
@@ -261,7 +267,8 @@ export const TeacherAssignmentsCalendar: React.FC<TeacherAssignmentsCalendarProp
                         </button>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center">

@@ -414,6 +414,16 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
                     </span>
                   </div>
                   <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
+                  {q.imageDataUrl && (
+                    <div className="mb-4">
+                      <img src={q.imageDataUrl} alt="Diagram" className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg" onClick={() => window.open(q.imageDataUrl, '_blank')} />
+                    </div>
+                  )}
+                  {q.diagramDescription && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
+                      <span className="font-bold text-yellow-700">Diagram:</span> {q.diagramDescription}
+                    </div>
+                  )}
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-500">Your answer:</span>
@@ -517,6 +527,16 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
                     <span className="text-xs font-bold text-gray-300">{q.points || 1} MARKS</span>
                   </div>
                   <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
+                  {q.imageDataUrl && (
+                    <div className="mb-4">
+                      <img src={q.imageDataUrl} alt="Diagram" className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg" onClick={() => window.open(q.imageDataUrl, '_blank')} />
+                    </div>
+                  )}
+                  {q.diagramDescription && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
+                      <span className="font-bold text-yellow-700">Diagram:</span> {q.diagramDescription}
+                    </div>
+                  )}
                   {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
                     <div className="flex flex-wrap gap-2">
                       {(q.options || []).map((opt: any) => (
@@ -565,6 +585,22 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
             <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} MARKS</span>
           </div>
           <MathText text={q.question_text} className="text-2xl font-bold text-gray-900 leading-tight" />
+          {q.imageDataUrl && (
+            <div className="mt-4">
+              <img
+                src={q.imageDataUrl}
+                alt="Question diagram"
+                className="w-full max-w-lg rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => window.open(q.imageDataUrl, '_blank')}
+              />
+              <p className="text-xs text-gray-400 mt-1">Click to expand</p>
+            </div>
+          )}
+          {q.diagramDescription && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
+              <span className="font-bold text-yellow-700">Diagram description:</span> {q.diagramDescription}
+            </div>
+          )}
         </div>
 
         <div className="space-y-4 pt-6">

@@ -8,6 +8,9 @@ export interface ExtractedQuestion {
   options?: { option_text: string; is_correct: boolean }[];
   correct_answers?: string[];
   group_id?: number;
+  pageIndex?: number;
+  imageDataUrl?: string;
+  diagramDescription?: string;
 }
 
 interface AiProviderConfig {
@@ -25,6 +28,21 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
+}
+
+function mapQuestionFields(q: any): ExtractedQuestion {
+  return {
+    question_text: q.question_text || '',
+    question_type: q.question_type || 'multiple_choice',
+    points: q.points ?? 1,
+    order_index: q.order_index,
+    options: q.options || [],
+    correct_answers: q.correct_answers || [],
+    group_id: q.group_id,
+    pageIndex: q.page_index !== undefined ? q.page_index : q.pageIndex,
+    imageDataUrl: q.imageDataUrl,
+    diagramDescription: q.diagram_description || q.diagramDescription,
+  };
 }
 
 export const aiService = {
@@ -62,20 +80,42 @@ export const aiService = {
       throw new Error('No active AI API keys found.');
     }
 
+    let questions: ExtractedQuestion[] = [];
+
     for (const key of activeKeys) {
       try {
         if (key.provider === 'gemini') {
-          return await this.callGeminiWithImages(key.key_value, images);
+          questions = await this.callGeminiWithImages(key.key_value, images);
         } else if (key.provider === 'openai' || key.provider === 'github') {
-          return await this.callVisionAI(key.key_value, images);
+          questions = await this.callVisionAI(key.key_value, images);
         }
+        break;
       } catch (error) {
         console.error(`Vision extraction failed for provider ${key.provider}:`, error);
         await db.markApiKeyFailed(key.id);
       }
     }
 
-    throw new Error('All AI providers failed vision-based extraction.');
+    if (questions.length === 0) {
+      throw new Error('All AI providers failed vision-based extraction.');
+    }
+
+    const dataUrls = await Promise.all(
+      images.map(img => {
+        return new Promise<string>(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(img);
+        });
+      })
+    );
+
+    return questions.map(q => ({
+      ...q,
+      imageDataUrl: q.pageIndex !== undefined && q.pageIndex >= 0 && q.pageIndex < dataUrls.length
+        ? dataUrls[q.pageIndex]
+        : undefined
+    }));
   },
 
   async callGemini(apiKey: string, text: string): Promise<ExtractedQuestion[]> {
@@ -126,7 +166,9 @@ export const aiService = {
 
     const data = await response.json();
     const resultText = data.candidates[0].content.parts[0].text;
-    return JSON.parse(resultText);
+    const parsed = JSON.parse(resultText);
+    const rawQuestions = parsed.questions ? parsed.questions : parsed;
+    return Array.isArray(rawQuestions) ? rawQuestions.map(mapQuestionFields) : [];
   },
 
   async callVisionAI(apiKey: string, images: Blob[]): Promise<ExtractedQuestion[]> {
@@ -167,7 +209,8 @@ export const aiService = {
     }
 
     const parsed = JSON.parse(resultText.trim());
-    return parsed.questions ? parsed.questions : parsed;
+    const rawQuestions = parsed.questions ? parsed.questions : parsed;
+    return Array.isArray(rawQuestions) ? rawQuestions.map(mapQuestionFields) : [];
   },
 
   async callOpenAI(apiKey: string, text: string): Promise<ExtractedQuestion[]> {
@@ -292,7 +335,10 @@ For ANY mathematical notation including matrices, use LaTeX:
 - Arrows: $$\\rightarrow, \\Rightarrow, \\Leftrightarrow$$
 - Comparison: $$\\leq, \\geq, \\neq, \\approx$$
 
-If you see a diagram, table, or image, describe it clearly in words within the question text.
+IMPORTANT - For each question that references a diagram, table, chart, map, or image, populate the "diagram_description" field with a detailed description of what the diagram shows (labels, axes, values, relationships, etc.).
+
+CRITICAL - For every question, set the "page_index" field to the 0-based index of the page image it came from (first page = 0, second page = 1, etc.).
+
 If you see ruled lines or answer spaces, note them as "_____" in the question.
 
 Output exactly a JSON object with a "questions" key containing an array:
@@ -302,6 +348,8 @@ Output exactly a JSON object with a "questions" key containing an array:
       "question_text": "string (use LaTeX $$...$$ for all math)",
       "question_type": "multiple_choice" | "true_false" | "short_answer",
       "points": 1,
+      "page_index": 0,
+      "diagram_description": "string or null if no diagram is referenced",
       "options": [
         { "option_text": "string", "is_correct": boolean }
       ],
@@ -313,7 +361,7 @@ Output exactly a JSON object with a "questions" key containing an array:
 IMPORTANT:
 - DO NOT skip any questions on any page
 - Preserve ALL mathematical notation precisely using LaTeX
-- For diagrams, describe what you see
+- Every question MUST have a page_index field
 - The output MUST be valid JSON`;
   }
 };

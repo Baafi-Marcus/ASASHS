@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { PortalCard } from '../../components/PortalCard';
 import { StudentProfile } from './StudentProfile';
 import { StudentBehavior } from './StudentBehavior';
@@ -262,15 +263,20 @@ export const StudentDashboard: React.FC<{
         <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
           <h3 className="text-xl font-bold text-gray-800 mb-6">Assignments</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {assignments.map((ass) => (
+            {assignments.map((ass) => {
+              const durationMin = Math.round((new Date(ass.due_date).getTime() - new Date(ass.created_at).getTime()) / 60000);
+              return (
               <div key={ass.id} className="p-6 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-bold text-gray-900 group-hover:text-school-green-600 transition-colors">{ass.title}</h4>
-                  {submissions[ass.id] ? (
-                    <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Submitted</span>
-                  ) : (
-                    <span className="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Pending</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(ass.created_at, durationMin)}`}>{getStatusLabel(ass.created_at, durationMin)}</span>
+                    {submissions[ass.id] ? (
+                      <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Submitted</span>
+                    ) : (
+                      <span className="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Pending</span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-gray-600 mb-6 line-clamp-2">{ass.description}</p>
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
@@ -285,7 +291,8 @@ export const StudentDashboard: React.FC<{
                    )}
                 </div>
               </div>
-            ))}
+            );
+            })}
             {assignments.length === 0 && (
               <div className="col-span-full py-10 text-center bg-gray-50 rounded-2xl border border-gray-100">
                 <p className="text-gray-500 font-medium">No active assignments.</p>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 
 interface Assignment {
   id: number;
@@ -133,7 +134,9 @@ export const TeacherAssignmentsByClass: React.FC<TeacherAssignmentsByClassProps>
                   </thead>
                   <tbody className="divide-y divide-school-cream-200">
                     {group.assignments.length > 0 ? (
-                      group.assignments.map((assignment) => (
+                      group.assignments.map((assignment) => {
+                        const status = getScheduleStatus(assignment.created_at, assignment.due_date);
+                        return (
                         <tr key={assignment.id} className="hover:bg-school-cream-50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900">{assignment.title}</div>
@@ -145,8 +148,13 @@ export const TeacherAssignmentsByClass: React.FC<TeacherAssignmentsByClassProps>
                               {assignment.assignment_type}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {new Date(assignment.due_date).toLocaleDateString()}
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-900">{new Date(assignment.due_date).toLocaleDateString()}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(status)}`}>
+                                {getStatusLabel(status)}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
                             <span className="text-blue-600 font-medium">12/25</span> submitted
@@ -163,7 +171,8 @@ export const TeacherAssignmentsByClass: React.FC<TeacherAssignmentsByClassProps>
                             </button>
                           </td>
                         </tr>
-                      ))
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center">

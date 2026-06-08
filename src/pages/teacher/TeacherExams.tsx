@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { getStatusLabel, getStatusColor } from '../../lib/dates';
 
 export function TeacherExams({ teacherId }: { teacherId: number }) {
   const [exams, setExams] = useState<any[]>([]);
@@ -150,9 +151,10 @@ export function TeacherExams({ teacherId }: { teacherId: number }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {exams.map((exam, i) => (
               <div key={i} className="bg-gray-50 border rounded-2xl p-6 hover:shadow-md transition cursor-pointer" onClick={() => fetchSubmissions(exam)}>
-                <div className="flex justify-between items-start mb-4">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">{exam.exam_type}</span>
-                </div>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">{exam.exam_type}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
+                  </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">{exam.title}</h3>
                 <p className="text-sm font-medium text-gray-600 mb-1">{exam.class_name}</p>
                 <p className="text-sm text-gray-500 mb-4">{exam.subject_name}</p>

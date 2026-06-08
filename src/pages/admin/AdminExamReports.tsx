@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 
 export function AdminExamReports() {
   const [exams, setExams] = useState<any[]>([]);
@@ -84,7 +85,10 @@ export function AdminExamReports() {
                 <div key={i} className="bg-gray-50 border rounded-2xl p-6 hover:shadow-md transition cursor-pointer" onClick={() => fetchReports(exam.title, exam.due_date)}>
                   <div className="flex justify-between items-start mb-4">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">{exam.exam_type}</span>
-                    <span className="text-xs font-medium text-gray-500">{new Date(exam.due_date).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
+                      <span className="text-xs font-medium text-gray-500">{new Date(exam.due_date).toLocaleDateString()}</span>
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{exam.title}</h3>
                   <p className="text-sm font-medium text-gray-600 mb-4">{exam.subject_name}</p>

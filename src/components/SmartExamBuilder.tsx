@@ -94,6 +94,24 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
               <div className="ml-12 mb-2">
                 <MathText text={q.question_text} className="text-sm text-gray-600 italic block" />
               </div>
+
+              {q.imageDataUrl && (
+                <div className="ml-12 mb-3">
+                  <img
+                    src={q.imageDataUrl}
+                    alt={`Page ${(q.pageIndex ?? 0) + 1}`}
+                    className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => window.open(q.imageDataUrl, '_blank')}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Page {q.pageIndex !== undefined ? q.pageIndex + 1 : '?'} — click to expand</p>
+                </div>
+              )}
+
+              {q.diagramDescription && (
+                <div className="ml-12 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
+                  <span className="font-bold text-yellow-700">Diagram description:</span> {q.diagramDescription}
+                </div>
+              )}
               
               <div className="ml-12 grid grid-cols-2 gap-4">
                 <div className="col-span-2 sm:col-span-1">
