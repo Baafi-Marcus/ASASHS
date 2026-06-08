@@ -6,6 +6,7 @@ import { TeacherDetailsModal } from './TeacherDetailsModal';
 import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { TeacherBulkUpload } from './TeacherBulkUpload';
 
 interface Teacher {
   id: number;
@@ -99,6 +100,7 @@ export function AdminTeacherManagement() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<number | null>(null);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
   const [isTeacherEditing, setIsTeacherEditing] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   // Multi-step form state (similar to student registration)
   const [currentStep, setCurrentStep] = useState(1);
@@ -676,15 +678,28 @@ export function AdminTeacherManagement() {
           <h2 className="text-2xl font-bold text-gray-800">Teacher Management</h2>
           <p className="text-gray-600">Manage teacher information and employment</p>
         </div>
-        <PortalButton
-          onClick={() => setShowForm(true)}
-          variant="primary"
-        >
-          <span>➕</span>
-          <span>Add Teacher</span>
-        </PortalButton>
+        <div className="flex gap-2">
+          <PortalButton
+            onClick={() => setShowBulkUpload(true)}
+            variant="secondary"
+          >
+            <span>📤</span>
+            <span>Bulk Upload</span>
+          </PortalButton>
+          <PortalButton
+            onClick={() => setShowForm(true)}
+            variant="primary"
+          >
+            <span>➕</span>
+            <span>Add Teacher</span>
+          </PortalButton>
+        </div>
       </div>
 
+      {showBulkUpload ? (
+        <TeacherBulkUpload onSuccess={() => { fetchTeachers(); setShowBulkUpload(false); }} />
+      ) : (
+      <>
       {/* Search */}
       <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 p-6">
         <div className="relative">
@@ -801,6 +816,9 @@ export function AdminTeacherManagement() {
           </>
         )}
       </div>
+
+      </>
+      )}
 
       {/* Add Teacher Form Modal */}
       {showForm && (

@@ -2499,6 +2499,55 @@ export const db = {
     return results;
   },
 
+  async bulkImportTeachers(teachersList: { surname: string; other_names: string; staff_id?: string; department: string; gender: string; title: string; position_rank: string }[]) {
+    const year = new Date().getFullYear();
+    const results = [];
+
+    const lastTea = await sql`SELECT user_id FROM users WHERE user_id LIKE ${`TEA${year}%`} ORDER BY user_id DESC LIMIT 1`;
+    let nextNum = 1;
+    if (lastTea.length > 0) {
+      const match = lastTea[0].user_id.match(/\d{3}$/);
+      if (match) nextNum = parseInt(match[0]) + 1;
+    }
+
+    for (const teacher of teachersList) {
+      const teacherId = `TEA${year}${nextNum.toString().padStart(3, '0')}`;
+      const tempPassword = generateRandomPassword(8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      const userRes = await sql`
+        INSERT INTO users (user_id, user_type, password_hash, temp_password, must_change_password)
+        VALUES (${teacherId}, 'teacher', ${hashedPassword}, ${tempPassword}, true)
+        RETURNING id
+      `;
+      const userId = userRes[0].id;
+
+      const staffId = teacher.staff_id || teacherId;
+
+      await sql`
+        INSERT INTO teachers (
+          user_id, teacher_id, staff_id, title, surname, other_names, gender,
+          department, position_rank, is_active
+        ) VALUES (
+          ${userId}, ${teacherId}, ${staffId}, ${teacher.title}, ${teacher.surname},
+          ${teacher.other_names}, ${teacher.gender}, ${teacher.department},
+          ${teacher.position_rank}, true
+        )
+      `;
+
+      results.push({
+        name: `${teacher.title} ${teacher.surname} ${teacher.other_names}`,
+        teacherId,
+        staffId,
+        tempPassword
+      });
+
+      nextNum++;
+    }
+
+    return results;
+  },
+
   async getStudentsByRegistrationStatus(status: string) {
     return await sql`
       SELECT s.*, c.class_name, co.name as course_name 
