@@ -26,6 +26,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const [tabSwitches, setTabSwitches] = useState(0);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showAnswerReview, setShowAnswerReview] = useState(false);
   const submitQuizRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
         setTimeLeft(remainingSeconds);
         quizData._useFixedSchedule = true;
       } else {
-        setTimeLeft(quizData.time_limit * 60);
+        setTimeLeft((quizData.duration_minutes || quizData.time_limit || 30) * 60);
       }
 
       // Group-aware shuffling
@@ -380,6 +381,56 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   // FINISHED / RESULT PAGE
   if (phase === 'finished') {
     const showScore = quiz?.show_results_immediately !== false;
+    const canReview = quiz?.allow_answer_review === true;
+
+    if (showAnswerReview && canReview) {
+      return (
+        <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-6 space-y-6">
+            <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Answer Review</h2>
+                <p className="text-gray-500">{result?.score} / {result?.totalPoints} points ({Math.round(result?.percentage || 0)}%)</p>
+              </div>
+              <PortalButton variant="secondary" onClick={() => setShowAnswerReview(false)}>
+                Back
+              </PortalButton>
+            </div>
+            {quiz.questions.map((q: any, idx: number) => {
+              const studentAnswer = answers[q.id] || '(no answer)';
+              const opts = q.options || [];
+              const selectedOption = opts.find((o: any) => o.option_text === studentAnswer);
+              const correctOption = opts.find((o: any) => o.is_correct);
+              const isCorrect = selectedOption?.is_correct || false;
+              return (
+                <div key={q.id} className={`bg-white rounded-2xl shadow-sm border-l-4 p-6 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Question {idx + 1}</span>
+                    <span className={`text-xs font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {isCorrect ? '+' + (q.points || 1) + ' pts' : '0 pts'}
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-4">{q.question_text}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-500">Your answer:</span>
+                      <span className={`${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{studentAnswer}</span>
+                    </div>
+                    {!isCorrect && correctOption && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-500">Correct answer:</span>
+                        <span className="text-green-700">{correctOption.option_text}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-lg w-full text-center space-y-6">
@@ -412,7 +463,14 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
               <p className="text-gray-500">Your answers have been recorded. Results will be available once released by your teacher.</p>
             </div>
           )}
-          <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
+          <div className="flex flex-col gap-3">
+            <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
+            {canReview && (
+              <PortalButton onClick={() => setShowAnswerReview(true)} variant="primary" className="w-full">
+                View Answers
+              </PortalButton>
+            )}
+          </div>
         </div>
       </div>
     );

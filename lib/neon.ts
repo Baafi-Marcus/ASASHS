@@ -2601,13 +2601,14 @@ export const db = {
       INSERT INTO elearning_quizzes (
         teacher_id, class_id, subject_id, title, description, instructions, time_limit,
         passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately,
-        display_mode, allow_late_grading, due_date, duration_minutes
+        allow_answer_review, display_mode, allow_late_grading, due_date, duration_minutes
       )
       VALUES (
         ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description},
         ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points},
         ${data.shuffle_questions || false}, ${data.shuffle_options || false},
         ${data.show_results_immediately !== undefined ? data.show_results_immediately : true},
+        ${data.allow_answer_review || false},
         ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false},
         ${data.due_date || null}, ${data.duration_minutes || null}
       )
@@ -2813,6 +2814,7 @@ export const db = {
     shuffle_questions?: boolean;
     shuffle_options?: boolean;
     show_results_immediately?: boolean;
+    allow_answer_review?: boolean;
     allow_late_grading?: boolean;
     display_mode?: string;
   }, classIds: number[]) {
@@ -2829,13 +2831,14 @@ export const db = {
       const qResult = await sql`
         INSERT INTO elearning_quizzes (
           title, description, instructions, subject_id, shuffle_questions, shuffle_options,
-          show_results_immediately, allow_late_grading, display_mode, time_limit,
+          show_results_immediately, allow_answer_review, allow_late_grading, display_mode, time_limit,
           due_date, duration_minutes, total_points
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.instructions || null},
           ${examData.subject_id},
           ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
-          ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
+          ${examData.show_results_immediately !== false}, ${examData.allow_answer_review || false},
+          ${examData.allow_late_grading || false},
           ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60},
           ${examData.due_date}, ${examData.duration_minutes || 60},
           ${totalPoints}

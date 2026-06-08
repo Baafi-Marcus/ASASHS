@@ -32,6 +32,7 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     shuffle_questions: false,
     shuffle_options: false,
     show_results_immediately: true,
+    allow_answer_review: false,
     display_mode: 'all_at_once',
     allow_late_grading: false
   });
@@ -232,7 +233,11 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                 </label>
                 <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
                   <input type="checkbox" checked={quizInfo.show_results_immediately} onChange={e => setQuizInfo({...quizInfo, show_results_immediately: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
-                  <span className="text-sm font-medium text-gray-700">Show Results Immediately after submission</span>
+                  <span className="text-sm font-medium text-gray-700">Show score immediately after submission</span>
+                </label>
+                <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
+                  <input type="checkbox" checked={quizInfo.allow_answer_review} onChange={e => setQuizInfo({...quizInfo, allow_answer_review: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
+                  <span className="text-sm font-medium text-gray-700">Allow students to review their answers</span>
                 </label>
                 <div className="flex flex-col space-y-1 bg-gray-50 p-3 rounded-xl border">
                   <label className="text-xs font-bold text-gray-500">Display Mode</label>
