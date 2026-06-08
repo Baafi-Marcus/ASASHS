@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 export function AdminExamReports() {
   const [exams, setExams] = useState<any[]>([]);
@@ -9,6 +10,17 @@ export function AdminExamReports() {
   const [selectedExam, setSelectedExam] = useState<{title: string, dueDate: string} | null>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredExams = useMemo(() => {
+    if (!searchQuery.trim()) return exams;
+    const q = searchQuery.toLowerCase();
+    return exams.filter((e: any) =>
+      e.title?.toLowerCase().includes(q) ||
+      e.subject_name?.toLowerCase().includes(q) ||
+      e.exam_type?.toLowerCase().includes(q)
+    );
+  }, [exams, searchQuery]);
 
   useEffect(() => {
     fetchExams();
@@ -76,12 +88,24 @@ export function AdminExamReports() {
     <div className="space-y-6">
       {!selectedExam ? (
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <h2 className="text-2xl font-bold mb-6">School Exam Reports</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <h2 className="text-2xl font-bold">School Exam Reports</h2>
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                type="text"
+                placeholder="Search exams..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-2 border rounded-xl text-sm w-64 focus:ring-2 focus:ring-school-green-500 focus:border-school-green-500"
+              />
+            </div>
+          </div>
           {loading ? (
-            <p>Loading exams...</p>
+            <LoadingSkeleton variant="card" rows={3} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {exams.map((exam, i) => (
+              {filteredExams.map((exam, i) => (
                 <div key={i} className="bg-gray-50 border rounded-2xl p-6 hover:shadow-md transition cursor-pointer" onClick={() => fetchReports(exam.title, exam.due_date)}>
                   <div className="flex justify-between items-start mb-4">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">{exam.exam_type}</span>
@@ -103,7 +127,7 @@ export function AdminExamReports() {
                   </div>
                 </div>
               ))}
-              {exams.length === 0 && <p className="text-gray-500 col-span-3">No exams found.</p>}
+              {filteredExams.length === 0 && <p className="text-gray-500 col-span-3">{searchQuery ? 'No exams match your search.' : 'No exams found.'}</p>}
             </div>
           )}
         </div>

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { MathText } from '../../components/MathText';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -122,6 +123,34 @@ export function AdminSchoolExams() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAiBuilder, setShowAiBuilder] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const filteredExams = useMemo(() => {
+    let list = exams;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(e => 
+        e.title?.toLowerCase().includes(q) ||
+        e.subject_name?.toLowerCase().includes(q) ||
+        e.exam_type?.toLowerCase().includes(q) ||
+        e.class_name?.toLowerCase().includes(q)
+      );
+    }
+    return list.sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime());
+  }, [exams, searchQuery]);
+
+  const paginatedExams = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredExams.slice(start, start + pageSize);
+  }, [filteredExams, page]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredExams.length / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchData();
@@ -564,65 +593,103 @@ export function AdminSchoolExams() {
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold mb-4">Scheduled General Exams</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-3 rounded-l-xl">Title</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Structure</th>
-                  <th className="px-4 py-3">Subject</th>
-                  <th className="px-4 py-3">Class</th>
-                  <th className="px-4 py-3">Start Time & Duration</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exams.map((exam, i) => (
-                  <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{exam.title}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {exam.exam_type || 'General Exam'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        {exam.has_obj && <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">OBJ</span>}
-                        {exam.has_theory && <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Theory</span>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">{exam.subject_name}</td>
-                    <td className="px-4 py-3">{exam.class_name} (Form {exam.form})</td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => setViewExam(exam)} className="text-school-green-600 hover:text-school-green-800 text-sm font-bold">View</button>
-                        <button onClick={() => handleEdit(exam)} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Edit</button>
-                        <button onClick={() => handleDelete(exam.title, exam.due_date)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {exams.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">No general exams scheduled</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h2 className="text-xl font-bold">Scheduled General Exams</h2>
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input
+              type="text"
+              placeholder="Search exams..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 border rounded-xl text-sm w-64 focus:ring-2 focus:ring-school-green-500 focus:border-school-green-500"
+            />
           </div>
+        </div>
+        {loading ? (
+          <LoadingSkeleton variant="table" rows={6} columns={8} />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-3 rounded-l-xl">Title</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Structure</th>
+                    <th className="px-4 py-3">Subject</th>
+                    <th className="px-4 py-3">Class</th>
+                    <th className="px-4 py-3">Start Time & Duration</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedExams.map((exam, i) => (
+                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium">{exam.title}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          {exam.exam_type || 'General Exam'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          {exam.has_obj && <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">OBJ</span>}
+                          {exam.has_theory && <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Theory</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">{exam.subject_name}</td>
+                      <td className="px-4 py-3">{exam.class_name} (Form {exam.form})</td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => setViewExam(exam)} className="text-school-green-600 hover:text-school-green-800 text-sm font-bold">View</button>
+                          <button onClick={() => handleEdit(exam)} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Edit</button>
+                          <button onClick={() => handleDelete(exam.title, exam.due_date)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredExams.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-gray-500">{searchQuery ? 'No exams match your search' : 'No general exams scheduled'}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <span className="text-sm text-gray-500">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredExams.length)} of {filteredExams.length}</span>
+                <div className="flex gap-2">
+                  <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Previous</button>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`px-3 py-1.5 border rounded-lg text-sm ${pageNum === page ? 'bg-school-green-600 text-white border-school-green-600' : 'hover:bg-gray-50'}`}>{pageNum}</button>
+                    );
+                  })}
+                  <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Next</button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

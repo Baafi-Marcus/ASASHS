@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { StudentDetailsModal } from './StudentDetailsModal';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 interface Student {
   id: number;
@@ -291,7 +292,7 @@ export function StudentList() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-4 text-center">Loading...</td>
+                  <td colSpan={8} className="p-4"><LoadingSkeleton variant="table-row" columns={8} /></td>
                 </tr>
               ) : students.length > 0 ? (
                 students.map((s) => (

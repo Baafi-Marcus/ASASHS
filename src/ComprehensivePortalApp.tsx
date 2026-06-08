@@ -12,6 +12,8 @@ import { PortalLayout } from './components/PortalLayout';
 import { AuthContext } from '../AuthContext';
 import LoginForm from '../LoginForm';
 import db from '../lib/neon';
+import { withCache } from './lib/cache';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Admin Portal Components
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -75,7 +77,7 @@ function ComprehensivePortalApp() {
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const mode = await db.getMaintenanceMode();
+        const mode = await withCache('maintenance_mode', () => db.getMaintenanceMode(), 10_000);
         setMaintenanceMode(mode);
       } catch (error) {
         console.error('Failed to check maintenance mode:', error);
@@ -273,17 +275,21 @@ function ComprehensivePortalApp() {
     }
 
     return (
-      <PortalLayout
-        portalName={portalName}
-        userName={user.full_name}
-        onLogout={signOut}
-        sidebarItems={sidebarItems}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      >
-        {content}
-        <Toaster position="top-right" />
-      </PortalLayout>
+      <ErrorBoundary>
+        <PortalLayout
+          portalName={portalName}
+          userName={user.full_name}
+          onLogout={signOut}
+          sidebarItems={sidebarItems}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        >
+          <ErrorBoundary key={activeTab}>
+            {content}
+          </ErrorBoundary>
+          <Toaster position="top-right" />
+        </PortalLayout>
+      </ErrorBoundary>
     );
   }
 

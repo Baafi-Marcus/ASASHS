@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { AssignSubjectToTeacherModal } from '../../components/AssignSubjectToTeacherModal';
 import { TeacherDetailsModal } from './TeacherDetailsModal';
 import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 interface Teacher {
   id: number;
@@ -62,6 +63,32 @@ export function AdminTeacherManagement() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [searchTerm, setSearchTerm] = useState(''); // Add search term state
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const filteredTeachers = useMemo(() => {
+    let list = teachers;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter(t =>
+        t.staff_id?.toLowerCase().includes(q) ||
+        t.surname?.toLowerCase().includes(q) ||
+        t.other_names?.toLowerCase().includes(q) ||
+        t.department?.toLowerCase().includes(q) ||
+        t.position_rank?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [teachers, searchTerm]);
+
+  const paginatedTeachers = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredTeachers.slice(start, start + pageSize);
+  }, [filteredTeachers, page]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
+
+  useEffect(() => { setPage(1); }, [searchTerm]);
   
   // Add state for subject assignment
   const [showSubjectAssignmentModal, setShowSubjectAssignmentModal] = useState(false);
@@ -388,15 +415,8 @@ export function AdminTeacherManagement() {
   };
 
   // Handle search submission
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchTeachers();
-  };
-
-  // Reset search
   const handleResetSearch = () => {
     setSearchTerm('');
-    fetchTeachers();
   };
 
   const handleViewTeacherDetails = (teacherId: number) => {
@@ -665,137 +685,121 @@ export function AdminTeacherManagement() {
         </PortalButton>
       </div>
 
-      {/* Search Form */}
+      {/* Search */}
       <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 p-6">
-        <form onSubmit={handleSearch} className="flex space-x-4">
-          <div className="flex-1">
-            <PortalInput
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search teachers by name, staff ID, or department..."
-            />
-          </div>
-          <PortalButton
-            type="submit"
-            variant="primary"
-          >
-            🔍 Search
-          </PortalButton>
-          <PortalButton
-            type="button"
-            variant="secondary"
-            onClick={handleResetSearch}
-          >
-            Reset
-          </PortalButton>
-        </form>
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <input
+            type="text"
+            placeholder="Search by name, staff ID, department..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 pr-4 py-2 border rounded-xl text-sm w-full focus:ring-2 focus:ring-school-green-500 focus:border-school-green-500"
+          />
+          {searchTerm && (
+            <button onClick={handleResetSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Teachers List */}
       <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 overflow-hidden">
-        <div className="bg-school-green-600 text-white p-6">
-          <h3 className="text-xl font-bold">Registered Teachers ({teachers.length})</h3>
+        <div className="bg-school-green-600 text-white p-6 flex justify-between items-center">
+          <h3 className="text-xl font-bold">Registered Teachers ({filteredTeachers.length})</h3>
+          {loading && <div className="animate-pulse h-4 w-20 bg-white/30 rounded" />}
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-school-cream-100">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Staff ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Department</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Position</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Gender</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-school-cream-200">
-              {teachers.length > 0 ? (
-                teachers.map((teacher) => (
-                  <tr key={teacher.id} className="hover:bg-school-cream-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.staff_id}</td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {teacher.title} {teacher.surname}, {teacher.other_names}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{teacher.department}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{teacher.position_rank}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{teacher.gender}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        teacher.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {teacher.is_active ? 'Active' : 'Deactivated'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleViewTeacherDetails(teacher.id)}
-                          className="text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-2 py-1 rounded"
-                          title="View Details"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleEditTeacher(teacher)}
-                          className="text-school-green-600 hover:text-school-green-800 font-medium bg-green-50 px-2 py-1 rounded"
-                          title="Edit Teacher"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleAssignSubject(teacher)}
-                          className="text-purple-600 hover:text-purple-800 font-medium bg-purple-50 px-2 py-1 rounded"
-                          title="Assign Subject"
-                        >
-                          Assign Subject
-                        </button>
-                        {teacher.is_active ? (
-                          <button
-                            onClick={() => handleDeactivateTeacher(teacher.id)}
-                            className="text-yellow-600 hover:text-yellow-800 font-medium bg-yellow-50 px-2 py-1 rounded"
-                            title="Deactivate Teacher"
-                          >
-                            Deactivate
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleReactivateTeacher(teacher.id)}
-                            className="text-green-600 hover:text-green-800 font-medium bg-green-50 px-2 py-1 rounded"
-                            title="Reactivate Teacher"
-                          >
-                            Activate
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteTeacher(teacher.id)}
-                          className="text-red-600 hover:text-red-800 font-medium bg-red-50 px-2 py-1 rounded"
-                          title="Delete Teacher"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
+        {loading ? (
+          <div className="p-6">
+            <LoadingSkeleton variant="table" rows={8} columns={7} />
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-school-cream-100">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Staff ID</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Department</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Position</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Gender</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Actions</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                    No teachers found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-school-cream-200">
+                  {paginatedTeachers.length > 0 ? (
+                    paginatedTeachers.map((teacher) => (
+                      <tr key={teacher.id} className="hover:bg-school-cream-50 transition-colors">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.staff_id}</td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {teacher.title} {teacher.surname}, {teacher.other_names}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{teacher.department}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{teacher.position_rank}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{teacher.gender}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            teacher.is_active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {teacher.is_active ? 'Active' : 'Deactivated'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="flex space-x-2">
+                            <button onClick={() => handleViewTeacherDetails(teacher.id)} className="text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-2 py-1 rounded">View</button>
+                            <button onClick={() => handleEditTeacher(teacher)} className="text-school-green-600 hover:text-school-green-800 font-medium bg-green-50 px-2 py-1 rounded">Edit</button>
+                            <button onClick={() => handleAssignSubject(teacher)} className="text-purple-600 hover:text-purple-800 font-medium bg-purple-50 px-2 py-1 rounded">Assign Subject</button>
+                            {teacher.is_active ? (
+                              <button onClick={() => handleDeactivateTeacher(teacher.id)} className="text-yellow-600 hover:text-yellow-800 font-medium bg-yellow-50 px-2 py-1 rounded">Deactivate</button>
+                            ) : (
+                              <button onClick={() => handleReactivateTeacher(teacher.id)} className="text-green-600 hover:text-green-800 font-medium bg-green-50 px-2 py-1 rounded">Activate</button>
+                            )}
+                            <button onClick={() => handleDeleteTeacher(teacher.id)} className="text-red-600 hover:text-red-800 font-medium bg-red-50 px-2 py-1 rounded">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        {searchTerm ? 'No teachers match your search.' : 'No teachers found.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t">
+                <span className="text-sm text-gray-500">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredTeachers.length)} of {filteredTeachers.length}</span>
+                <div className="flex gap-2">
+                  <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Previous</button>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) pageNum = i + 1;
+                    else if (page <= 3) pageNum = i + 1;
+                    else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
+                    else pageNum = page - 2 + i;
+                    return (
+                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`px-3 py-1.5 border rounded-lg text-sm ${pageNum === page ? 'bg-school-green-600 text-white border-school-green-600' : 'hover:bg-gray-50'}`}>{pageNum}</button>
+                    );
+                  })}
+                  <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Next</button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Add Teacher Form Modal */}
