@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { AuthContext } from '../../../AuthContext';
 import { AuditLogViewer } from './AuditLogViewer';
@@ -20,10 +21,15 @@ export default function SystemOversight() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceToggling, setMaintenanceToggling] = useState(false);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+  const [currentSemester, setCurrentSemester] = useState(1);
+  const [savingAY, setSavingAY] = useState(false);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
     db.getMaintenanceMode().then(setMaintenanceMode).catch(() => {});
+    db.getCurrentAcademicYear().then(setCurrentAcademicYear).catch(() => {});
+    db.getCurrentSemester().then(setCurrentSemester).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -253,6 +259,59 @@ export default function SystemOversight() {
             <p className="text-sm text-red-700 font-medium">Maintenance mode is ACTIVE. Non-admin users cannot access the system.</p>
           </div>
         )}
+      </div>
+
+      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6 mb-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Academic Year Settings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current Academic Year</label>
+            <input
+              type="text"
+              value={currentAcademicYear}
+              onChange={(e) => setCurrentAcademicYear(e.target.value)}
+              placeholder="e.g. 2025/2026"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current Semester</label>
+            <select
+              value={currentSemester}
+              onChange={(e) => setCurrentSemester(parseInt(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            >
+              <option value={1}>Semester 1 (Sep–Feb)</option>
+              <option value={2}>Semester 2 (Mar–Aug)</option>
+            </select>
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            setSavingAY(true);
+            try {
+              await db.setCurrentAcademicYear(currentAcademicYear);
+              await db.setCurrentSemester(currentSemester);
+              await db.logAuditEvent({
+                actor_id: user?.user_id || 'unknown',
+                actor_name: user?.full_name || 'Unknown',
+                action: 'update_academic_settings',
+                entity_type: 'system',
+                details: `Academic year set to ${currentAcademicYear}, Semester ${currentSemester}`
+              });
+              toast.success('Academic year settings saved');
+            } catch (e) {
+              console.error('Failed to save academic settings:', e);
+              toast.error('Failed to save settings');
+            } finally {
+              setSavingAY(false);
+            }
+          }}
+          disabled={savingAY}
+          className="px-6 py-2 bg-school-green-600 text-white rounded-xl font-bold hover:bg-school-green-700 transition-colors disabled:opacity-50"
+        >
+          {savingAY ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

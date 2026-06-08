@@ -70,15 +70,8 @@ export const StudentDashboard: React.FC<{
   const [activeElections, setActiveElections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
-  const computeAcademicYear = () => {
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
-    return { year: m >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`, term: m >= 8 || m <= 1 ? 1 : 2 };
-  };
-  const initial = computeAcademicYear();
-  const [academicYear, setAcademicYear] = useState(initial.year);
-  const [term, setTerm] = useState(initial.term);
+  const [academicYear, setAcademicYear] = useState('');
+  const [term, setTerm] = useState(1);
   const [submissions, setSubmissions] = useState<Record<number, any>>({});
   const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
@@ -90,6 +83,9 @@ export const StudentDashboard: React.FC<{
   const fetchData = async () => {
     try {
       setLoading(true);
+      const [ay, sem] = await Promise.all([db.getCurrentAcademicYear(), db.getCurrentSemester()]);
+      if (ay) setAcademicYear(ay);
+      if (sem) setTerm(sem);
       const studentDbId = parseInt(student.id);
       const studentSubjectsResult = await db.getStudentSubjects(studentDbId);
       const studentSubjects = Array.isArray(studentSubjectsResult) ? studentSubjectsResult : [];

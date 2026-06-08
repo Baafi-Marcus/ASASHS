@@ -2949,6 +2949,11 @@ export const db = {
     try {
       await sql`CREATE TABLE IF NOT EXISTS system_config (key VARCHAR PRIMARY KEY, value TEXT NOT NULL)`;
       await sql`INSERT INTO system_config (key, value) VALUES ('maintenance_mode', 'false') ON CONFLICT (key) DO NOTHING`;
+      const now = new Date();
+      const y = now.getFullYear();
+      const defaultAY = now.getMonth() >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`;
+      await sql`INSERT INTO system_config (key, value) VALUES ('current_academic_year', ${defaultAY}) ON CONFLICT (key) DO NOTHING`;
+      await sql`INSERT INTO system_config (key, value) VALUES ('current_semester', '1') ON CONFLICT (key) DO NOTHING`;
     } catch (e) {
       console.error('Failed to ensure system_config table:', e);
     }
@@ -2967,6 +2972,32 @@ export const db = {
     await this.ensureSystemConfigTable();
     await sql`INSERT INTO system_config (key, value) VALUES ('maintenance_mode', ${enabled ? 'true' : 'false'}) ON CONFLICT (key) DO UPDATE SET value = ${enabled ? 'true' : 'false'}`;
     return enabled;
+  },
+
+  async getCurrentAcademicYear(): Promise<string> {
+    try {
+      const result = await sql`SELECT value FROM system_config WHERE key = 'current_academic_year'`;
+      return result[0]?.value || `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`;
+    } catch { return `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`; }
+  },
+
+  async setCurrentAcademicYear(year: string) {
+    await this.ensureSystemConfigTable();
+    await sql`INSERT INTO system_config (key, value) VALUES ('current_academic_year', ${year}) ON CONFLICT (key) DO UPDATE SET value = ${year}`;
+    return year;
+  },
+
+  async getCurrentSemester(): Promise<number> {
+    try {
+      const result = await sql`SELECT value FROM system_config WHERE key = 'current_semester'`;
+      return parseInt(result[0]?.value || '1');
+    } catch { return 1; }
+  },
+
+  async setCurrentSemester(semester: number) {
+    await this.ensureSystemConfigTable();
+    await sql`INSERT INTO system_config (key, value) VALUES ('current_semester', ${semester.toString()}) ON CONFLICT (key) DO UPDATE SET value = ${semester.toString()}`;
+    return semester;
   },
 
   // --- General Exams Management ---
