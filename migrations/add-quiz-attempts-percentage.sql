@@ -1,1 +1,0 @@
-ALTER TABLE quiz_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5,2) DEFAULT 0;

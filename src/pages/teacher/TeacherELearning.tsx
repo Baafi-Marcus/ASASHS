@@ -68,7 +68,7 @@ function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) 
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Passing Score</label>
-              <p className="text-gray-900 font-medium">{quiz.passing_score || 'N/A'}%</p>
+              <p className="text-gray-900 font-medium">{quiz.passing_score != null ? quiz.passing_score : 'N/A'}%</p>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase">Display Mode</label>
@@ -293,13 +293,13 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {quiz.time_limit} mins
+                      {quiz.duration_minutes || quiz.time_limit || 'N/A'} mins
                     </div>
                     <div className="flex items-center">
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {quiz.passing_score}% pass
+                      {quiz.passing_score != null ? quiz.passing_score : 'N/A'}% pass
                     </div>
                   </div>
 

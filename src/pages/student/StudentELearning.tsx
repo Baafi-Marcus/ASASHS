@@ -90,7 +90,7 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                             <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            {quiz.time_limit} mins
+                            {quiz.duration_minutes || quiz.time_limit || 'N/A'} mins
                           </span>
                           {startTime && (
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${isEnded ? 'bg-red-50 text-red-600' : isUpcoming ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>

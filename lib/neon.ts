@@ -2679,23 +2679,28 @@ export const db = {
   },
 
   async completeQuizAttempt(attemptId: number, score: number, percentage: number, tabSwitches: number = 0) {
+    const runUpdate = () => sql`
+      UPDATE quiz_attempts 
+      SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
+      WHERE id = ${attemptId}
+    `;
     try {
-      await sql`
-        UPDATE quiz_attempts 
-        SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
-        WHERE id = ${attemptId}
-      `;
+      await runUpdate();
     } catch (e: any) {
-      // If percentage column is missing, add it and retry
-      if (String(e?.message || '').includes('column "percentage" of relation "quiz_attempts" does not exist')) {
+      const msg = String(e?.message || '');
+      const colMatch = msg.match(/column "([^"]+)" of relation "([^"]+)" does not exist/);
+      if (colMatch) {
+        const [, colName, relName] = colMatch;
+        const typeMap: Record<string, string> = {
+          percentage: 'DECIMAL(5,2) DEFAULT 0',
+          end_time: 'TIMESTAMP',
+          tab_switches: 'INTEGER DEFAULT 0',
+        };
+        const colType = typeMap[colName] || 'TEXT';
         try {
-          await sql`ALTER TABLE quiz_attempts ADD COLUMN IF NOT EXISTS percentage DECIMAL(5,2) DEFAULT 0`;
+          await sql`ALTER TABLE ${sql.unsafe(relName)} ADD COLUMN IF NOT EXISTS ${sql.unsafe(colName)} ${sql.unsafe(colType)}`;
         } catch {}
-        await sql`
-          UPDATE quiz_attempts 
-          SET score = ${score}, percentage = ${percentage}, tab_switches = ${tabSwitches}, status = 'completed', end_time = CURRENT_TIMESTAMP
-          WHERE id = ${attemptId}
-        `;
+        await runUpdate();
       } else {
         throw e;
       }
