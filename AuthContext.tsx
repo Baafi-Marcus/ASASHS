@@ -119,6 +119,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   };
 
   const signOut = () => {
+    if (!confirm('Are you sure you want to sign out?')) return;
     setUser(null);
     localStorage.removeItem('asashs_user');
     toast.success('Logged out successfully');

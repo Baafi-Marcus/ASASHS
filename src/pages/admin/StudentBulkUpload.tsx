@@ -8,6 +8,37 @@ interface StudentBulkUploadProps {
   classes: { id: number; class_name: string }[];
 }
 
+const normalizeHeader = (h: string): string => {
+  const map: Record<string, string> = {
+    'student id': 'student_id',
+    'student no': 'student_id',
+    'student no.': 'student_id',
+    'student number': 'student_id',
+    'admission number': 'admission_number',
+    'admission no': 'admission_number',
+    'admission no.': 'admission_number',
+    'date of birth': 'date_of_birth',
+    'birth date': 'date_of_birth',
+    'dob': 'date_of_birth',
+    'other names': 'other_names',
+    'given names': 'other_names',
+    'first name': 'other_names',
+    'last name': 'surname',
+    'academic year': 'academic_year',
+    'academic session': 'academic_year',
+    'session': 'academic_year',
+    'programme': 'programme',
+    'program': 'programme',
+    'course': 'programme',
+    'current class': 'class',
+    'form class': 'class',
+  };
+  const key = h.toLowerCase().trim();
+  // Replace whitespace with single space, then check map
+  const normalized = key.replace(/\s+/g, ' ');
+  return map[normalized] || key;
+};
+
 export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess, courses, classes }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -48,7 +79,8 @@ export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess,
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const rawHeaders = lines[0].split(',').map(h => h.trim());
+      const headers = rawHeaders.map(h => normalizeHeader(h));
       const data = lines.slice(1).filter(line => line.trim() !== '').map(line => {
         const values = line.split(',').map(v => v.trim());
         const obj: any = {};
@@ -68,20 +100,22 @@ export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess,
       reader.onload = async (e) => {
         const text = e.target?.result as string;
         const lines = text.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const rawHeaders = lines[0].split(',').map(h => h.trim());
+        const headers = rawHeaders.map(h => normalizeHeader(h));
         const studentsToImport = lines.slice(1).filter(line => line.trim() !== '').map(line => {
           const values = line.split(',').map(v => v.trim());
           const obj: any = {};
           headers.forEach((header, i) => { obj[header] = values[i]; });
-          const classMatch = classes.find(c => c.class_name.toLowerCase() === obj.class?.toLowerCase() || c.class_name.toLowerCase() === obj.current_class?.toLowerCase());
-          const courseMatch = courses.find(c => c.name.toLowerCase() === obj.course?.toLowerCase() || c.name.toLowerCase() === obj.programme?.toLowerCase());
-          if (!classMatch || !courseMatch) throw new Error(`Invalid class or course name in row: ${line}`);
+          const classMatch = classes.find(c => c.class_name.toLowerCase() === obj.class?.toLowerCase());
+          const courseMatch = courses.find(c => c.name.toLowerCase() === obj.programme?.toLowerCase());
+          if (!classMatch) throw new Error(`Class not found in row: ${line}. Use an exact class name like 1A1, 2B2.`);
+          if (!courseMatch) throw new Error(`Programme not found in row: ${line}. Use an exact programme name like General Science, Business.`);
           return {
             surname: obj.surname || obj.lastname || '',
             other_names: obj.other_names || obj.firstname || '',
             class_id: classMatch.id,
             course_id: courseMatch.id,
-            admission_number: obj.admission_number || obj.student_id || '',
+            admission_number: obj.student_id || obj.admission_number || '',
             date_of_birth: obj.date_of_birth || obj.dob || '',
             gender: obj.gender || '',
           };
