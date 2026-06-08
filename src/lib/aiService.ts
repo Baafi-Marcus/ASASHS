@@ -86,8 +86,10 @@ export const aiService = {
       try {
         if (key.provider === 'gemini') {
           questions = await this.callGeminiWithImages(key.key_value, images);
-        } else if (key.provider === 'openai' || key.provider === 'github') {
+        } else if (key.provider === 'openai') {
           questions = await this.callVisionAI(key.key_value, images);
+        } else if (key.provider === 'github') {
+          questions = await this.callGithubWithImages(key.key_value, images);
         }
         break;
       } catch (error) {
@@ -274,6 +276,47 @@ export const aiService = {
     const parsed = JSON.parse(resultText.trim());
     
     return parsed.questions ? parsed.questions : parsed;
+  },
+
+  async callGithubWithImages(apiKey: string, images: Blob[]): Promise<ExtractedQuestion[]> {
+    const prompt = this.getVisionPromptSystemInstructions();
+    const content: any[] = [{ type: 'text', text: prompt }];
+
+    for (const img of images) {
+      const b64 = await blobToBase64(img);
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:image/jpeg;base64,${b64}` }
+      });
+    }
+
+    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content }],
+        max_tokens: 16384
+      })
+    });
+
+    if (!response.ok) throw new Error(`GitHub Vision API Error: ${response.statusText}`);
+
+    const data = await response.json();
+    let resultText = data.choices[0].message.content;
+
+    if (resultText.startsWith('```json')) {
+      resultText = resultText.replace(/```json\n?/, '').replace(/```\n?$/, '');
+    } else if (resultText.startsWith('```')) {
+      resultText = resultText.replace(/```\n?/, '').replace(/```\n?$/, '');
+    }
+
+    const parsed = JSON.parse(resultText.trim());
+    const rawQuestions = parsed.questions ? parsed.questions : parsed;
+    return Array.isArray(rawQuestions) ? rawQuestions.map(mapQuestionFields) : [];
   },
 
   getPromptSystemInstructions() {
