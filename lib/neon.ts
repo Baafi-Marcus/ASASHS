@@ -3037,20 +3037,40 @@ export const db = {
 
     async getGeneralExams() {
     checkDatabaseConfig();
-    return await sql`
-      SELECT a.*, 
-             s.name as subject_name,
-             c.class_name,
-             c.form,
-             c.course_id,
-             eq.max_attempts
-      FROM assignments a
-      JOIN subjects s ON a.subject_id = s.id
-      JOIN classes c ON a.class_id = c.id
-      LEFT JOIN elearning_quizzes eq ON a.quiz_id = eq.id
-      WHERE a.is_general_exam = true
-      ORDER BY a.created_at DESC
-    `;
+    try {
+      return await sql`
+        SELECT a.*, 
+               s.name as subject_name,
+               c.class_name,
+               c.form,
+               c.course_id,
+               eq.max_attempts
+        FROM assignments a
+        JOIN subjects s ON a.subject_id = s.id
+        JOIN classes c ON a.class_id = c.id
+        LEFT JOIN elearning_quizzes eq ON a.quiz_id = eq.id
+        WHERE a.is_general_exam = true
+        ORDER BY a.created_at DESC
+      `;
+    } catch {
+      try {
+        await sql`ALTER TABLE elearning_quizzes ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 1`;
+      } catch {}
+      return await sql`
+        SELECT a.*, 
+               s.name as subject_name,
+               c.class_name,
+               c.form,
+               c.course_id,
+               eq.max_attempts
+        FROM assignments a
+        JOIN subjects s ON a.subject_id = s.id
+        JOIN classes c ON a.class_id = c.id
+        LEFT JOIN elearning_quizzes eq ON a.quiz_id = eq.id
+        WHERE a.is_general_exam = true
+        ORDER BY a.created_at DESC
+      `;
+    }
   },
 
   async getStudentExams(classId: number) {
