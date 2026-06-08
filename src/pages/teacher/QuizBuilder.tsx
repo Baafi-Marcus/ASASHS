@@ -33,7 +33,8 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     show_results_immediately: true,
     allow_answer_review: false,
     display_mode: 'all_at_once',
-    allow_late_grading: false
+    allow_late_grading: false,
+    max_attempts: 1
   });
 
   // Questions
@@ -238,6 +239,16 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                     <option value="all_at_once">Show All Questions at Once (Scroll)</option>
                     <option value="one_by_one">Show One by One (Paginated)</option>
                   </select>
+                </div>
+                <div className="flex flex-col space-y-1 bg-gray-50 p-3 rounded-xl border">
+                  <label className="text-xs font-bold text-gray-500">Max Attempts</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quizInfo.max_attempts}
+                    onChange={e => setQuizInfo({...quizInfo, max_attempts: Math.max(1, parseInt(e.target.value) || 1)})}
+                    className="border rounded-lg px-3 py-2 text-sm bg-white"
+                  />
                 </div>
               </div>
             </div>

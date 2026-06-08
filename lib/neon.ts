@@ -2602,7 +2602,8 @@ export const db = {
       INSERT INTO elearning_quizzes (
         teacher_id, class_id, subject_id, title, description, instructions, time_limit,
         passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately,
-        allow_answer_review, display_mode, allow_late_grading, due_date, duration_minutes
+        allow_answer_review, display_mode, allow_late_grading, due_date, duration_minutes,
+        max_attempts
       )
       VALUES (
         ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description},
@@ -2611,7 +2612,8 @@ export const db = {
         ${data.show_results_immediately !== undefined ? data.show_results_immediately : true},
         ${data.allow_answer_review || false},
         ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false},
-        ${data.due_date || null}, ${effectiveDuration}
+        ${data.due_date || null}, ${effectiveDuration},
+        ${data.max_attempts ?? 1}
       )
       RETURNING id
     `;
@@ -2625,6 +2627,7 @@ export const db = {
         const [, colName, relName] = colMatch;
         const typeMap: Record<string, string> = {
           allow_answer_review: 'BOOLEAN DEFAULT false',
+          max_attempts: 'INTEGER DEFAULT 1',
         };
         const colType = typeMap[colName] || 'TEXT';
         try {
@@ -2696,12 +2699,35 @@ export const db = {
     return result[0] || null;
   },
 
+  async getMaxAttempts(quizId: number) {
+    try {
+      const result = await sql`SELECT max_attempts FROM elearning_quizzes WHERE id = ${quizId}`;
+      return result[0]?.max_attempts ?? 1;
+    } catch {
+      return 1;
+    }
+  },
+
+  async getCompletedAttemptCount(studentId: number, quizId: number) {
+    try {
+      const result = await sql`
+        SELECT COUNT(*) as cnt FROM quiz_attempts
+        WHERE student_id = ${studentId} AND quiz_id = ${quizId} AND status = 'completed'
+      `;
+      return Number(result[0]?.cnt || 0);
+    } catch {
+      return 0;
+    }
+  },
+
   async startQuizAttempt(studentId: number, quizId: number) {
+    const maxAttempts = await this.getMaxAttempts(quizId);
+    const completedCount = await this.getCompletedAttemptCount(studentId, quizId);
+    if (completedCount >= maxAttempts) {
+      throw new Error(`You have used all ${maxAttempts} attempt(s) for this assessment. No more attempts allowed.`);
+    }
     const existing = await this.getExistingQuizAttempt(studentId, quizId);
-    if (existing) {
-      if (existing.status === 'completed') {
-        throw new Error('You have already completed this assessment. Re-taking is not allowed.');
-      }
+    if (existing && existing.status === 'in-progress') {
       return existing.id;
     }
     const result = await sql`
@@ -2880,6 +2906,7 @@ export const db = {
     allow_answer_review?: boolean;
     allow_late_grading?: boolean;
     display_mode?: string;
+    max_attempts?: number;
   }, classIds: number[]) {
     checkDatabaseConfig();
     
@@ -2895,7 +2922,7 @@ export const db = {
         INSERT INTO elearning_quizzes (
           title, description, instructions, subject_id, shuffle_questions, shuffle_options,
           show_results_immediately, allow_answer_review, allow_late_grading, display_mode, time_limit,
-          due_date, duration_minutes, total_points
+          due_date, duration_minutes, total_points, max_attempts
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.instructions || null},
           ${examData.subject_id},
@@ -2904,7 +2931,8 @@ export const db = {
           ${examData.allow_late_grading || false},
           ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60},
           ${examData.due_date}, ${examData.duration_minutes || 60},
-          ${totalPoints}
+          ${totalPoints},
+          ${examData.max_attempts ?? 1}
         )
         RETURNING id
       `;
@@ -2918,6 +2946,7 @@ export const db = {
           const [, colName, relName] = colMatch;
           const typeMap: Record<string, string> = {
             allow_answer_review: 'BOOLEAN DEFAULT false',
+            max_attempts: 'INTEGER DEFAULT 1',
           };
           const colType = typeMap[colName] || 'TEXT';
           try {
@@ -3013,10 +3042,12 @@ export const db = {
              s.name as subject_name,
              c.class_name,
              c.form,
-             c.course_id
+             c.course_id,
+             eq.max_attempts
       FROM assignments a
       JOIN subjects s ON a.subject_id = s.id
       JOIN classes c ON a.class_id = c.id
+      LEFT JOIN elearning_quizzes eq ON a.quiz_id = eq.id
       WHERE a.is_general_exam = true
       ORDER BY a.created_at DESC
     `;

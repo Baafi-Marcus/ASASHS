@@ -116,6 +116,7 @@ export function AdminSchoolExams() {
     shuffle_options: false,
     show_results_immediately: true,
     display_mode: 'all_at_once',
+    max_attempts: 1,
     selectedForms: [] as number[], 
     selectedCourses: [] as number[], 
   });
@@ -172,6 +173,7 @@ export function AdminSchoolExams() {
       shuffle_options: exam.shuffle_options || false,
       show_results_immediately: exam.show_results_immediately !== false,
       display_mode: exam.display_mode || 'all_at_once',
+      max_attempts: exam.max_attempts ?? 1,
       selectedForms: [exam.form],
       selectedCourses: exam.course_id ? [exam.course_id] : [],
     });
@@ -185,7 +187,7 @@ export function AdminSchoolExams() {
       subject_id: '', due_date: '', duration_minutes: 60, max_score: 100,
       has_obj: true, has_theory: false, theory_content_url: '', obj_answer_key: '',
       extractedQuestions: [], shuffle_questions: false, shuffle_options: false,
-      show_results_immediately: true, display_mode: 'all_at_once',
+      show_results_immediately: true, display_mode: 'all_at_once', max_attempts: 1,
       selectedForms: [], selectedCourses: [],
     });
   };
@@ -254,7 +256,8 @@ export function AdminSchoolExams() {
         shuffle_questions: formData.shuffle_questions,
         shuffle_options: formData.shuffle_options,
         show_results_immediately: formData.show_results_immediately,
-        display_mode: formData.display_mode
+        display_mode: formData.display_mode,
+        max_attempts: formData.max_attempts
       }, classIds);
 
       toast.success(editingExam ? 'Exam updated successfully!' : `Exam distributed successfully to ${classIds.length} classes!`);
@@ -457,6 +460,16 @@ export function AdminSchoolExams() {
                             <option value="all_at_once">All at Once (Scroll)</option>
                             <option value="one_by_one">One by One (Paginated)</option>
                           </select>
+                        </div>
+                        <div className="flex flex-col">
+                          <label className="text-xs text-gray-500 mb-1">Max Attempts</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={formData.max_attempts}
+                            onChange={e => setFormData({...formData, max_attempts: Math.max(1, parseInt(e.target.value) || 1)})}
+                            className="border rounded px-2 py-1 text-sm"
+                          />
                         </div>
                       </div>
                     </div>
