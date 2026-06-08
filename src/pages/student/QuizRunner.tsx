@@ -135,6 +135,23 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
         setTimeLeft((quizData.duration_minutes || quizData.time_limit || 30) * 60);
       }
 
+      // Check for existing attempt — block if already completed
+      try {
+        const existingAttempt = await db.getExistingQuizAttempt(studentId, quizId);
+        if (existingAttempt) {
+          if (existingAttempt.status === 'completed') {
+            setBlocked('You have already completed this assessment. Re-taking is not allowed.');
+            setQuiz(quizData);
+            setLoading(false);
+            return;
+          }
+          // Resume in-progress attempt
+          setAttemptId(existingAttempt.id);
+        }
+      } catch {
+        // Non-critical — allow to proceed if check fails
+      }
+
       // Group-aware shuffling
       if (quizData.shuffle_questions && quizData.questions) {
         const groups: Record<string, any[]> = {};

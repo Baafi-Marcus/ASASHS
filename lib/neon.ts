@@ -2685,7 +2685,25 @@ export const db = {
     return await query;
   },
 
+  async getExistingQuizAttempt(studentId: number, quizId: number) {
+    const result = await sql`
+      SELECT id, status, score, percentage, start_time, end_time
+      FROM quiz_attempts
+      WHERE student_id = ${studentId} AND quiz_id = ${quizId}
+      ORDER BY start_time DESC
+      LIMIT 1
+    `;
+    return result[0] || null;
+  },
+
   async startQuizAttempt(studentId: number, quizId: number) {
+    const existing = await this.getExistingQuizAttempt(studentId, quizId);
+    if (existing) {
+      if (existing.status === 'completed') {
+        throw new Error('You have already completed this assessment. Re-taking is not allowed.');
+      }
+      return existing.id;
+    }
     const result = await sql`
       INSERT INTO quiz_attempts (student_id, quiz_id, status)
       VALUES (${studentId}, ${quizId}, 'in-progress')
