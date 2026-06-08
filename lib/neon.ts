@@ -2597,6 +2597,8 @@ export const db = {
   },
 
   async createQuiz(data: any) {
+    // Consolidate: use duration_minutes as the single source, set time_limit for backward compatibility
+    const effectiveDuration = data.duration_minutes || data.time_limit || 60;
     const result = await sql`
       INSERT INTO elearning_quizzes (
         teacher_id, class_id, subject_id, title, description, instructions, time_limit,
@@ -2605,12 +2607,12 @@ export const db = {
       )
       VALUES (
         ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description},
-        ${data.instructions}, ${data.time_limit}, ${data.passing_score}, ${data.total_points},
+        ${data.instructions}, ${effectiveDuration}, ${data.passing_score}, ${data.total_points},
         ${data.shuffle_questions || false}, ${data.shuffle_options || false},
         ${data.show_results_immediately !== undefined ? data.show_results_immediately : true},
         ${data.allow_answer_review || false},
         ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false},
-        ${data.due_date || null}, ${data.duration_minutes || null}
+        ${data.due_date || null}, ${effectiveDuration}
       )
       RETURNING id
     `;

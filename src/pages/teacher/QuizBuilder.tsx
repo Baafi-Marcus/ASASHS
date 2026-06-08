@@ -27,7 +27,6 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     subject_id: '',
     due_date: '',
     duration_minutes: 60,
-    time_limit: 30,
     passing_score: 50,
     shuffle_questions: false,
     shuffle_options: false,
@@ -206,12 +205,6 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
               min="1"
               value={quizInfo.duration_minutes}
               onChange={e => setQuizInfo({ ...quizInfo, duration_minutes: parseInt(e.target.value) || 60 })}
-            />
-            <PortalInput
-              label="Time Limit (Minutes)"
-              type="number"
-              value={quizInfo.time_limit}
-              onChange={e => setQuizInfo({ ...quizInfo, time_limit: parseInt(e.target.value) })}
             />
             <PortalInput
               label="Passing Score (%)"
