@@ -13,11 +13,11 @@ export const TeacherBulkUpload: React.FC<TeacherBulkUploadProps> = ({ onSuccess 
   const [results, setResults] = useState<any[] | null>(null);
 
   const downloadTemplate = () => {
-    const headers = ['surname', 'other_names', 'staff_id', 'department', 'gender', 'title', 'position_rank'];
+    const headers = ['staff_id', 'title', 'surname', 'other_names', 'gender', 'department', 'position_rank'];
     const sampleRows = [
-      ['Agyapong', 'John', 'STAFF001', 'Mathematics', 'Male', 'Mr.', 'Teacher'],
-      ['Asante', 'Grace', '', 'Science', 'Female', 'Mrs.', 'Senior Teacher'],
-      ['Osei', 'Samuel', 'STAFF003', 'English', 'Male', 'Mr.', 'HoD'],
+      ['', 'Mr.', 'Agyapong', 'John', 'Male', 'Mathematics', 'Teacher'],
+      ['STAFF002', 'Mrs.', 'Asante', 'Grace', 'Female', 'Science', 'Senior Teacher'],
+      ['', 'Mr.', 'Osei', 'Samuel', 'Male', 'English', 'Head of Department'],
     ];
     let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + sampleRows.map(r => r.join(",")).join("\n");
     const link = document.createElement("a");
@@ -114,9 +114,13 @@ export const TeacherBulkUpload: React.FC<TeacherBulkUploadProps> = ({ onSuccess 
           Download Sample CSV
         </button>
       </div>
-      <p className="text-gray-600 mb-6 font-medium">
-        Required columns: <code className="bg-gray-100 px-2 py-1 rounded">surname, other_names, staff_id, department, gender, title, position_rank</code>
-      </p>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
+        <p className="font-bold mb-1">Required columns:</p>
+        <code className="text-xs">surname, other_names, gender, department, position_rank</code>
+        <p className="font-bold mt-2 mb-1">Optional columns:</p>
+        <code className="text-xs">staff_id, title</code>
+        <p className="text-xs mt-1">Leave <strong>staff_id</strong> blank to auto-generate. <strong>title</strong> defaults to Mr., <strong>gender</strong> defaults to Male.</p>
+      </div>
 
       {!results ? (
         <div className="space-y-4">

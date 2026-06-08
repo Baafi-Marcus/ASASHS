@@ -15,11 +15,11 @@ export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess,
   const [results, setResults] = useState<any[] | null>(null);
 
   const downloadTemplate = () => {
-    const headers = ['surname', 'other_names', 'class', 'course'];
+    const headers = ['admission_number', 'surname', 'other_names', 'date_of_birth', 'gender', 'form', 'programme', 'class'];
     const sampleRows = [
-      ['Asare', 'Kwame', '1A1', 'General Science'],
-      ['Mensah', 'Akua', '2B2', 'Business'],
-      ['Owusu', 'Yaa', '1A1', 'General Arts'],
+      ['', 'Asare', 'Kwame', '2005-03-15', 'Male', '1', 'General Science', '1A1'],
+      ['ASA2025001', 'Mensah', 'Akua', '2006-07-22', 'Female', '2', 'Business', '2B2'],
+      ['', 'Owusu', 'Yaa', '2005-11-08', 'Female', '1', 'General Arts', '1A3'],
     ];
     let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + sampleRows.map(r => r.join(",")).join("\n");
     const link = document.createElement("a");
@@ -73,14 +73,17 @@ export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess,
           const values = line.split(',').map(v => v.trim());
           const obj: any = {};
           headers.forEach((header, i) => { obj[header] = values[i]; });
-          const classMatch = classes.find(c => c.class_name.toLowerCase() === obj.class?.toLowerCase());
+          const classMatch = classes.find(c => c.class_name.toLowerCase() === obj.class?.toLowerCase() || c.class_name.toLowerCase() === obj.current_class?.toLowerCase());
           const courseMatch = courses.find(c => c.name.toLowerCase() === obj.course?.toLowerCase() || c.name.toLowerCase() === obj.programme?.toLowerCase());
           if (!classMatch || !courseMatch) throw new Error(`Invalid class or course name in row: ${line}`);
           return {
             surname: obj.surname || obj.lastname || '',
             other_names: obj.other_names || obj.firstname || '',
             class_id: classMatch.id,
-            course_id: courseMatch.id
+            course_id: courseMatch.id,
+            admission_number: obj.admission_number || obj.student_id || '',
+            date_of_birth: obj.date_of_birth || obj.dob || '',
+            gender: obj.gender || '',
           };
         });
         const imported = await db.bulkImportStudents(studentsToImport);
@@ -119,9 +122,13 @@ export const StudentBulkUpload: React.FC<StudentBulkUploadProps> = ({ onSuccess,
           Download Sample CSV
         </button>
       </div>
-      <p className="text-gray-600 mb-6 font-medium">
-        Required columns: <code className="bg-gray-100 px-2 py-1 rounded">surname, other_names, class, course</code>
-      </p>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
+        <p className="font-bold mb-1">Required columns:</p>
+        <code className="text-xs">surname, other_names, programme, class</code>
+        <p className="font-bold mt-2 mb-1">Optional columns:</p>
+        <code className="text-xs">admission_number, date_of_birth, gender, form</code>
+        <p className="text-xs mt-1">Leave <strong>admission_number</strong> blank to auto-generate. Use <strong>programme</strong> (not course) column. Use exact class names (e.g. 1A1, 2B2) and programme names (e.g. General Science, Business).</p>
+      </div>
 
       {!results ? (
         <div className="space-y-4">

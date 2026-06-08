@@ -2439,11 +2439,18 @@ export const db = {
 
   // --- BULK STUDENT IMPORT ---
 
-  async bulkImportStudents(studentsList: { surname: string; other_names: string; class_id: number; course_id: number }[]) {
+  async bulkImportStudents(studentsList: {
+    surname: string;
+    other_names: string;
+    class_id: number;
+    course_id: number;
+    admission_number?: string;
+    date_of_birth?: string;
+    gender?: string;
+  }[]) {
     const year = new Date().getFullYear();
     const results = [];
     
-    // Get starting sequence for STU IDs
     const lastStu = await sql`SELECT user_id FROM users WHERE user_id LIKE ${`STU${year}%`} ORDER BY user_id DESC LIMIT 1`;
     let nextNum = 1;
     if (lastStu.length > 0) {
@@ -2451,7 +2458,6 @@ export const db = {
       if (match) nextNum = parseInt(match[0]) + 1;
     }
 
-    // Get starting sequence for Admission numbers (ASA)
     const lastAsa = await sql`SELECT admission_number FROM students WHERE admission_number LIKE ${`ASA${year}%`} ORDER BY admission_number DESC LIMIT 1`;
     let nextAsaNum = 1;
     if (lastAsa.length > 0) {
@@ -2461,27 +2467,27 @@ export const db = {
 
     for (const student of studentsList) {
       const studentId = `STU${year}${nextNum.toString().padStart(3, '0')}`;
-      const admissionNum = `ASA${year}${nextAsaNum.toString().padStart(3, '0')}`;
+      const admissionNum = student.admission_number || `ASA${year}${nextAsaNum.toString().padStart(3, '0')}`;
       const tempPassword = generateRandomPassword(8);
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-      // 1. Create User
       const userRes = await sql`
         INSERT INTO users (user_id, user_type, password_hash, temp_password, must_change_password)
         VALUES (${studentId}, 'student', ${hashedPassword}, ${tempPassword}, true)
         RETURNING id
       `;
-      
       const userId = userRes[0].id;
 
-      // 2. Create Student (Minimal Info)
       await sql`
         INSERT INTO students (
           user_id, student_id, admission_number, surname, other_names, 
-          current_class_id, course_id, registration_status, is_active
+          current_class_id, course_id, date_of_birth, gender,
+          registration_status, is_active
         ) VALUES (
           ${userId}, ${studentId}, ${admissionNum}, ${student.surname}, ${student.other_names},
-          ${student.class_id}, ${student.course_id}, 'voter_only', true
+          ${student.class_id}, ${student.course_id},
+          ${student.date_of_birth || null}, ${student.gender || null},
+          'complete', true
         )
       `;
 
@@ -2493,7 +2499,7 @@ export const db = {
       });
 
       nextNum++;
-      nextAsaNum++;
+      if (!student.admission_number) nextAsaNum++;
     }
 
     return results;
