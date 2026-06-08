@@ -2597,9 +2597,8 @@ export const db = {
   },
 
   async createQuiz(data: any) {
-    // Consolidate: use duration_minutes as the single source, set time_limit for backward compatibility
     const effectiveDuration = data.duration_minutes || data.time_limit || 60;
-    const result = await sql`
+    const insertQuiz = () => sql`
       INSERT INTO elearning_quizzes (
         teacher_id, class_id, subject_id, title, description, instructions, time_limit,
         passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately,
@@ -2616,6 +2615,26 @@ export const db = {
       )
       RETURNING id
     `;
+    let result;
+    try {
+      result = await insertQuiz();
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      const colMatch = msg.match(/column "([^"]+)" of relation "([^"]+)" does not exist/);
+      if (colMatch) {
+        const [, colName, relName] = colMatch;
+        const typeMap: Record<string, string> = {
+          allow_answer_review: 'BOOLEAN DEFAULT false',
+        };
+        const colType = typeMap[colName] || 'TEXT';
+        try {
+          await sql`ALTER TABLE ${sql.unsafe(relName)} ADD COLUMN IF NOT EXISTS ${sql.unsafe(colName)} ${sql.unsafe(colType)}`;
+        } catch {}
+        result = await insertQuiz();
+      } else {
+        throw e;
+      }
+    }
     const quizId = result[0].id;
     
     for (const q of data.questions) {
@@ -2830,7 +2849,7 @@ export const db = {
       const totalPoints = examData.extractedQuestions.reduce((sum: number, q: any) => sum + (q.points || 1), 0);
 
       // Create master quiz (no specific class/teacher since it's general)
-      const qResult = await sql`
+      const insertExamQuiz = () => sql`
         INSERT INTO elearning_quizzes (
           title, description, instructions, subject_id, shuffle_questions, shuffle_options,
           show_results_immediately, allow_answer_review, allow_late_grading, display_mode, time_limit,
@@ -2847,6 +2866,26 @@ export const db = {
         )
         RETURNING id
       `;
+      let qResult;
+      try {
+        qResult = await insertExamQuiz();
+      } catch (e: any) {
+        const msg = String(e?.message || '');
+        const colMatch = msg.match(/column "([^"]+)" of relation "([^"]+)" does not exist/);
+        if (colMatch) {
+          const [, colName, relName] = colMatch;
+          const typeMap: Record<string, string> = {
+            allow_answer_review: 'BOOLEAN DEFAULT false',
+          };
+          const colType = typeMap[colName] || 'TEXT';
+          try {
+            await sql`ALTER TABLE ${sql.unsafe(relName)} ADD COLUMN IF NOT EXISTS ${sql.unsafe(colName)} ${sql.unsafe(colType)}`;
+          } catch {}
+          qResult = await insertExamQuiz();
+        } else {
+          throw e;
+        }
+      }
       quizId = qResult[0].id;
 
       // Insert questions
