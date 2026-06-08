@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { PortalCard } from '../../components/PortalCard';
@@ -26,6 +26,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const [tabSwitches, setTabSwitches] = useState(0);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const submitQuizRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     fetchQuiz();
@@ -48,13 +49,14 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
     }
   }, [phase, attemptId]);
 
-  // Timer logic
+  // Timer logic – uses ref to avoid stale closure on submitQuiz
   useEffect(() => {
     if (phase === 'in-progress' && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            handleAutoSubmit();
+            toast.error('Time is up! Submitting your quiz automatically...', { duration: 5000 });
+            submitQuizRef.current();
             return 0;
           }
           return prev - 1;
@@ -190,13 +192,6 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
     }
   };
 
-  const handleAutoSubmit = () => {
-    if (phase !== 'finished') {
-      toast.error('Time is up! Submitting your quiz automatically...', { duration: 5000 });
-      submitQuiz();
-    }
-  };
-
   const submitQuiz = useCallback(async () => {
     if (isSubmitting || !quiz || !attemptId) return;
     setIsSubmitting(true);
@@ -265,6 +260,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
       setIsSubmitting(false);
     }
   }, [isSubmitting, quiz, attemptId, answers, tabSwitches]);
+  submitQuizRef.current = submitQuiz;
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
