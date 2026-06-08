@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { db } from '../../../lib/neon';
+import { AuthContext } from '../../../AuthContext';
+import { AuditLogViewer } from './AuditLogViewer';
 
 interface AnalyticsData {
   totalLoginsToday: number;
@@ -18,6 +20,7 @@ export default function SystemOversight() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceToggling, setMaintenanceToggling] = useState(false);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     db.getMaintenanceMode().then(setMaintenanceMode).catch(() => {});
@@ -226,6 +229,13 @@ export default function SystemOversight() {
               try {
                 const newMode = await db.setMaintenanceMode(!maintenanceMode);
                 setMaintenanceMode(newMode);
+                await db.logAuditEvent({
+                  actor_id: user?.user_id || 'unknown',
+                  actor_name: user?.full_name || 'Unknown',
+                  action: newMode ? 'enable_maintenance' : 'disable_maintenance',
+                  entity_type: 'system',
+                  details: `Maintenance mode ${newMode ? 'enabled' : 'disabled'}`
+                });
               } catch (e) {
                 console.error('Failed to toggle maintenance mode:', e);
               } finally {
@@ -292,6 +302,8 @@ export default function SystemOversight() {
           </div>
         </div>
       </div>
+
+      <AuditLogViewer />
     </div>
   );
 }

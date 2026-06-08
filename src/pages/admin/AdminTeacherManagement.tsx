@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useContext } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { AuthContext } from '../../../AuthContext';
 import { AssignSubjectToTeacherModal } from '../../components/AssignSubjectToTeacherModal';
 import { TeacherDetailsModal } from './TeacherDetailsModal';
 import { PortalButton } from '../../components/PortalButton';
@@ -55,6 +56,7 @@ type RegistrationResult = {
 } | null;
 
 export function AdminTeacherManagement() {
+  const { user } = useContext(AuthContext);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -199,6 +201,15 @@ export function AdminTeacherManagement() {
         toast.success('Teacher registered successfully!');
       }
       
+      db.logAuditEvent({
+        actor_id: user?.user_id || 'unknown',
+        actor_name: user?.full_name || 'Unknown',
+        action: 'create',
+        entity_type: 'teacher',
+        entity_id: result?.teacher_id || formData.staff_id,
+        details: `Created teacher ${formData.title} ${formData.surname} ${formData.other_names}`
+      });
+      
       setShowForm(false);
       setFormData({
         staff_id: '',
@@ -312,9 +323,18 @@ export function AdminTeacherManagement() {
   const handleDeleteTeacher = async (teacherId: number) => {
     if (window.confirm('Are you sure you want to permanently delete this teacher? This action cannot be undone and all teacher data will be removed from the system.')) {
       try {
+        const teacher = teachers.find(t => t.id === teacherId);
         await db.deleteTeacher(teacherId);
         toast.success('Teacher deleted successfully');
-        fetchData(); // Refresh the teacher list
+        db.logAuditEvent({
+          actor_id: user?.user_id || 'unknown',
+          actor_name: user?.full_name || 'Unknown',
+          action: 'delete',
+          entity_type: 'teacher',
+          entity_id: teacher?.staff_id || String(teacherId),
+          details: `Deleted teacher ${teacher?.title || ''} ${teacher?.surname || ''} ${teacher?.other_names || ''}`
+        });
+        fetchData();
       } catch (error) {
         console.error('Failed to delete teacher:', error);
         toast.error('Failed to delete teacher: ' + (error as Error).message);
@@ -323,10 +343,19 @@ export function AdminTeacherManagement() {
   };
 
   const handleDeactivateTeacher = async (teacherId: number) => {
-    if (window.confirm('Are you sure you want to deactivate this teacher? The teacher will no longer be able to log in, but their account will remain in the system.')) {
+    if (window.confirm('Are you sure you want to deactivate this teacher?')) {
       try {
+        const teacher = teachers.find(t => t.id === teacherId);
         await db.deactivateTeacher(teacherId);
         toast.success('Teacher deactivated successfully');
+        db.logAuditEvent({
+          actor_id: user?.user_id || 'unknown',
+          actor_name: user?.full_name || 'Unknown',
+          action: 'deactivate',
+          entity_type: 'teacher',
+          entity_id: teacher?.staff_id || String(teacherId),
+          details: `Deactivated teacher ${teacher?.title || ''} ${teacher?.surname || ''} ${teacher?.other_names || ''}`
+        });
         fetchData(); // Refresh the teacher list
       } catch (error) {
         console.error('Failed to deactivate teacher:', error);

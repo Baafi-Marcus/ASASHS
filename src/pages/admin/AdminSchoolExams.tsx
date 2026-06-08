@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { AuthContext } from '../../../AuthContext';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
 import { ExtractedQuestion } from '../../lib/aiService';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
@@ -91,6 +92,7 @@ function formatDateForInput(dateStr: string) {
 }
 
 export function AdminSchoolExams() {
+  const { user } = useContext(AuthContext);
   const [exams, setExams] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -222,10 +224,18 @@ export function AdminSchoolExams() {
   };
 
   const handleDelete = async (title: string, dueDate: string) => {
-    if (window.confirm(`Are you sure you want to delete the exam "${title}"? This will delete it for all assigned classes and remove all submissions.`)) {
+    if (window.confirm(`Are you sure you want to delete the exam "${title}"?`)) {
       try {
         await db.deleteGeneralExam(title, dueDate);
         toast.success('Exam deleted successfully');
+        db.logAuditEvent({
+          actor_id: user?.user_id || 'unknown',
+          actor_name: user?.full_name || 'Unknown',
+          action: 'delete',
+          entity_type: 'exam',
+          entity_id: title,
+          details: `Deleted exam "${title}" (due: ${dueDate})`
+        });
         fetchData();
       } catch (e) {
         toast.error('Failed to delete exam');
@@ -290,6 +300,14 @@ export function AdminSchoolExams() {
       }, classIds);
 
       toast.success(editingExam ? 'Exam updated successfully!' : `Exam distributed successfully to ${classIds.length} classes!`);
+      db.logAuditEvent({
+        actor_id: user?.user_id || 'unknown',
+        actor_name: user?.full_name || 'Unknown',
+        action: editingExam ? 'update' : 'create',
+        entity_type: 'exam',
+        entity_id: formData.title,
+        details: `${editingExam ? 'Updated' : 'Created'} exam "${formData.title}" for ${classIds.length} class(es)`
+      });
       cancelEdit();
       fetchData();
     } catch (error) {

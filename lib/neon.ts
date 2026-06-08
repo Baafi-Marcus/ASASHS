@@ -3316,7 +3316,85 @@ export const db = {
       SET last_failed_at = NOW()
       WHERE id = ${id}
     `;
-  }
+  },
+
+  // --- Audit Log ---
+  async ensureAuditLogTable() {
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id SERIAL PRIMARY KEY,
+          actor_id TEXT NOT NULL,
+          actor_name TEXT NOT NULL,
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id TEXT,
+          details TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+    } catch (e) {
+      console.error('Failed to ensure audit_log table:', e);
+    }
+  },
+
+  async logAuditEvent(event: {
+    actor_id: string;
+    actor_name: string;
+    action: string;
+    entity_type: string;
+    entity_id?: string;
+    details?: string;
+  }) {
+    try {
+      await this.ensureAuditLogTable();
+      await sql`
+        INSERT INTO audit_log (actor_id, actor_name, action, entity_type, entity_id, details)
+        VALUES (${event.actor_id}, ${event.actor_name}, ${event.action}, ${event.entity_type}, ${event.entity_id || null}, ${event.details || null})
+      `;
+    } catch (e) {
+      console.error('Failed to log audit event:', e);
+    }
+  },
+
+  async getAuditLogs(filters?: {
+    limit?: number;
+    offset?: number;
+    entity_type?: string;
+    actor_id?: string;
+    action?: string;
+  }) {
+    try {
+      await this.ensureAuditLogTable();
+      let query = sql`SELECT * FROM audit_log WHERE 1=1`;
+      if (filters?.entity_type) query = sql`${query} AND entity_type = ${filters.entity_type}`;
+      if (filters?.actor_id) query = sql`${query} AND actor_id = ${filters.actor_id}`;
+      if (filters?.action) query = sql`${query} AND action = ${filters.action}`;
+      query = sql`${query} ORDER BY created_at DESC LIMIT ${filters?.limit || 50} OFFSET ${filters?.offset || 0}`;
+      return await query;
+    } catch (e) {
+      console.error('Failed to fetch audit logs:', e);
+      return [];
+    }
+  },
+
+  async getAuditLogCount(filters?: {
+    entity_type?: string;
+    actor_id?: string;
+    action?: string;
+  }) {
+    try {
+      await this.ensureAuditLogTable();
+      let query = sql`SELECT COUNT(*) as count FROM audit_log WHERE 1=1`;
+      if (filters?.entity_type) query = sql`${query} AND entity_type = ${filters.entity_type}`;
+      if (filters?.actor_id) query = sql`${query} AND actor_id = ${filters.actor_id}`;
+      if (filters?.action) query = sql`${query} AND action = ${filters.action}`;
+      const result = await query;
+      return Number(result[0]?.count || 0);
+    } catch {
+      return 0;
+    }
+  },
 };
 
 // Learning Materials

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { StudentDetailsModal } from './StudentDetailsModal';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { AuthContext } from '../../../AuthContext';
 
 interface Student {
   id: number;
@@ -32,6 +33,7 @@ interface ClassItem {
 }
 
 export function StudentList() {
+  const { user } = useContext(AuthContext);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -166,11 +168,20 @@ export function StudentList() {
   };
 
   const handleDeleteStudent = async (studentId: number) => {
-    if (window.confirm('Are you sure you want to delete this student? This action cannot be undone and will permanently remove all student data.')) {
+    if (window.confirm('Are you sure you want to delete this student?')) {
       try {
+        const student = students.find(s => s.id === studentId);
         await db.deleteStudent(studentId);
         toast.success('Student deleted successfully');
-        fetchStudents(); // Refresh the list
+        db.logAuditEvent({
+          actor_id: user?.user_id || 'unknown',
+          actor_name: user?.full_name || 'Unknown',
+          action: 'delete',
+          entity_type: 'student',
+          entity_id: student?.student_id || String(studentId),
+          details: `Deleted student ${student?.surname || ''} ${student?.other_names || ''} (${student?.student_id || ''})`
+        });
+        fetchStudents();
       } catch (error) {
         console.error('Failed to delete student:', error);
         toast.error('Failed to delete student: ' + (error as Error).message);
