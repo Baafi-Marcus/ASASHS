@@ -23,8 +23,8 @@ export const StudentDownloads: React.FC = () => {
       setDownloads([
         {
           id: 1,
-          title: 'Term 1 Report Sheet',
-          description: 'Your complete academic report for the first term',
+          title: 'Semester 1 Report Sheet',
+          description: 'Your complete academic report for the first semester',
           type: 'report',
           fileSize: '2.4 MB',
           uploadDate: '2025-04-01',
@@ -50,8 +50,8 @@ export const StudentDownloads: React.FC = () => {
         },
         {
           id: 4,
-          title: 'Term 2 Report Sheet',
-          description: 'Your complete academic report for the second term',
+          title: 'Semester 2 Report Sheet',
+          description: 'Your complete academic report for the second semester',
           type: 'report',
           fileSize: '2.6 MB',
           uploadDate: '2025-07-15',

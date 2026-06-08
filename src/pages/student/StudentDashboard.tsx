@@ -74,7 +74,7 @@ export const StudentDashboard: React.FC<{
     const now = new Date();
     const m = now.getMonth();
     const y = now.getFullYear();
-    return { year: m >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`, term: m >= 8 ? 1 : m >= 4 ? 2 : 3 };
+    return { year: m >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`, term: m >= 8 || m <= 1 ? 1 : 2 };
   };
   const initial = computeAcademicYear();
   const [academicYear, setAcademicYear] = useState(initial.year);
@@ -163,7 +163,7 @@ export const StudentDashboard: React.FC<{
               </div>
               <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
                 <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Academic Year</span>
-                <div className="font-bold text-lg">{academicYear} (Term {term})</div>
+                <div className="font-bold text-lg">{academicYear} (Semester {term})</div>
               </div>
             </div>
           </div>
