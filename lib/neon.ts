@@ -2737,6 +2737,7 @@ export const db = {
       tab_switches: 'INTEGER DEFAULT 0',
       points: 'DECIMAL(10,2) DEFAULT 0',
       submission_type: "VARCHAR(50) DEFAULT 'auto'",
+      start_time: 'TIMESTAMP',
     };
     const attemptSql = () => {
       if (classId) {
