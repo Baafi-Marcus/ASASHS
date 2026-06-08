@@ -65,6 +65,20 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
   };
 
   if (questions) {
+    const groups: { pageKey: number; questions: ExtractedQuestion[]; startIndex: number }[] = [];
+    let currentPage = -2;
+    let startIdx = 0;
+    questions.forEach((q, i) => {
+      const pageKey = q.pageIndex ?? -1;
+      if (pageKey !== currentPage) {
+        if (currentPage !== -2) groups[groups.length - 1].questions = questions.slice(startIdx, i);
+        currentPage = pageKey;
+        startIdx = i;
+        groups.push({ pageKey, questions: [], startIndex: i });
+      }
+    });
+    if (groups.length > 0) groups[groups.length - 1].questions = questions.slice(startIdx);
+
     return (
       <div className="bg-white rounded-2xl border p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
@@ -75,112 +89,100 @@ export function SmartExamBuilder({ onComplete, onCancel }: SmartExamBuilderProps
           </div>
         </div>
 
-        <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-4">
-          {questions.map((q, i) => (
-            <div key={i} className="p-4 border rounded-xl bg-gray-50">
-              <div className="flex gap-4 mb-3">
-                <span className="font-bold text-gray-500 w-8">Q{i + 1}.</span>
-                <input 
-                  type="text" 
-                  value={q.question_text} 
-                  onChange={e => {
-                    const newQ = [...questions];
-                    newQ[i].question_text = e.target.value;
-                    setQuestions(newQ);
-                  }}
-                  className="flex-1 px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-school-green-500 font-mono text-sm" 
-                />
-              </div>
-              <div className="ml-12 mb-2">
-                <MathText text={q.question_text} className="text-sm text-gray-600 italic block" />
-              </div>
-
-              {q.imageDataUrl && (
-                <div className="ml-12 mb-3">
+        <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-4">
+          {groups.map(group => (
+            <div key={group.pageKey}>
+              {group.questions[0]?.imageDataUrl && (
+                <div className="mb-4">
                   <img
-                    src={q.imageDataUrl}
-                    alt={`Page ${(q.pageIndex ?? 0) + 1}`}
-                    className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => window.open(q.imageDataUrl, '_blank')}
+                    src={group.questions[0].imageDataUrl}
+                    alt={`Page ${group.pageKey + 1}`}
+                    className="w-full max-w-lg rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => window.open(group.questions[0].imageDataUrl, '_blank')}
                   />
-                  <p className="text-xs text-gray-400 mt-1">Page {q.pageIndex !== undefined ? q.pageIndex + 1 : '?'} — click to expand</p>
+                  <p className="text-xs text-gray-400 mt-1">Page {group.pageKey >= 0 ? group.pageKey + 1 : 'Unknown'} — click to expand</p>
                 </div>
               )}
+              <div className="space-y-4">
+                {group.questions.map((q, offset) => {
+                  const gi = group.startIndex + offset;
+                  return (
+                    <div key={gi} className="p-4 border rounded-xl bg-gray-50">
+                      <div className="flex gap-4 mb-3">
+                        <span className="font-bold text-gray-500 w-8 shrink-0">Q{gi + 1}.</span>
+                        <input
+                          type="text"
+                          value={q.question_text}
+                          onChange={e => { const nq = [...questions]; nq[gi].question_text = e.target.value; setQuestions(nq); }}
+                          className="flex-1 px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-school-green-500 font-mono text-sm"
+                        />
+                      </div>
+                      <div className="ml-12 mb-2">
+                        <MathText text={q.question_text} className="text-sm text-gray-600 italic block" />
+                      </div>
 
-              {q.diagramDescription && (
-                <div className="ml-12 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
-                  <span className="font-bold text-yellow-700">Diagram description:</span> {q.diagramDescription}
-                </div>
-              )}
-              
-              <div className="ml-12 grid grid-cols-2 gap-4">
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Type</label>
-                  <select 
-                    value={q.question_type}
-                    onChange={e => {
-                      const newQ = [...questions];
-                      newQ[i].question_type = e.target.value as any;
-                      setQuestions(newQ);
-                    }}
-                    className="w-full px-3 py-2 border rounded text-sm"
-                  >
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="true_false">True / False</option>
-                    <option value="short_answer">Short Answer / Fill-in</option>
-                  </select>
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Marks</label>
-                  <input 
-                    type="number" 
-                    value={q.points || 1} 
-                    onChange={e => {
-                      const newQ = [...questions];
-                      newQ[i].points = parseInt(e.target.value) || 1;
-                      setQuestions(newQ);
-                    }}
-                    className="w-full px-3 py-2 border rounded text-sm" 
-                  />
-                </div>
-              </div>
+                      {q.diagramDescription && (
+                        <div className="ml-12 mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
+                          <span className="font-bold text-yellow-700">Diagram description:</span> {q.diagramDescription}
+                        </div>
+                      )}
 
-              {(q.question_type === 'multiple_choice' || q.question_type === 'true_false') && q.options && (
-                <div className="ml-12 mt-4 space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block">Options (Check the correct answer)</label>
-                  {q.options.map((opt, optIndex) => (
-                    <div key={optIndex} className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        checked={opt.is_correct} 
-                        onChange={e => {
-                          const newQ = [...questions];
-                          newQ[i].options![optIndex].is_correct = e.target.checked;
-                          setQuestions(newQ);
-                        }}
-                        className="w-4 h-4 text-school-green-600"
-                      />
-                      <input 
-                        type="text" 
-                        value={opt.option_text} 
-                        onChange={e => {
-                          const newQ = [...questions];
-                          newQ[i].options![optIndex].option_text = e.target.value;
-                          setQuestions(newQ);
-                        }}
-                        className="flex-1 px-3 py-1 border rounded text-sm font-mono"
-                      />
+                      <div className="ml-12 grid grid-cols-2 gap-4 mb-4">
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="text-xs font-bold text-gray-500 block mb-1">Type</label>
+                          <select
+                            value={q.question_type}
+                            onChange={e => { const nq = [...questions]; nq[gi].question_type = e.target.value as any; setQuestions(nq); }}
+                            className="w-full px-3 py-2 border rounded text-sm"
+                          >
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="true_false">True / False</option>
+                            <option value="short_answer">Short Answer / Fill-in</option>
+                          </select>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="text-xs font-bold text-gray-500 block mb-1">Marks</label>
+                          <input
+                            type="number"
+                            value={q.points || 1}
+                            onChange={e => { const nq = [...questions]; nq[gi].points = parseInt(e.target.value) || 1; setQuestions(nq); }}
+                            className="w-full px-3 py-2 border rounded text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {(q.question_type === 'multiple_choice' || q.question_type === 'true_false') && q.options && (
+                        <div className="ml-12 space-y-2">
+                          <label className="text-xs font-bold text-gray-500 block">Options (Check the correct answer)</label>
+                          {q.options.map((opt, optIndex) => (
+                            <div key={optIndex} className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={opt.is_correct}
+                                onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].is_correct = e.target.checked; setQuestions(nq); }}
+                                className="w-4 h-4 text-school-green-600"
+                              />
+                              <input
+                                type="text"
+                                value={opt.option_text}
+                                onChange={e => { const nq = [...questions]; nq[gi].options![optIndex].option_text = e.target.value; setQuestions(nq); }}
+                                className="flex-1 px-3 py-1 border rounded text-sm font-mono"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.question_type === 'short_answer' && (
+                        <div className="ml-12 mt-4">
+                          <label className="text-xs font-bold text-gray-500 block">Correct Answers</label>
+                          <p className="text-sm text-gray-700 mt-1">{q.correct_answers?.join(', ') || '(not set)'}</p>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {q.question_type === 'short_answer' && (
-                <div className="ml-12 mt-4">
-                  <label className="text-xs font-bold text-gray-500 block">Correct Answers</label>
-                  <p className="text-sm text-gray-700 mt-1">{q.correct_answers?.join(', ') || '(not set)'}</p>
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
