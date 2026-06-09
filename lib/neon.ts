@@ -3607,10 +3607,14 @@ export const db = {
         }
 
         if (classes.length > 0) {
-          await sql`
-            INSERT INTO exam_class_assignments (quiz_id, class_id)
-            VALUES ${sql.unsafe(classes.map((c: any) => `(${quizId}, ${c.id})`).join(', '))}
-          `;
+          try {
+            await sql`
+              INSERT INTO exam_class_assignments (quiz_id, class_id)
+              VALUES ${sql.unsafe(classes.map((c: any) => `(${quizId}, ${c.id})`).join(', '))}
+            `;
+          } catch (_eca) {
+            // table may not exist — non-critical
+          }
         }
 
         created++;
@@ -3728,10 +3732,14 @@ export const db = {
         }
 
         if (classes.length > 0) {
-          await sql`
-            INSERT INTO exam_class_assignments (quiz_id, class_id)
-            VALUES ${sql.unsafe(classes.map((c: any) => `(${quizId}, ${c.id})`).join(', '))}
-          `;
+          try {
+            await sql`
+              INSERT INTO exam_class_assignments (quiz_id, class_id)
+              VALUES ${sql.unsafe(classes.map((c: any) => `(${quizId}, ${c.id})`).join(', '))}
+            `;
+          } catch (_eca) {
+            // table may not exist — non-critical
+          }
           for (const c of classes) {
             await sql`
               INSERT INTO assignments (title, description, exam_type, is_general_exam, subject_id, class_id, due_date, duration_minutes, max_score, assignment_type_id, is_active, has_obj, has_theory, quiz_id, shuffle_questions, shuffle_options, show_results_immediately)
