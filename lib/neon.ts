@@ -3575,9 +3575,13 @@ export const db = {
 
         const points = 5;
         const classId = classes.length > 0 ? classes[0].id : null;
+        const quizTitle = `[DEMO] ${subject.name} Quiz`;
+        const quizDesc = `Demo quiz for ${subject.name}. Take this to test the e-learning system.`;
+        const dueDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        const totalPts = templates.length * points;
         const quizResult = await sql`
           INSERT INTO elearning_quizzes (title, description, subject_id, class_id, is_active, shuffle_questions, shuffle_options, show_results_immediately, time_limit, due_date, duration_minutes, total_points, max_attempts)
-          VALUES ('[DEMO] ${subject.name} Quiz', 'Demo quiz for ${subject.name}. Take this to test the e-learning system.', ${subject.id}, ${classId}, true, true, true, true, ${30}, ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}, ${10}, ${templates.length * points}, ${5})
+          VALUES (${quizTitle}, ${quizDesc}, ${subject.id}, ${classId}, true, true, true, true, ${30}, ${dueDate}, ${10}, ${totalPts}, ${5})
           RETURNING id
         `;
         const quizId = quizResult[0].id;
@@ -3693,10 +3697,12 @@ export const db = {
         const points = 5;
         const totalPoints = templates.length * points;
         const classId = classes.length > 0 ? classes[0].id : null;
+        const quizTitle = `[DEMO] ${subject.name} Exam`;
+        const quizDesc = `Demo exam for ${subject.name}. Simulates the end-of-term exam experience.`;
 
         const quizResult = await sql`
           INSERT INTO elearning_quizzes (title, description, subject_id, class_id, is_active, shuffle_questions, shuffle_options, show_results_immediately, time_limit, due_date, duration_minutes, total_points, max_attempts)
-          VALUES ('[DEMO] ${subject.name} Exam', 'Demo exam for ${subject.name}. Simulates the end-of-term exam experience.', ${subject.id}, ${classId}, true, true, true, true, ${60}, ${dueDate}, ${30}, ${totalPoints}, ${1})
+          VALUES (${quizTitle}, ${quizDesc}, ${subject.id}, ${classId}, true, true, true, true, ${60}, ${dueDate}, ${30}, ${totalPoints}, ${1})
           RETURNING id
         `;
         const quizId = quizResult[0].id;
@@ -3729,7 +3735,7 @@ export const db = {
           for (const c of classes) {
             await sql`
               INSERT INTO assignments (title, description, exam_type, is_general_exam, subject_id, class_id, due_date, duration_minutes, max_score, assignment_type_id, is_active, has_obj, has_theory, quiz_id, shuffle_questions, shuffle_options, show_results_immediately)
-              VALUES ('[DEMO] ${subject.name} Exam', 'Demo exam for ${subject.name}.', 'obj', true, ${subject.id}, ${c.id}, ${dueDate}, ${30}, ${totalPoints}, ${assignmentTypeId}, true, true, false, ${quizId}, true, true, true)
+              VALUES (${quizTitle}, ${quizDesc}, 'obj', true, ${subject.id}, ${c.id}, ${dueDate}, ${30}, ${totalPoints}, ${assignmentTypeId}, true, true, false, ${quizId}, true, true, true)
             `;
           }
         }
