@@ -346,7 +346,7 @@ function ComprehensivePortalApp() {
       
       <div className="relative flex-grow">
         {showTesterSignup ? (
-          <TesterSignup onBack={handleBackToLanding} onLogin={goToLogin} />
+          <TesterSignup onBack={handleBackToLanding} onDirectLogin={(id, pass) => signIn(id, pass)} />
         ) : showNewsPage ? (
           <NewsEventsPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onCalendarClick={() => {}} />
         ) : showStaffPage ? (
