@@ -42,6 +42,7 @@ import { AdminProfile } from './pages/admin/AdminProfile';
 
 // Student Portal Components
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import TestStudentView from './pages/student/TestStudentView';
 
 // Teacher Portal Components
 
@@ -257,16 +258,47 @@ function ComprehensivePortalApp() {
         { id: 'profile', label: 'My Profile', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> }
       ];
 
-      const teacherProp = {
-        fullName: user.full_name,
-        teacherId: user.teacher_id || 'TEST-TCH',
-        teacherDbId: user.teacher_db_id || 0,
-        department: (user as any).department || 'General',
-        classes: (user as any).classes || [],
-        subjects: (user as any).subjects || []
-      };
+      if (user.is_test_account) {
+        content = (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-school-green-800 to-teal-900 rounded-2xl p-8 text-white shadow-2xl">
+              <h2 className="text-3xl font-black mb-2">Teacher View (Test Mode)</h2>
+              <p className="text-school-green-100 text-lg">You are viewing the Teacher Portal as a test account.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                <div className="text-3xl mb-2">👨‍🏫</div>
+                <h3 className="font-bold text-gray-800">Teaching</h3>
+                <p className="text-sm text-gray-500 mt-2">Browse the School Exams, Gradebook, and other tabs to explore teacher features.</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                <div className="text-3xl mb-2">📝</div>
+                <h3 className="font-bold text-gray-800">Assignments</h3>
+                <p className="text-sm text-gray-500 mt-2">Create and manage assignments for your classes.</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
+                <div className="text-3xl mb-2">📊</div>
+                <h3 className="font-bold text-gray-800">Performance</h3>
+                <p className="text-sm text-gray-500 mt-2">View student performance analytics.</p>
+              </div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+              <strong>Test Mode:</strong> You are viewing a simulated teacher experience. No real teacher account is linked.
+            </div>
+          </div>
+        );
+      } else {
+        const teacherProp = {
+          fullName: user.full_name,
+          teacherId: user.teacher_id || 'TEST-TCH',
+          teacherDbId: user.teacher_db_id || 0,
+          department: (user as any).department || 'General',
+          classes: (user as any).classes || [],
+          subjects: (user as any).subjects || []
+        };
 
-      content = <TeacherDashboard teacher={teacherProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+        content = <TeacherDashboard teacher={teacherProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+      }
     } else if (effectiveRole === 'student') {
       portalName = 'Student';
       sidebarItems = [
@@ -282,17 +314,21 @@ function ComprehensivePortalApp() {
         { id: 'elearning', label: 'E-Learning', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> }
       ];
 
-      const studentProp = {
-        fullName: user.full_name,
-        studentId: user.student_id,
-        id: (user.student_db_id || user.id).toString(),
-        course: (user as any).course || 'General Arts',
-        className: (user as any).class_name || '',
-        current_class_id: (user as any).current_class_id || 1,
-        registration_status: (user as any).registration_status || 'complete'
-      };
+      if (user.is_test_account) {
+        content = <TestStudentView activeTab={activeTab} setActiveTab={setActiveTab} fullName={user.full_name} />;
+      } else {
+        const studentProp = {
+          fullName: user.full_name,
+          studentId: user.student_id,
+          id: (user.student_db_id || user.id).toString(),
+          course: (user as any).course || 'General Arts',
+          className: (user as any).class_name || '',
+          current_class_id: (user as any).current_class_id || 1,
+          registration_status: (user as any).registration_status || 'complete'
+        };
 
-      content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+        content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+      }
     }
 
     return (
