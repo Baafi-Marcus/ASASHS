@@ -3508,13 +3508,13 @@ export const db = {
 
   async seedDemoQuizzes() {
     try {
-      const subjects = await sql`SELECT id, name FROM subjects WHERE is_active = true ORDER BY name`;
+      const subjects = await sql`SELECT id, name FROM subjects WHERE is_active = true ORDER BY id`;
       if (subjects.length === 0) return { count: 0, message: 'No subjects found.' };
 
       const existing = await sql`SELECT COUNT(*) as c FROM elearning_quizzes WHERE title LIKE '%[DEMO]%'`;
       if (Number(existing[0]?.c || 0) > 0) return { count: 0, message: 'Demo quizzes already exist.' };
 
-      const classes = await sql`SELECT id, name FROM classes WHERE is_active = true LIMIT 2`;
+      const classes = await sql`SELECT id, class_name FROM classes WHERE is_active = true LIMIT 2`;
       let created = 0;
       const questionTemplates: Record<string, { q: string; opts: string[]; ans: number }[]> = {
         math: [
@@ -3621,13 +3621,13 @@ export const db = {
 
   async seedDemoExams() {
     try {
-      const subjects = await sql`SELECT id, name FROM subjects WHERE is_active = true ORDER BY name`;
+      const subjects = await sql`SELECT id, name FROM subjects WHERE is_active = true ORDER BY id`;
       if (subjects.length === 0) return { count: 0, message: 'No subjects found.' };
 
       const existing = await sql`SELECT COUNT(*) as c FROM assignments WHERE title LIKE '%[DEMO]%' AND is_general_exam = true`;
       if (Number(existing[0]?.c || 0) > 0) return { count: 0, message: 'Demo exams already exist.' };
 
-      const classes = await sql`SELECT id, name FROM classes WHERE is_active = true LIMIT 2`;
+      const classes = await sql`SELECT id, class_name FROM classes WHERE is_active = true LIMIT 2`;
       let created = 0;
       const questionTemplates: Record<string, { q: string; opts: string[]; ans: number }[]> = {
         math: [
