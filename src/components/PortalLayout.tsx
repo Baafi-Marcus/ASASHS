@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { PortalHeader } from './PortalHeader';
 import { PortalSidebar } from './PortalSidebar';
 import { AuthContext } from '../../AuthContext';
@@ -30,6 +30,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 }) => {
   const { user } = useContext(AuthContext);
   const isTest = isTestAccount || (user as any)?.is_test_account === true;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-school-cream-50 flex flex-col">
@@ -51,7 +52,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         <PortalSidebar 
           items={sidebarItems} 
           activeItem={activeTab} 
-          onItemClick={setActiveTab} 
+          onItemClick={setActiveTab}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         
         <main className="flex-1 p-6 overflow-auto">
