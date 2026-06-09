@@ -52,6 +52,7 @@ function ComprehensivePortalApp() {
   const [showStaffPage, setShowStaffPage] = useState(false);
   const [showCalendarPage, setShowCalendarPage] = useState(false);
   const [showTesterSignup, setShowTesterSignup] = useState(false);
+  const [testRole, setTestRole] = useState<'admin' | 'teacher' | 'student'>('admin');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hasActiveElection, setHasActiveElection] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -59,12 +60,20 @@ function ComprehensivePortalApp() {
   useEffect(() => {
     // Reset active tab when user role changes or user logs in
     if (user) {
+      if (user.is_test_account) {
+        db.setReadOnlyMode(true);
+        setTestRole('admin');
+      } else {
+        db.setReadOnlyMode(false);
+      }
       if (user.user_type === 'admin' || user.user_type === 'teacher') {
         setActiveTab('dashboard');
       } else if (user.user_type === 'student') {
         setActiveTab('overview');
       }
       setShowLandingPage(false);
+    } else {
+      db.setReadOnlyMode(false);
     }
   }, [user?.user_type]);
 
@@ -188,8 +197,9 @@ function ComprehensivePortalApp() {
     let sidebarItems: any[] = [];
     let portalName: 'Admin' | 'Teacher' | 'Student' = 'Student';
     let content = null;
+    const effectiveRole = user.is_test_account ? testRole : (user.user_type as 'admin' | 'teacher' | 'student');
 
-    if (user.user_type === 'admin') {
+    if (effectiveRole === 'admin') {
       portalName = 'Admin';
       sidebarItems = [
         { id: 'dashboard', label: 'Overview', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
@@ -231,7 +241,7 @@ function ComprehensivePortalApp() {
         case 'profile': content = <AdminProfile adminId={user.user_id} />; break;
         default: content = <AdminDashboard admin={user as any} onLogout={signOut} />;
       }
-    } else if (user.user_type === 'teacher') {
+    } else if (effectiveRole === 'teacher') {
       portalName = 'Teacher';
       sidebarItems = [
         { id: 'dashboard', label: 'Overview', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
@@ -245,18 +255,17 @@ function ComprehensivePortalApp() {
         { id: 'profile', label: 'My Profile', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> }
       ];
 
-      // Map teacher props correctly
       const teacherProp = {
         fullName: user.full_name,
-        teacherId: user.teacher_id,
-        teacherDbId: user.teacher_db_id || user.id,
+        teacherId: user.teacher_id || 'TEST-TCH',
+        teacherDbId: user.teacher_db_id || 0,
         department: (user as any).department || 'General',
         classes: (user as any).classes || [],
         subjects: (user as any).subjects || []
       };
 
       content = <TeacherDashboard teacher={teacherProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
-    } else if (user.user_type === 'student') {
+    } else if (effectiveRole === 'student') {
       portalName = 'Student';
       sidebarItems = [
         { id: 'overview', label: 'Overview', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
@@ -271,7 +280,6 @@ function ComprehensivePortalApp() {
         { id: 'elearning', label: 'E-Learning', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> }
       ];
 
-      // Map student props correctly (use student_db_id not users.id)
       const studentProp = {
         fullName: user.full_name,
         studentId: user.student_id,
@@ -294,6 +302,9 @@ function ComprehensivePortalApp() {
           sidebarItems={sidebarItems}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          isTestAccount={!!user.is_test_account}
+          currentRole={testRole}
+          onRoleChange={setTestRole}
         >
           <ErrorBoundary key={activeTab}>
             {content}

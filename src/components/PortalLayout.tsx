@@ -11,6 +11,9 @@ interface PortalLayoutProps {
   sidebarItems: any[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isTestAccount?: boolean;
+  currentRole?: 'admin' | 'teacher' | 'student';
+  onRoleChange?: (role: 'admin' | 'teacher' | 'student') => void;
 }
 
 export const PortalLayout: React.FC<PortalLayoutProps> = ({
@@ -20,14 +23,17 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   onLogout,
   sidebarItems,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  isTestAccount,
+  currentRole,
+  onRoleChange
 }) => {
   const { user } = useContext(AuthContext);
-  const isTestAccount = (user as any)?.is_test_account === true;
+  const isTest = isTestAccount || (user as any)?.is_test_account === true;
 
   return (
     <div className="min-h-screen bg-school-cream-50 flex flex-col">
-      {isTestAccount && (
+      {isTest && (
         <div className="bg-amber-500 text-white text-center text-sm font-bold py-1.5 px-4">
           TEST ACCOUNT — Actions are visible and may be reset. Do not enter real personal data.
         </div>
@@ -35,7 +41,10 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       <PortalHeader 
         portalName={portalName} 
         userName={userName} 
-        onLogout={onLogout} 
+        onLogout={onLogout}
+        isTestAccount={isTest}
+        currentRole={currentRole}
+        onRoleChange={onRoleChange}
       />
       
       <div className="flex flex-1 overflow-hidden">

@@ -74,6 +74,32 @@ function generateRandomPassword(length: number = 8): string {
   return result;
 }
 
+// Read-only mode flag for test accounts
+let readOnlyMode = false;
+
+export function setReadOnlyMode(enabled: boolean) {
+  readOnlyMode = enabled;
+}
+
+// Wrap sql to block writes when in read-only mode
+const _sql = sql;
+if (_sql) {
+  sql = new Proxy(_sql, {
+    apply(target, thisArg, args) {
+      if (readOnlyMode) {
+        const queryStr = args[0]?.__rawQueries?.[0] || String(args[0] || '');
+        if (/^\s*(INSERT\s+|UPDATE\s+|DELETE\s+|ALTER\s+|DROP\s+|TRUNCATE\s+)/i.test(queryStr)) {
+          const safe = /CREATE TABLE IF NOT EXISTS/i.test(queryStr) || /ADD COLUMN IF NOT EXISTS/i.test(queryStr);
+          if (!safe) {
+            throw new Error('Test accounts cannot modify data.');
+          }
+        }
+      }
+      return Reflect.apply(target, thisArg, args);
+    }
+  });
+}
+
 // Database helper functions
 export const db = {
   // Authentication
@@ -3482,6 +3508,8 @@ export const db = {
     await this.ensureTesterColumn();
     await sql`DELETE FROM users WHERE is_test_account = true`;
   },
+
+  setReadOnlyMode,
 };
 
 // Learning Materials
