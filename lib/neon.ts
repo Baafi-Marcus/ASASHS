@@ -3522,6 +3522,105 @@ export const db = {
     await sql`DELETE FROM users WHERE is_test_account = true`;
   },
 
+  async seedDemoQuizzes() {
+    try {
+      const subjects = await sql`SELECT id, name FROM subjects WHERE is_active = true ORDER BY name`;
+      if (subjects.length === 0) return { count: 0, message: 'No subjects found.' };
+
+      const existing = await sql`SELECT COUNT(*) as c FROM elearning_quizzes WHERE title LIKE '%[DEMO]%'`;
+      if (Number(existing[0]?.c || 0) > 0) return { count: 0, message: 'Demo quizzes already exist.' };
+
+      const classes = await sql`SELECT id, name FROM classes WHERE is_active = true LIMIT 2`;
+      let created = 0;
+      const questionTemplates: Record<string, { q: string; opts: string[]; ans: number }[]> = {
+        math: [
+          { q: 'What is 15 × 12?', opts: ['144', '150', '180', '160'], ans: 2 },
+          { q: 'Solve for x: 2x + 6 = 20', opts: ['5', '7', '9', '14'], ans: 1 },
+          { q: 'What is the square root of 144?', opts: ['11', '12', '13', '14'], ans: 1 },
+          { q: 'What is 25% of 200?', opts: ['25', '40', '50', '75'], ans: 2 },
+          { q: 'What is the area of a circle with radius 7cm? (π ≈ 22/7)', opts: ['154 cm²', '144 cm²', '164 cm²', '150 cm²'], ans: 0 },
+        ],
+        english: [
+          { q: 'Which word is a synonym for "happy"?', opts: ['Sad', 'Angry', 'Joyful', 'Tired'], ans: 2 },
+          { q: 'Choose the correct spelling:', opts: ['Recieve', 'Receive', 'Receeve', 'Receave'], ans: 1 },
+          { q: 'What is a noun?', opts: ['An action word', 'A naming word', 'A describing word', 'A joining word'], ans: 1 },
+          { q: 'Which sentence is correct?', opts: ['He go to school', 'He goes to school', 'He going to school', 'He gone to school'], ans: 1 },
+          { q: 'What is the past tense of "run"?', opts: ['Run', 'Runned', 'Ran', 'Running'], ans: 2 },
+        ],
+        science: [
+          { q: 'What is the chemical symbol for water?', opts: ['H2O', 'CO2', 'NaCl', 'O2'], ans: 0 },
+          { q: 'Which planet is known as the Red Planet?', opts: ['Venus', 'Mars', 'Jupiter', 'Saturn'], ans: 1 },
+          { q: 'What is the largest organ in the human body?', opts: ['Liver', 'Brain', 'Skin', 'Heart'], ans: 2 },
+          { q: 'What gas do plants absorb from the atmosphere?', opts: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'], ans: 2 },
+          { q: 'What is the boiling point of water in Celsius?', opts: ['90°C', '100°C', '110°C', '120°C'], ans: 1 },
+        ],
+        social: [
+          { q: 'What is the capital of Ghana?', opts: ['Kumasi', 'Accra', 'Takoradi', 'Tamale'], ans: 1 },
+          { q: 'Which ocean borders Ghana to the south?', opts: ['Indian Ocean', 'Pacific Ocean', 'Atlantic Ocean', 'Arctic Ocean'], ans: 2 },
+          { q: 'What is the main export of Ghana?', opts: ['Oil', 'Gold', 'Cocoa', 'Diamonds'], ans: 2 },
+          { q: 'Who was the first President of Ghana?', opts: ['Kwame Nkrumah', 'Jerry Rawlings', 'John Kufuor', 'Kwesi Annan'], ans: 0 },
+          { q: 'Which river is the longest in Ghana?', opts: ['Volta', 'Ankobra', 'Tano', 'Pra'], ans: 0 },
+        ],
+        ict: [
+          { q: 'What does CPU stand for?', opts: ['Central Processing Unit', 'Computer Personal Unit', 'Central Program Unit', 'Core Processing Unit'], ans: 0 },
+          { q: 'Which device is used to store data permanently?', opts: ['RAM', 'Hard Drive', 'CPU', 'Monitor'], ans: 1 },
+          { q: 'What is the function of a modem?', opts: ['Display images', 'Connect to internet', 'Process data', 'Store files'], ans: 1 },
+          { q: 'Which of these is an input device?', opts: ['Monitor', 'Printer', 'Keyboard', 'Speaker'], ans: 2 },
+          { q: 'What does "www" stand for?', opts: ['World Wide Web', 'World Web Wide', 'Web World Wide', 'Wide World Web'], ans: 0 },
+        ],
+      };
+
+      for (const subject of subjects) {
+        const name = subject.name.toLowerCase();
+        let templates: { q: string; opts: string[]; ans: number }[] | null = null;
+        if (name.includes('math') || name.includes('mathematics')) templates = questionTemplates.math;
+        else if (name.includes('english') || name.includes('language') || name.includes('literature')) templates = questionTemplates.english;
+        else if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) templates = questionTemplates.science;
+        else if (name.includes('social') || name.includes('history') || name.includes('geography') || name.includes('gov') || name.includes('rme')) templates = questionTemplates.social;
+        else if (name.includes('ict') || name.includes('comput')) templates = questionTemplates.ict;
+
+        if (!templates) {
+          templates = [
+            { q: `What is the main focus of ${subject.name}?`, opts: ['Study of numbers', 'Study of language', 'Study of the subject', 'All of the above'], ans: 2 },
+            { q: `Which of the following is related to ${subject.name}?`, opts: ['Topic A', 'Topic B', 'Topic C', `All topics in ${subject.name}`], ans: 3 },
+            { q: `How many core areas does ${subject.name} cover?`, opts: ['1', '2', '3', 'Multiple'], ans: 3 },
+            { q: `${subject.name} is primarily studied at which level?`, opts: ['Primary', 'JHS', 'SHS', 'All levels'], ans: 3 },
+            { q: `Which skill is most improved by studying ${subject.name}?`, opts: ['Critical thinking', 'Memory', 'Creativity', 'All of the above'], ans: 3 },
+          ];
+        }
+
+        const points = 5;
+        const quizResult = await sql`
+          INSERT INTO elearning_quizzes (title, description, subject_id, shuffle_questions, shuffle_options, show_results_immediately, time_limit, due_date, duration_minutes, total_points, max_attempts)
+          VALUES ('[DEMO] ${subject.name} Quiz', 'Demo quiz for ${subject.name}. Take this to test the e-learning system.', ${subject.id}, true, true, true, ${30}, ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}, ${10}, ${templates.length * points}, ${5})
+          RETURNING id
+        `;
+        const quizId = quizResult[0].id;
+
+        for (const t of templates) {
+          await sql`
+            INSERT INTO elearning_quiz_questions (quiz_id, question_text, options, correct_option, points, question_type)
+            VALUES (${quizId}, ${t.q}, ${JSON.stringify(t.opts)}, ${t.ans}, ${points}, 'multiple_choice')
+          `;
+        }
+
+        if (classes.length > 0) {
+          await sql`
+            INSERT INTO exam_class_assignments (quiz_id, class_id)
+            VALUES ${sql.unsafe(classes.map((c: any) => `(${quizId}, ${c.id})`).join(', '))}
+          `;
+        }
+
+        created++;
+      }
+
+      return { count: created, message: `Created ${created} demo quizzes with questions.` };
+    } catch (e) {
+      console.error('Failed to seed demo quizzes:', e);
+      return { count: 0, message: 'Failed to seed demo quizzes.' };
+    }
+  },
+
   setReadOnlyMode,
 };
 

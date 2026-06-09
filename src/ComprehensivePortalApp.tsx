@@ -58,11 +58,13 @@ function ComprehensivePortalApp() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
-    // Reset active tab when user role changes or user logs in
     if (user) {
       if (user.is_test_account) {
         db.setReadOnlyMode(true);
         setTestRole('admin');
+        db.seedDemoQuizzes().then((r: any) => {
+          if (r.count > 0) console.log(`Seeded ${r.count} demo quizzes`);
+        });
       } else {
         db.setReadOnlyMode(false);
       }
