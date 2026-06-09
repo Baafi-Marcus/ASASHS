@@ -61,14 +61,14 @@ function ComprehensivePortalApp() {
   useEffect(() => {
     if (user) {
       if (user.is_test_account) {
-        db.setReadOnlyMode(true);
+        (async () => {
+          const q = await db.seedDemoQuizzes();
+          if (q.count > 0) console.log(`Seeded ${q.count} demo quizzes`);
+          const e = await db.seedDemoExams();
+          if (e.count > 0) console.log(`Seeded ${e.count} demo exams`);
+          db.setReadOnlyMode(true);
+        })();
         setTestRole('admin');
-        db.seedDemoQuizzes().then((r: any) => {
-          if (r.count > 0) console.log(`Seeded ${r.count} demo quizzes`);
-        });
-        db.seedDemoExams().then((r: any) => {
-          if (r.count > 0) console.log(`Seeded ${r.count} demo exams`);
-        });
       } else {
         db.setReadOnlyMode(false);
       }

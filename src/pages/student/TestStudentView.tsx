@@ -223,10 +223,7 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
                       <p className="text-sm text-gray-500">{exam.subject_name} — {exam.class_name}</p>
                     </div>
                     <button
-                      onClick={() => {
-                        const url = `${window.location.origin}${window.location.pathname}?takeQuiz=1&quizId=${exam.quiz_id}`;
-                        window.open(url, '_blank');
-                      }}
+                      onClick={() => setSelectedQuiz({ id: exam.quiz_id, title: exam.title, subject_name: exam.subject_name })}
                       className="px-4 py-2 bg-school-green-600 text-white rounded-lg font-bold hover:bg-school-green-700"
                       disabled={!exam.quiz_id}
                     >

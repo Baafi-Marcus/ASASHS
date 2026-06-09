@@ -81,31 +81,15 @@ export function setReadOnlyMode(enabled: boolean) {
   readOnlyMode = enabled;
 }
 
-// Tables that test accounts can write to (quiz/exam/messaging)
-const allowedWriteTables = [
-  'elearning_quizzes', 'elearning_quiz_questions', 'quiz_attempts',
-  'general_exams', 'exam_class_assignments', 'exam_questions',
-  'student_results', 'assignment_submissions', 'learning_materials',
-  'messages', 'behavior_records', 'audit_log',
-  'elections', 'votes', 'candidates', 'ict_registrations',
-  'announcements', 'timetable_entries'
-];
-
-// Wrap sql to block writes when in read-only mode
+// Wrap sql to block ALL writes when in read-only mode
 const _sql = sql;
 if (_sql) {
   sql = new Proxy(_sql, {
     apply(target, thisArg, args) {
       if (readOnlyMode) {
         const queryStr = args[0]?.__rawQueries?.[0] || String(args[0] || '');
-        const match = queryStr.match(/^\s*(INSERT\s+(?:INTO\s+)?|UPDATE\s+|DELETE\s+FROM\s+|ALTER\s+TABLE\s+)(?:"?\w+"?\.)?("?\w+"?)\b/i);
-        if (match) {
-          const tableName = match[2].replace(/"/g, '').toLowerCase();
-          const isAllowed = allowedWriteTables.includes(tableName);
-          const isMigration = /CREATE TABLE IF NOT EXISTS/i.test(queryStr) || /ADD COLUMN IF NOT EXISTS/i.test(queryStr);
-          if (!isAllowed && !isMigration) {
-            throw new Error(`Test accounts cannot modify "${tableName}" table.`);
-          }
+        if (/^\s*(?:INSERT\s+(?:INTO\s+)?|UPDATE\s+|DELETE\s+FROM\s+|ALTER\s+TABLE\s+|TRUNCATE\s+|DROP\s+TABLE|CREATE\s+(?:TABLE|INDEX))\b/i.test(queryStr)) {
+          throw new Error('Test accounts cannot modify data. This is a read-only demo session.');
         }
       }
       return Reflect.apply(target, thisArg, args);
