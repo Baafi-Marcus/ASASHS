@@ -383,6 +383,18 @@ export default function SystemOversight() {
           </button>
           <button
             onClick={async () => {
+              if (!confirm('Seed demo exams for all subjects? This is a one-time operation.')) return;
+              try {
+                const r = await db.seedDemoExams();
+                toast.success(r.message || `Created ${r.count} demo exams.`);
+              } catch { toast.error('Failed to seed demo exams.'); }
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Seed Demo Exams
+          </button>
+          <button
+            onClick={async () => {
               if (!confirm('Delete ALL test accounts? This cannot be undone.')) return;
               try {
                 await db.deleteAllTestAccounts();

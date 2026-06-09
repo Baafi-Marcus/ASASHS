@@ -66,6 +66,9 @@ function ComprehensivePortalApp() {
         db.seedDemoQuizzes().then((r: any) => {
           if (r.count > 0) console.log(`Seeded ${r.count} demo quizzes`);
         });
+        db.seedDemoExams().then((r: any) => {
+          if (r.count > 0) console.log(`Seeded ${r.count} demo exams`);
+        });
       } else {
         db.setReadOnlyMode(false);
       }
