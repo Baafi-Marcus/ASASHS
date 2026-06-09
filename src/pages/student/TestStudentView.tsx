@@ -11,32 +11,10 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
   const [demoQuizzes, setDemoQuizzes] = useState<any[]>([]);
 
   useEffect(() => {
-    db.getGeneralExams({}).then((exams: any[]) => {
-      setDemoQuizzes((exams || []).filter((e: any) => e.title?.includes('[DEMO]')));
+    db.getQuizzes({}).then((quizzes: any[]) => {
+      setDemoQuizzes((quizzes || []).filter((q: any) => q.title?.includes('[DEMO]')));
     }).catch(() => {});
   }, []);
-
-  const demoStudent = {
-    id: '0',
-    studentId: 'TEST-STU-001',
-    fullName,
-    course: 'Demo Programme',
-    className: 'Demo Class',
-    current_class_id: 0,
-    registration_status: 'complete',
-  };
-
-  const sidebarItems = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'profile', label: 'My Profile', icon: '👤' },
-    { id: 'grades', label: 'My Grades', icon: '📈' },
-    { id: 'assignments', label: 'Assignments', icon: '📝' },
-    { id: 'behavior', label: 'Behavior', icon: '⭐' },
-    { id: 'downloads', label: 'Downloads', icon: '📥' },
-    { id: 'messages', label: 'Messages', icon: '💬' },
-    { id: 'exams', label: 'School Exams', icon: '📋' },
-    { id: 'elearning', label: 'E-Learning', icon: '💻' },
-  ];
 
   const renderContent = () => {
     switch (activeTab) {
@@ -71,7 +49,7 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
           </div>
         );
       case 'profile':
-        return <StudentProfile student={demoStudent as any} />;
+        return <StudentProfile student={{ id: '0', studentId: 'TEST-STU-001', fullName, course: 'Demo Programme', className: 'Demo Class', current_class_id: 0, registration_status: 'complete' } as any} />;
       case 'grades':
         return (
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 text-center">
@@ -93,11 +71,7 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
       case 'downloads':
         return <StudentDownloads studentId="0" />;
       case 'messages':
-        return <StudentMessages
-          studentId="0"
-          studentName={fullName}
-          currentClassId={0}
-        />;
+        return <StudentMessages studentId="0" studentName={fullName} currentClassId={0} />;
       case 'exams':
         return <StudentExams studentId={0} studentName={fullName} />;
       case 'elearning':
@@ -108,24 +82,8 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
   };
 
   return (
-    <div className="flex h-full">
-      <aside className="w-64 bg-white border-r border-gray-200 p-4 space-y-1 shrink-0">
-        {sidebarItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-              activeTab === item.id ? 'bg-school-green-50 text-school-green-700' : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </aside>
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="max-w-5xl mx-auto">{renderContent()}</div>
-      </main>
+    <div className="p-6">
+      <div className="max-w-5xl mx-auto">{renderContent()}</div>
     </div>
   );
 };

@@ -3590,9 +3590,10 @@ export const db = {
         }
 
         const points = 5;
+        const classId = classes.length > 0 ? classes[0].id : null;
         const quizResult = await sql`
-          INSERT INTO elearning_quizzes (title, description, subject_id, shuffle_questions, shuffle_options, show_results_immediately, time_limit, due_date, duration_minutes, total_points, max_attempts)
-          VALUES ('[DEMO] ${subject.name} Quiz', 'Demo quiz for ${subject.name}. Take this to test the e-learning system.', ${subject.id}, true, true, true, ${30}, ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}, ${10}, ${templates.length * points}, ${5})
+          INSERT INTO elearning_quizzes (title, description, subject_id, class_id, is_active, shuffle_questions, shuffle_options, show_results_immediately, time_limit, due_date, duration_minutes, total_points, max_attempts)
+          VALUES ('[DEMO] ${subject.name} Quiz', 'Demo quiz for ${subject.name}. Take this to test the e-learning system.', ${subject.id}, ${classId}, true, true, true, true, ${30}, ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}, ${10}, ${templates.length * points}, ${5})
           RETURNING id
         `;
         const quizId = quizResult[0].id;
