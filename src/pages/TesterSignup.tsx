@@ -71,7 +71,10 @@ export const TesterSignup: React.FC<TesterSignupProps> = ({ onBack, onDirectLogi
             <strong>Note:</strong> This is a test account. All actions are visible and may be reset at any time. Do not enter real personal data.
           </div>
           <button
-            onClick={() => onDirectLogin(credentials.username, credentials.password)}
+            onClick={async () => {
+              try { await onDirectLogin(credentials.username, credentials.password); }
+              catch { setError('Login failed. Try again or go back.'); }
+            }}
             className="w-full px-6 py-3 bg-school-green-600 text-white rounded-xl font-bold hover:bg-school-green-700 transition-colors"
           >
             Login Now

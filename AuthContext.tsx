@@ -69,7 +69,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         return;
       }
 
-      if (requiredRole === 'non-admin' && authenticatedUser.user_type === 'admin') {
+      if (requiredRole === 'non-admin' && authenticatedUser.user_type === 'admin' && !authenticatedUser.is_test_account) {
         // Pretend credentials don't exist to hide admin existence from students
         toast.error('Invalid credentials. Please check your ID and password.');
         setLoading(false);
