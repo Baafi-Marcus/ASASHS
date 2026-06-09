@@ -83,6 +83,9 @@ export const db = {
       return null;
     }
     
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN DEFAULT false`;
+    } catch {}
     const result = await sql`
       SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
              s.current_class_id,
@@ -128,7 +131,8 @@ export const db = {
       admission_number: user.admission_number,
       staff_id: user.staff_id,
       current_class_id: user.current_class_id,
-      class_name: user.student_class_name
+      class_name: user.student_class_name,
+      is_test_account: user.is_test_account === true
     };
   },
 
@@ -2436,10 +2440,6 @@ export const db = {
     `;
   },
 
-  async getAuditLogs() {
-    return await sql`SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100`;
-  },
-
   // --- BULK STUDENT IMPORT ---
 
   async bulkImportStudents(studentsList: {
@@ -3434,6 +3434,53 @@ export const db = {
     } catch {
       return 0;
     }
+  },
+
+  // --- Tester Accounts ---
+  async ensureTesterColumn() {
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN DEFAULT false`;
+    } catch { /* column may already exist */ }
+  },
+
+  async createTesterAccount(name: string, email: string) {
+    checkDatabaseConfig();
+    await this.ensureTesterColumn();
+    const timestamp = Date.now().toString().slice(-6);
+    const username = 'TESTER' + timestamp;
+    const password = 'test' + Math.floor(1000 + Math.random() * 9000);
+    const hash = await bcrypt.hash(password, 10);
+    try {
+      const result = await sql`
+        INSERT INTO users (user_id, password_hash, user_type, full_name, role, is_active, is_test_account)
+        VALUES (${username}, ${hash}, 'admin', ${name}, 'admin', true, true)
+        RETURNING user_id
+      `;
+      return { username: result[0].user_id, password };
+    } catch (e) {
+      console.error('Failed to create tester account:', e);
+      throw new Error('Failed to create tester account');
+    }
+  },
+
+  async getTesterAccounts() {
+    await this.ensureTesterColumn();
+    try {
+      return await sql`
+        SELECT id, user_id, full_name, user_type, created_at, last_login
+        FROM users WHERE is_test_account = true
+        ORDER BY created_at DESC
+      `;
+    } catch { return []; }
+  },
+
+  async deleteTesterAccount(id: number) {
+    await sql`DELETE FROM users WHERE id = ${id} AND is_test_account = true`;
+  },
+
+  async deleteAllTestAccounts() {
+    await this.ensureTesterColumn();
+    await sql`DELETE FROM users WHERE is_test_account = true`;
   },
 };
 

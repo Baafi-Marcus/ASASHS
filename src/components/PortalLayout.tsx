@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { PortalHeader } from './PortalHeader';
 import { PortalSidebar } from './PortalSidebar';
+import { AuthContext } from '../../AuthContext';
 
 interface PortalLayoutProps {
   children: React.ReactNode;
@@ -21,8 +22,16 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   activeTab,
   setActiveTab
 }) => {
+  const { user } = useContext(AuthContext);
+  const isTestAccount = (user as any)?.is_test_account === true;
+
   return (
     <div className="min-h-screen bg-school-cream-50 flex flex-col">
+      {isTestAccount && (
+        <div className="bg-amber-500 text-white text-center text-sm font-bold py-1.5 px-4">
+          TEST ACCOUNT — Actions are visible and may be reset. Do not enter real personal data.
+        </div>
+      )}
       <PortalHeader 
         portalName={portalName} 
         userName={userName} 

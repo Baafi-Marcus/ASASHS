@@ -17,6 +17,7 @@ interface User {
   admission_number?: string;
   staff_id?: string;
   current_class_id?: number;
+  is_test_account?: boolean;
 }
 
 interface AuthContextProps {

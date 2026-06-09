@@ -10,6 +10,7 @@ interface SchoolLandingPageProps {
     onStaffClick?: () => void;
     onCalendarClick?: () => void;
     onHomeClick?: () => void;
+    onTesterSignup?: () => void;
 }
 
 export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({ 
@@ -18,7 +19,8 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
     onNewsClick,
     onStaffClick,
     onCalendarClick,
-    onHomeClick
+    onHomeClick,
+    onTesterSignup
 }) => {
     const [hasActiveElection, setHasActiveElection] = React.useState(false);
 
@@ -394,6 +396,11 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                             Access Student Portal
                         </button>
                     </div>
+                    {onTesterSignup && (
+                        <button onClick={onTesterSignup} className="mt-4 text-white/60 hover:text-white text-sm underline underline-offset-2 transition-colors">
+                            Want to test the portal? Get a demo account
+                        </button>
+                    )}
                 </div>
             </section>
 

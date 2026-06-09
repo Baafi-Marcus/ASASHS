@@ -7,6 +7,7 @@ import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
 import { LandingNavbar } from './components/LandingNavbar';
 import { UnifiedLogin } from './pages/UnifiedLogin';
 import { PortalLayout } from './components/PortalLayout';
+import { TesterSignup } from './pages/TesterSignup';
 
 // Shared Components
 import { AuthContext } from '../AuthContext';
@@ -50,6 +51,7 @@ function ComprehensivePortalApp() {
   const [showNewsPage, setShowNewsPage] = useState(false);
   const [showStaffPage, setShowStaffPage] = useState(false);
   const [showCalendarPage, setShowCalendarPage] = useState(false);
+  const [showTesterSignup, setShowTesterSignup] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hasActiveElection, setHasActiveElection] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -100,6 +102,15 @@ function ComprehensivePortalApp() {
   }, []);
 
   const goToLogin = () => {
+    setShowLandingPage(false);
+    setShowNewsPage(false);
+    setShowStaffPage(false);
+    setShowCalendarPage(false);
+    setShowTesterSignup(false);
+  };
+
+  const goToTesterSignup = () => {
+    setShowTesterSignup(true);
     setShowLandingPage(false);
     setShowNewsPage(false);
     setShowStaffPage(false);
@@ -321,16 +332,18 @@ function ComprehensivePortalApp() {
       )}
       
       <div className="relative flex-grow">
-        {showNewsPage ? (
+        {showTesterSignup ? (
+          <TesterSignup onBack={handleBackToLanding} onLogin={goToLogin} />
+        ) : showNewsPage ? (
           <NewsEventsPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onCalendarClick={() => {}} />
         ) : showStaffPage ? (
           <StaffDirectoryPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onCalendarClick={() => {}} onNewsClick={() => {}} />
         ) : showCalendarPage ? (
           <AcademicCalendarPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onNewsClick={() => {}} />
         ) : showLandingPage ? (
-          <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
+          <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onTesterSignup={goToTesterSignup} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
         ) : (
-          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} />
+          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} onTesterSignup={goToTesterSignup} />
         )}
       </div>
 
