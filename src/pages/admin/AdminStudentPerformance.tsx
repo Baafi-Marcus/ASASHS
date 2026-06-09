@@ -66,18 +66,19 @@ export const AdminStudentPerformance: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch courses
-      const courseData = await db.getCourses();
+      const [courseData, ay, sem] = await Promise.all([
+        db.getCourses(),
+        db.getCurrentAcademicYear(),
+        db.getCurrentSemester()
+      ]);
       setCourses(courseData);
       
-      // Set default academic year and term
-      const currentYear = new Date().getFullYear();
-      const academicYear = `${currentYear}/${currentYear + 1}`;
+      const academicYear = ay || `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`;
+      const semester = sem || 1;
       setSelectedAcademicYear(academicYear);
-      setSelectedTerm(1);
+      setSelectedTerm(semester);
       
-      // Fetch all performance data
-      await fetchPerformanceData(academicYear, 1);
+      await fetchPerformanceData(academicYear, semester);
     } catch (error) {
       console.error('Failed to fetch initial data:', error);
       toast.error('Failed to load performance data');
@@ -184,16 +185,15 @@ export const AdminStudentPerformance: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Term</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(parseInt(e.target.value))}
               className="w-full px-4 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
             >
-              <option value={0}>Select Term</option>
-              <option value={1}>Term 1</option>
-              <option value={2}>Term 2</option>
-              <option value={3}>Term 3</option>
+              <option value={0}>Select Semester</option>
+              <option value={1}>Semester 1 (Sep–Feb)</option>
+              <option value={2}>Semester 2 (Mar–Aug)</option>
             </select>
           </div>
           
