@@ -45,6 +45,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard';
 import TestStudentView from './pages/student/TestStudentView';
 
 // Teacher Portal Components
+import TestTeacherView from './pages/teacher/TestTeacherView';
 
 function ComprehensivePortalApp() {
   const { user, signIn, signOut, loading } = useContext(AuthContext);
@@ -262,34 +263,7 @@ function ComprehensivePortalApp() {
       ];
 
       if (user.is_test_account) {
-        content = (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-school-green-800 to-teal-900 rounded-2xl p-8 text-white shadow-2xl">
-              <h2 className="text-3xl font-black mb-2">Teacher View (Test Mode)</h2>
-              <p className="text-school-green-100 text-lg">You are viewing the Teacher Portal as a test account.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-                <div className="text-3xl mb-2">👨‍🏫</div>
-                <h3 className="font-bold text-gray-800">Teaching</h3>
-                <p className="text-sm text-gray-500 mt-2">Browse the School Exams, Gradebook, and other tabs to explore teacher features.</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-                <div className="text-3xl mb-2">📝</div>
-                <h3 className="font-bold text-gray-800">Assignments</h3>
-                <p className="text-sm text-gray-500 mt-2">Create and manage assignments for your classes.</p>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-                <div className="text-3xl mb-2">📊</div>
-                <h3 className="font-bold text-gray-800">Performance</h3>
-                <p className="text-sm text-gray-500 mt-2">View student performance analytics.</p>
-              </div>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-              <strong>Test Mode:</strong> You are viewing a simulated teacher experience. No real teacher account is linked.
-            </div>
-          </div>
-        );
+        content = <TestTeacherView activeTab={activeTab} fullName={user.full_name} />;
       } else {
         const teacherProp = {
           fullName: user.full_name,
