@@ -41,7 +41,7 @@ const databaseUrl = getDatabaseUrl();
 let sql: any;
 if (databaseUrl) {
   try {
-    sql = neon(databaseUrl);
+    sql = neon(databaseUrl, { disableWarningInBrowsers: true } as any);
   } catch (error) {
     console.error('Failed to initialize Neon SQL function:', error);
     sql = null;
