@@ -235,6 +235,14 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
             )}
           </div>
         );
+      case 'voting':
+        return (
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 text-center">
+            <div className="text-5xl mb-4">🗳️</div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Demo Voting</h3>
+            <p className="text-gray-500">Voting is read-only in demo mode. Election results and candidates can be viewed by an admin.</p>
+          </div>
+        );
       case 'elearning':
         return (
           <div className="space-y-4">
