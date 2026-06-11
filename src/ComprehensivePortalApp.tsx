@@ -58,6 +58,7 @@ function ComprehensivePortalApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hasActiveElection, setHasActiveElection] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [pageMaintenance, setPageMaintenance] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) {
@@ -100,6 +101,10 @@ function ComprehensivePortalApp() {
       } catch (error) {
         console.error('Failed to check maintenance mode:', error);
       }
+      try {
+        const pm = await db.getPageMaintenance();
+        setPageMaintenance(pm);
+      } catch {}
     };
     checkMaintenance();
   }, []);
@@ -205,6 +210,8 @@ function ComprehensivePortalApp() {
     let portalName: 'Admin' | 'Teacher' | 'Student' = 'Student';
     let content = null;
     const effectiveRole = user.is_test_account ? testRole : (user.user_type as 'admin' | 'teacher' | 'student');
+    const pageKey = `${effectiveRole}_${activeTab}`;
+    const isPageLocked = !!pageMaintenance[pageKey] && effectiveRole !== 'admin';
 
     if (effectiveRole === 'admin') {
       portalName = 'Admin';
@@ -322,7 +329,19 @@ function ComprehensivePortalApp() {
           onRoleChange={setTestRole}
         >
           <ErrorBoundary key={activeTab}>
-            {content}
+            {isPageLocked ? (
+              <div className="flex items-center justify-center min-h-[60vh] p-6">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center space-y-4">
+                  <div className="flex justify-center">
+                    <svg className="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m0 0v2m0-2h2m-2 0H10m9.364-7.364A9 9 0 1112 3a9 9 0 017.364 4.636z" /></svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Page Under Maintenance</h2>
+                  <p className="text-gray-500">This page is currently being updated. Please check back later. Other sections of the system are still available.</p>
+                </div>
+              </div>
+            ) : (
+              content
+            )}
           </ErrorBoundary>
           <Toaster position="top-right" />
         </PortalLayout>

@@ -2977,6 +2977,7 @@ export const db = {
       const defaultAY = now.getMonth() >= 8 ? `${y}/${y + 1}` : `${y - 1}/${y}`;
       await sql`INSERT INTO system_config (key, value) VALUES ('current_academic_year', ${defaultAY}) ON CONFLICT (key) DO NOTHING`;
       await sql`INSERT INTO system_config (key, value) VALUES ('current_semester', '1') ON CONFLICT (key) DO NOTHING`;
+      await sql`INSERT INTO system_config (key, value) VALUES ('page_maintenance', '{}') ON CONFLICT (key) DO NOTHING`;
     } catch (e) {
       console.error('Failed to ensure system_config table:', e);
     }
@@ -2995,6 +2996,27 @@ export const db = {
     await this.ensureSystemConfigTable();
     await sql`INSERT INTO system_config (key, value) VALUES ('maintenance_mode', ${enabled ? 'true' : 'false'}) ON CONFLICT (key) DO UPDATE SET value = ${enabled ? 'true' : 'false'}`;
     return enabled;
+  },
+
+  async getPageMaintenance(): Promise<Record<string, boolean>> {
+    try {
+      const result = await sql`SELECT value FROM system_config WHERE key = 'page_maintenance'`;
+      return result[0]?.value ? JSON.parse(result[0].value) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  async setPageMaintenance(pageKey: string, enabled: boolean): Promise<Record<string, boolean>> {
+    await this.ensureSystemConfigTable();
+    const current = await this.getPageMaintenance();
+    if (enabled) {
+      current[pageKey] = true;
+    } else {
+      delete current[pageKey];
+    }
+    await sql`INSERT INTO system_config (key, value) VALUES ('page_maintenance', ${JSON.stringify(current)}) ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(current)}`;
+    return current;
   },
 
   async getCurrentAcademicYear(): Promise<string> {

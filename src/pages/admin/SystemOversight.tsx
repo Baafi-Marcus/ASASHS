@@ -15,6 +15,117 @@ interface AnalyticsData {
   peakUsageHours: { hour: number; count: number }[];
 }
 
+const PAGE_GROUPS: Record<string, { label: string; pages: { key: string; label: string }[] }> = {
+  admin: {
+    label: 'Admin Portal',
+    pages: [
+      { key: 'admin_dashboard', label: 'Overview' },
+      { key: 'admin_subadmins', label: 'Sub-Admins' },
+      { key: 'admin_school_exams', label: 'School Exams' },
+      { key: 'admin_exam_reports', label: 'Exam Reports' },
+      { key: 'admin_students', label: 'Students' },
+      { key: 'admin_teachers', label: 'Teachers' },
+      { key: 'admin_courses', label: 'Academics' },
+      { key: 'admin_timetables', label: 'Timetables' },
+      { key: 'admin_announcements', label: 'Announcements' },
+      { key: 'admin_behavior', label: 'Behavior Records' },
+      { key: 'admin_performance', label: 'Performance' },
+      { key: 'admin_ai-settings', label: 'AI Settings' },
+      { key: 'admin_voting', label: 'Elections' },
+      { key: 'admin_ict', label: 'ICT Registration' },
+      { key: 'admin_reports', label: 'Reports' },
+      { key: 'admin_system', label: 'System' },
+      { key: 'admin_profile', label: 'My Profile' },
+    ],
+  },
+  teacher: {
+    label: 'Teacher Portal',
+    pages: [
+      { key: 'teacher_dashboard', label: 'Overview' },
+      { key: 'teacher_classes', label: 'My Classes' },
+      { key: 'teacher_assignments', label: 'Assignments' },
+      { key: 'teacher_exams', label: 'School Exams' },
+      { key: 'teacher_grades', label: 'Gradebook' },
+      { key: 'teacher_performance', label: 'Performance' },
+      { key: 'teacher_messages', label: 'Messages' },
+      { key: 'teacher_elearning', label: 'E-Learning' },
+      { key: 'teacher_profile', label: 'My Profile' },
+    ],
+  },
+  student: {
+    label: 'Student Portal',
+    pages: [
+      { key: 'student_overview', label: 'Overview' },
+      { key: 'student_profile', label: 'My Profile' },
+      { key: 'student_grades', label: 'My Grades' },
+      { key: 'student_assignments', label: 'Assignments' },
+      { key: 'student_behavior', label: 'Behavior' },
+      { key: 'student_downloads', label: 'Downloads' },
+      { key: 'student_messages', label: 'Messages' },
+      { key: 'student_voting', label: 'Vote Now' },
+      { key: 'student_exams', label: 'School Exams' },
+      { key: 'student_elearning', label: 'E-Learning' },
+    ],
+  },
+};
+
+function PageMaintenanceControl() {
+  const [pageMaintenance, setPageMaintenance] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    db.getPageMaintenance().then((pm) => {
+      setPageMaintenance(pm);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const togglePage = async (pageKey: string) => {
+    const current = pageMaintenance[pageKey];
+    const updated = await db.setPageMaintenance(pageKey, !current);
+    setPageMaintenance({ ...updated });
+    toast.success(`${current ? 'Unlocked' : 'Locked'} page for maintenance`);
+  };
+
+  if (loading) {
+    return <div className="text-sm text-gray-500">Loading page list...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {Object.entries(PAGE_GROUPS).map(([portal, group]) => (
+        <div key={portal}>
+          <h4 className="text-md font-semibold text-gray-700 mb-2">{group.label}</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {group.pages.map((page) => {
+              const isLocked = !!pageMaintenance[page.key];
+              return (
+                <button
+                  key={page.key}
+                  onClick={() => togglePage(page.key)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-colors ${
+                    isLocked
+                      ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <span>{page.label}</span>
+                  <span className={`ml-2 text-xs font-bold ${isLocked ? 'text-red-500' : 'text-gray-400'}`}>
+                    {isLocked ? 'LOCKED' : 'open'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {Object.keys(pageMaintenance).length === 0 && (
+        <p className="text-xs text-gray-400 italic">No pages are locked. All pages are accessible.</p>
+      )}
+    </div>
+  );
+}
+
 export default function SystemOversight() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -259,6 +370,12 @@ export default function SystemOversight() {
             <p className="text-sm text-red-700 font-medium">Maintenance mode is ACTIVE. Non-admin users cannot access the system.</p>
           </div>
         )}
+      </div>
+
+      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6 mb-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Page Maintenance</h3>
+        <p className="text-sm text-gray-500 mb-4">Lock individual pages for maintenance while the rest of the system keeps running. Affected users will see a notice when they try to access a locked page.</p>
+        <PageMaintenanceControl />
       </div>
 
       <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6 mb-6">
