@@ -9,7 +9,6 @@ interface Student {
   studentId: string;
   fullName: string;
   className: string;
-  house: string;
   form: number;
   course: string;
   profilePicture?: string;
@@ -25,7 +24,6 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student }) => {
   const [profileData, setProfileData] = useState({
     fullName: student.fullName,
     className: student.className,
-    house: student.house,
     course: student.course,
     contact: {
       address: '',
@@ -75,10 +73,6 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student }) => {
               <div className="bg-school-cream-100 rounded-xl p-3">
                 <div className="text-sm text-gray-600">Class</div>
                 <div className="text-lg font-bold">{student.className}</div>
-              </div>
-              <div className="bg-school-cream-100 rounded-xl p-3">
-                <div className="text-sm text-gray-600">House</div>
-                <div className="text-lg font-bold">{student.house}</div>
               </div>
               <div className="bg-school-cream-100 rounded-xl p-3">
                 <div className="text-sm text-gray-600">Course</div>
@@ -187,11 +181,6 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ student }) => {
           <div>
             <p className="text-sm text-gray-500">Programme</p>
             <p className="font-medium">{student.course}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-gray-500">House</p>
-            <p className="font-medium">{student.house}</p>
           </div>
           
           <div>

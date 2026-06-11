@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { PortalCard } from '../../components/PortalCard';
 import { StudentProfile } from './StudentProfile';
-import { StudentBehavior } from './StudentBehavior';
 import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
@@ -305,7 +304,6 @@ export const StudentDashboard: React.FC<{
           </div>
         </div>
       );
-      case 'behavior': return <StudentBehavior studentId={parseInt(student.id)} />;
       case 'downloads': return <StudentDownloads />;
       case 'messages': return <StudentMessages />;
       case 'voting': return <StudentVoting studentId={parseInt(student.id)} onComplete={() => setActiveTab('overview')} />;

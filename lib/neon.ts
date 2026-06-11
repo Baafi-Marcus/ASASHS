@@ -180,13 +180,11 @@ export const db = {
     search?: string;
     course_id?: number;
     gender?: string;
-    unassignedHouse?: boolean; // New parameter for filtering students with unassigned houses
-    house5?: boolean; // New parameter for filtering students in House 5
     page?: number;
     limit?: number;
-    includeInactive?: boolean; // New parameter
+    includeInactive?: boolean;
   }) {
-    const { search, course_id, gender, unassignedHouse, house5, page = 1, limit = 10, includeInactive = false } = filters || {};
+    const { search, course_id, gender, page = 1, limit = 10, includeInactive = false } = filters || {};
     
     // Base query condition
     const isActiveCondition = includeInactive ? '' : 'AND s.is_active = true';
@@ -232,34 +230,6 @@ export const db = {
       `;
     }
     
-    // New filter for students with unassigned houses
-    if (unassignedHouse) {
-      return await sql`
-        SELECT s.*, c.name as course_name, cl.class_name, u.user_id
-        FROM students s
-        LEFT JOIN courses c ON s.course_id = c.id
-        LEFT JOIN classes cl ON s.current_class_id = cl.id
-        LEFT JOIN users u ON s.user_id = u.id
-        WHERE 1=1 ${sql.unsafe(isActiveCondition)} AND (s.house_preference IS NULL OR s.house_preference = '' OR s.house_preference = 'Not Assigned')
-        ORDER BY s.created_at DESC
-        LIMIT ${limit} OFFSET ${(page - 1) * limit}
-      `;
-    }
-    
-    // New filter for students in House 5
-    if (house5) {
-      return await sql`
-        SELECT s.*, c.name as course_name, cl.class_name, u.user_id
-        FROM students s
-        LEFT JOIN courses c ON s.course_id = c.id
-        LEFT JOIN classes cl ON s.current_class_id = cl.id
-        LEFT JOIN users u ON s.user_id = u.id
-        WHERE 1=1 ${sql.unsafe(isActiveCondition)} AND s.house_preference = 'House 5'
-        ORDER BY s.created_at DESC
-        LIMIT ${limit} OFFSET ${(page - 1) * limit}
-      `;
-    }
-    
     return await sql`
       SELECT s.*, c.name as course_name, cl.class_name, u.user_id
       FROM students s
@@ -270,27 +240,6 @@ export const db = {
       ORDER BY s.created_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `;
-  },
-
-  // New function to assign unassigned students to House 5
-  async assignUnassignedToHouse5() {
-    try {
-      const result = await sql`
-        UPDATE students 
-        SET house_preference = 'House 5'
-        WHERE house_preference IS NULL OR house_preference = '' OR house_preference = 'Not Assigned'
-        RETURNING *
-      `;
-      
-      return {
-        success: true,
-        updatedCount: result.length,
-        message: `Successfully updated ${result.length} students to House 5`
-      };
-    } catch (error) {
-      console.error('Error assigning students to House 5:', error);
-      throw new Error('Failed to assign students to House 5');
-    }
   },
 
   async createStudent(studentData: any) {
@@ -360,7 +309,7 @@ export const db = {
         region_of_origin, guardian_name, guardian_relationship, guardian_phone,
         guardian_phone_alt, guardian_email, guardian_address, previous_school,
         graduation_year, known_allergies, chronic_conditions, blood_group,
-        enrollment_date, residential_status, house_preference, is_active
+        enrollment_date, residential_status, is_active
       ) VALUES (
         ${userId}, ${studentId}, ${admissionNumber}, ${studentData.programme_id || studentData.course_id}, ${studentData.current_class_id}, 
         ${studentData.surname}, ${studentData.other_names}, ${studentData.date_of_birth}, 
@@ -370,7 +319,7 @@ export const db = {
         ${studentData.guardian_email}, ${studentData.guardian_address}, ${studentData.previous_school}, 
         ${studentData.graduation_year}, ${studentData.known_allergies}, ${studentData.chronic_conditions}, 
         ${studentData.blood_group}, ${studentData.enrollment_date}, 
-        ${studentData.residential_status || 'Day Student'}, ${studentData.house_preference || null}, true
+        ${studentData.residential_status || 'Day Student'}, true
       ) RETURNING *
     `;
     
@@ -611,7 +560,6 @@ export const db = {
           blood_group = COALESCE(${studentData.blood_group}, blood_group),
           enrollment_date = COALESCE(${parseDate(studentData.enrollment_date)}, enrollment_date),
           residential_status = COALESCE(${studentData.residential_status}, residential_status),
-          house_preference = COALESCE(${studentData.house_preference}, house_preference),
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ${studentId}
         RETURNING *
@@ -1879,103 +1827,6 @@ export const db = {
     } catch (error) {
       console.error('Error grading assignment:', error);
       throw new Error('Failed to grade assignment');
-    }
-  },
-
-  async getStudentBehaviorRecords(studentId: number) {
-    try {
-      const result = await sql`
-        SELECT *
-        FROM student_behavior_records
-        WHERE student_id = ${studentId} AND is_active = true
-        ORDER BY date DESC
-      `;
-      
-      return result;
-    } catch (error) {
-      console.error('Error fetching student behavior records:', error);
-      return [];
-    }
-  },
-
-  async getAllBehaviorRecords() {
-    try {
-      const result = await sql`
-        SELECT sbr.*, 
-               s.surname as student_surname, 
-               s.other_names as student_other_names,
-               t.surname as teacher_surname,
-               t.other_names as teacher_other_names
-        FROM student_behavior_records sbr
-        JOIN students s ON sbr.student_id = s.id
-        LEFT JOIN teachers t ON sbr.recorded_by = t.id
-        WHERE sbr.is_active = true
-        ORDER BY sbr.date DESC
-      `;
-      
-      return result.map((record: any) => ({
-        ...record,
-        student_name: `${record.student_surname} ${record.student_other_names}`,
-        teacher_name: record.teacher_surname ? `${record.teacher_surname} ${record.teacher_other_names}` : 'System'
-      }));
-    } catch (error) {
-      console.error('Error fetching all behavior records:', error);
-      return [];
-    }
-  },
-
-  async createBehaviorRecord(recordData: any) {
-    try {
-      const result = await sql`
-        INSERT INTO student_behavior_records 
-        (student_id, recorded_by, date, type, description, status)
-        VALUES (${recordData.student_id}, ${recordData.recorded_by}, ${recordData.date}, 
-                ${recordData.type}, ${recordData.description}, ${recordData.status})
-        RETURNING *
-      `;
-      
-      return result[0];
-    } catch (error) {
-      console.error('Error creating behavior record:', error);
-      throw new Error('Failed to create behavior record');
-    }
-  },
-
-  async updateBehaviorRecord(id: number, recordData: any) {
-    try {
-      const result = await sql`
-        UPDATE student_behavior_records
-        SET student_id = ${recordData.student_id},
-            recorded_by = ${recordData.recorded_by},
-            date = ${recordData.date},
-            type = ${recordData.type},
-            description = ${recordData.description},
-            status = ${recordData.status},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      
-      return result[0];
-    } catch (error) {
-      console.error('Error updating behavior record:', error);
-      throw new Error('Failed to update behavior record');
-    }
-  },
-
-  async deleteBehaviorRecord(id: number) {
-    try {
-      const result = await sql`
-        UPDATE student_behavior_records
-        SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id}
-        RETURNING *
-      `;
-      
-      return result[0];
-    } catch (error) {
-      console.error('Error deleting behavior record:', error);
-      throw new Error('Failed to delete behavior record');
     }
   },
 

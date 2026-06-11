@@ -29,7 +29,6 @@ interface Student {
   blood_group: string | null;
   enrollment_date: string;
   residential_status: string;
-  house_preference: string | null;
   course_id: number;
   current_class_id: number;
   course_name?: string;

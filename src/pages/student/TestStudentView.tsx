@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { StudentProfile } from './StudentProfile';
-import { StudentBehavior } from './StudentBehavior';
 import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import db from '../../../lib/neon';
@@ -183,7 +182,7 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
           </div>
         );
       case 'profile':
-        return <StudentProfile student={{ id: '0', studentId: 'TEST-STU-001', fullName, course: 'Demo Programme', className: 'Demo Class', house: 'Demo', form: 1 } as any} onLogout={() => {}} />;
+        return <StudentProfile student={{ id: '0', studentId: 'TEST-STU-001', fullName, course: 'Demo Programme', className: 'Demo Class', form: 1 } as any} onLogout={() => {}} />;
       case 'grades':
         return (
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 text-center">
@@ -200,8 +199,6 @@ const TestStudentView: React.FC<{ activeTab: string; setActiveTab: (t: string) =
             <p className="text-gray-500">Assignments will appear here when teachers create them.</p>
           </div>
         );
-      case 'behavior':
-        return <StudentBehavior studentId={0} />;
       case 'downloads':
         return <StudentDownloads />;
       case 'messages':

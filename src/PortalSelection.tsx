@@ -136,7 +136,7 @@ export const PortalSelection: React.FC<PortalSelectionProps> = ({ onSelectPortal
                   <span className="text-xs font-black text-blue-600 uppercase tracking-[0.4em] mb-2">Academic Staff</span>
                   <h3 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">TEACHER</h3>
                   <p className="text-gray-500 font-medium leading-relaxed mb-10">
-                    Manage class assignments, upload student performance data, track behavioral records, and coordinate with staff.
+                     Manage class assignments, upload student performance data, and coordinate with staff.
                   </p>
                   
                   <div className="mt-auto flex items-center text-blue-600 font-black text-sm uppercase tracking-widest group-hover:translate-x-3 transition-transform duration-500">

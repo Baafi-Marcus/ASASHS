@@ -19,7 +19,6 @@ interface StudentFormData {
   other_names: string;
   gender: string;
   date_of_birth: string;
-  house_preference: string;
   course_id: number;
   current_class_id: number;
   guardian_name: string;
@@ -38,7 +37,6 @@ export const AdminStudentRegistration: React.FC = () => {
     other_names: '',
     gender: '',
     date_of_birth: '',
-    house_preference: '',
     course_id: 0,
     current_class_id: 0,
     guardian_name: '',
@@ -104,7 +102,6 @@ export const AdminStudentRegistration: React.FC = () => {
         other_names: '',
         gender: '',
         date_of_birth: '',
-        house_preference: '',
         course_id: 0,
         current_class_id: 0,
         guardian_name: '',
@@ -235,16 +232,6 @@ export const AdminStudentRegistration: React.FC = () => {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">House Preference</label>
-                  <input
-                    type="text"
-                    name="house_preference"
-                    value={formData.house_preference}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  />
-                </div>
               </div>
             </div>
             
@@ -383,7 +370,6 @@ export const AdminStudentRegistration: React.FC = () => {
                   other_names: '',
                   gender: '',
                   date_of_birth: '',
-                  house_preference: '',
                   course_id: 0,
                   current_class_id: 0,
                   guardian_name: '',

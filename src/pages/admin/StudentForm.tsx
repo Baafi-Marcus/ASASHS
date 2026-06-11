@@ -45,7 +45,6 @@ interface Student {
   blood_group: string | null;
   enrollment_date: string;
   residential_status: string;
-  house_preference: string | null;
 }
 
 interface StudentFormProps {
@@ -123,8 +122,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
       chronic_conditions: 'None',
       blood_group: null,
       enrollment_date: new Date().toISOString().split('T')[0],
-      residential_status: 'Day Student',
-      house_preference: null
+      residential_status: 'Day Student'
     };
     
     try {
@@ -155,8 +153,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           chronic_conditions: student.chronic_conditions || defaultBloatData.chronic_conditions,
           blood_group: student.blood_group,
           enrollment_date: student.enrollment_date || defaultBloatData.enrollment_date,
-          residential_status: student.residential_status || defaultBloatData.residential_status,
-          house_preference: student.house_preference
+          residential_status: student.residential_status || defaultBloatData.residential_status
         };
         
         await db.updateStudent(student.id, studentData);

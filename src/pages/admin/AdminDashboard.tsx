@@ -24,11 +24,6 @@ interface RecentActivity {
   details?: any;
 }
 
-interface HouseDistribution {
-  house: string;
-  count: number;
-}
-
 interface Admin {
   id: string;
   adminId: string;
@@ -50,7 +45,7 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
   });
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [houseDistribution, setHouseDistribution] = useState<HouseDistribution[]>([]);
+  const [classEnrollment, setClassEnrollment] = useState<{ className: string; count: number }[]>([]);
   const [aiKeyCount, setAiKeyCount] = useState<number>(0);
 
   // Ensure we're using the admin and onLogout props
@@ -90,22 +85,19 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
       const maleStudents = activeStudents.filter((student: any) => student?.gender === 'Male').length;
       const femaleStudents = activeStudents.filter((student: any) => student?.gender === 'Female').length;
 
-      // Calculate house distribution
-      const houseCounts: Record<string, number> = {};
-      activeStudents.forEach((student: any) => {
-        const house = student.house_preference && student.house_preference.trim() !== '' 
-          ? student.house_preference 
-          : 'Not Assigned';
-        houseCounts[house] = (houseCounts[house] || 0) + 1;
-      });
-      
-      const houseDistributionData = Object.entries(houseCounts)
-        .map(([house, count]) => ({ house, count }))
-        .sort((a, b) => b.count - a.count);
-
-      // Get active classes count
+      // Get active classes and enrollment
       const activeClassesResult = await db.getClasses();
       const activeClasses = Array.isArray(activeClassesResult) ? activeClassesResult : [];
+
+      // Build class enrollment from students
+      const classCounts: Record<string, number> = {};
+      activeStudents.forEach((s: any) => {
+        const cn = s.class_name || 'Unassigned';
+        classCounts[cn] = (classCounts[cn] || 0) + 1;
+      });
+      const enrollmentData = Object.entries(classCounts)
+        .map(([className, count]) => ({ className, count }))
+        .sort((a, b) => b.count - a.count);
 
       setStats({
         totalStudents: students?.length || 0,
@@ -118,7 +110,7 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
         totalSubjects: subjects?.length || 0,
       });
 
-      setHouseDistribution(houseDistributionData);
+      setClassEnrollment(enrollmentData);
 
       // Set recent activities from real data
       const activities: RecentActivity[] = [];
@@ -267,33 +259,33 @@ export function AdminDashboard({ admin, onLogout }: { admin: Admin; onLogout: ()
           </div>
         </div>
 
-        {/* House Distribution */}
+        {/* Class Enrollment */}
         <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-6">House Distribution</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-6">Class Enrollment</h3>
           <div className="h-56 overflow-y-auto pr-2 custom-scrollbar">
-            {houseDistribution.length > 0 ? (
+            {classEnrollment.length > 0 ? (
               <div className="space-y-3">
-                {houseDistribution.map((house, index) => (
+                {classEnrollment.map((cls, index) => (
                   <div key={index} className="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all cursor-pointer group">
                     <div className="flex items-center">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-4 text-white font-bold shadow-md ${
-                        index === 0 ? 'bg-gradient-to-br from-red-400 to-red-600 shadow-red-200' :
+                        index === 0 ? 'bg-gradient-to-br from-school-green-400 to-school-green-600 shadow-green-200' :
                         index === 1 ? 'bg-gradient-to-br from-blue-400 to-blue-600 shadow-blue-200' :
-                        index === 2 ? 'bg-gradient-to-br from-green-400 to-green-600 shadow-green-200' :
-                        index === 3 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-yellow-200' : 
-                        'bg-gradient-to-br from-purple-400 to-purple-600 shadow-purple-200'
+                        index === 2 ? 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-amber-200' :
+                        index === 3 ? 'bg-gradient-to-br from-purple-400 to-purple-600 shadow-purple-200' : 
+                        'bg-gradient-to-br from-teal-400 to-teal-600 shadow-teal-200'
                       }`}>
-                        {house.house.charAt(0)}
+                        {cls.className.charAt(0)}
                       </div>
-                      <span className="font-semibold text-gray-800 group-hover:text-school-green-600 transition-colors">{house.house}</span>
+                      <span className="font-semibold text-gray-800 group-hover:text-school-green-600 transition-colors">{cls.className}</span>
                     </div>
-                    <span className="text-xl font-black text-gray-700 bg-gray-100 px-3 py-1 rounded-lg">{house.count}</span>
+                    <span className="text-xl font-black text-gray-700 bg-gray-100 px-3 py-1 rounded-lg">{cls.count}</span>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 font-medium bg-gray-50 px-6 py-3 rounded-2xl">No house data available</p>
+                <p className="text-gray-500 font-medium bg-gray-50 px-6 py-3 rounded-2xl">No class enrollment data available</p>
               </div>
             )}
           </div>

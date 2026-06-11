@@ -16,7 +16,6 @@ interface Student {
   current_class_id: number;
   course_name?: string;
   class_name?: string;
-  house_preference?: string;
   is_active: boolean;
 }
 
@@ -39,8 +38,6 @@ export function StudentList() {
   const [search, setSearch] = useState("");
   const [programme, setProgramme] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
-  const [unassignedHouse, setUnassignedHouse] = useState<boolean>(false);
-  const [house5Filter, setHouse5Filter] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -52,7 +49,7 @@ export function StudentList() {
   useEffect(() => {
     fetchStudents();
     fetchProgrammesAndClasses();
-  }, [search, programme, gender, unassignedHouse, house5Filter, page]);
+  }, [search, programme, gender, page]);
 
   const fetchProgrammesAndClasses = async () => {
     try {
@@ -89,16 +86,7 @@ export function StudentList() {
       if (gender) {
         filters.gender = gender;
       }
-      
-      if (unassignedHouse) {
-        filters.unassignedHouse = true;
-      }
-      
-      // Add House 5 filter
-      if (house5Filter) {
-        filters.house5 = true;
-      }
-      
+
       const studentsData = await db.getStudents(filters);
       setStudents(studentsData as Student[]);
     } catch (error) {
@@ -113,20 +101,6 @@ export function StudentList() {
   const handleSearch = () => {
     setPage(1); // Reset to first page when searching
     fetchStudents();
-  };
-
-  // Function to assign all unassigned students to House 5
-  const handleAssignToHouse5 = async () => {
-    if (window.confirm('Are you sure you want to assign all unassigned students to House 5? This action cannot be undone.')) {
-      try {
-        const result = await db.assignUnassignedToHouse5();
-        toast.success(result.message);
-        fetchStudents(); // Refresh the list
-      } catch (error) {
-        console.error('Failed to assign students to House 5:', error);
-        toast.error('Failed to assign students to House 5: ' + (error as Error).message);
-      }
-    }
   };
 
   const handleViewDetails = (studentId: number) => {
@@ -260,28 +234,6 @@ export function StudentList() {
             <option value="Female">Female</option>
           </select>
 
-          {/* Filter for unassigned houses */}
-          <label className="flex items-center space-x-2 p-2 border border-gray-300 rounded-lg">
-            <input
-              type="checkbox"
-              checked={unassignedHouse}
-              onChange={(e) => setUnassignedHouse(e.target.checked)}
-              className="rounded text-school-green-600 focus:ring-school-green-500"
-            />
-            <span className="text-sm">Unassigned Houses</span>
-          </label>
-
-          {/* New filter for House 5 */}
-          <label className="flex items-center space-x-2 p-2 border border-gray-300 rounded-lg">
-            <input
-              type="checkbox"
-              checked={house5Filter}
-              onChange={(e) => setHouse5Filter(e.target.checked)}
-              className="rounded text-school-green-600 focus:ring-school-green-500"
-            />
-            <span className="text-sm">House 5 Only</span>
-          </label>
-
 
         </div>
 
@@ -295,7 +247,6 @@ export function StudentList() {
                 <th className="p-3 border-b">Gender</th>
                 <th className="p-3 border-b">Programme</th>
                 <th className="p-3 border-b">Class</th>
-                <th className="p-3 border-b">House</th>
                 <th className="p-3 border-b">Status</th>
                 <th className="p-3 border-b">Actions</th>
               </tr>
@@ -303,7 +254,7 @@ export function StudentList() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-4"><LoadingSkeleton variant="table-row" columns={8} /></td>
+                  <td colSpan={7} className="p-4"><LoadingSkeleton variant="table-row" columns={7} /></td>
                 </tr>
               ) : students.length > 0 ? (
                 students.map((s) => (
@@ -313,7 +264,6 @@ export function StudentList() {
                     <td className="p-3">{s.gender}</td>
                     <td className="p-3">{s.course_name || getProgrammeName(s.course_id)}</td>
                     <td className="p-3">{s.class_name || 'Not assigned'}</td>
-                    <td className="p-3">{s.house_preference || 'Not assigned'}</td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         s.is_active 
@@ -387,7 +337,7 @@ export function StudentList() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-4 text-center text-gray-500">
+                  <td colSpan={7} className="p-4 text-center text-gray-500">
                     No students found.
                   </td>
                 </tr>
