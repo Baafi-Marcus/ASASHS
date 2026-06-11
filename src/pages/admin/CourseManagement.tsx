@@ -48,6 +48,7 @@ interface Subject {
   course_id: number | null;
   is_core: boolean;
   is_active: boolean;
+  applicable_forms?: string | null;
 }
 
 interface ClassStudent {
@@ -123,7 +124,8 @@ export function CourseManagement() {
     name: '',
     code: '',
     course_id: '',
-    is_core: false
+    is_core: false,
+    applicable_forms: ''
   });
 
   const [currentAcademicYear, setCurrentAcademicYear] = useState('');
@@ -383,7 +385,7 @@ export function CourseManagement() {
         course_id: subjectFormData.course_id ? parseInt(subjectFormData.course_id) : null
       });
       toast.success('Subject created successfully!');
-      setSubjectFormData({ name: '', code: '', course_id: '', is_core: false });
+      setSubjectFormData({ name: '', code: '', course_id: '', is_core: false, applicable_forms: '' });
       setShowSubjectForm(false);
       fetchData();
     } catch (error) {
@@ -397,13 +399,30 @@ export function CourseManagement() {
     if (!editingSubject) return;
     
     try {
-      // Update subject logic would go here
+      await db.updateSubject(editingSubject.id, {
+        ...subjectFormData,
+        course_id: subjectFormData.course_id ? parseInt(subjectFormData.course_id) : null
+      });
       toast.success('Subject updated successfully!');
       setEditingSubject(null);
+      setShowSubjectForm(false);
+      setSubjectFormData({ name: '', code: '', course_id: '', is_core: false, applicable_forms: '' });
       fetchData();
     } catch (error) {
       console.error('Failed to update subject:', error);
       toast.error('Failed to update subject');
+    }
+  };
+
+  const handleDeleteSubject = async (subject: Subject) => {
+    if (!window.confirm(`Delete subject "${subject.name}" (${subject.code})? This cannot be undone.`)) return;
+    try {
+      await db.deleteSubject(subject.id);
+      toast.success('Subject deleted successfully!');
+      fetchData();
+    } catch (error) {
+      console.error('Failed to delete subject:', error);
+      toast.error('Failed to delete subject');
     }
   };
 
@@ -1031,7 +1050,7 @@ export function CourseManagement() {
                   <button
                     onClick={() => {
                       setEditingSubject(null);
-                      setSubjectFormData({ name: '', code: '', course_id: '', is_core: false });
+                      setSubjectFormData({ name: '', code: '', course_id: '', is_core: false, applicable_forms: '' });
                       setShowSubjectForm(true);
                     }}
                     className="bg-school-green-600 text-white px-4 py-2 rounded-lg hover:bg-school-green-700 transition-colors flex items-center space-x-2"
@@ -1110,6 +1129,30 @@ export function CourseManagement() {
                         Core Subject (Required for all students)
                       </label>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Applicable Forms</label>
+                      <div className="flex items-center space-x-4">
+                        {[
+                          { value: '', label: 'All Forms' },
+                          { value: '1', label: 'Form 1' },
+                          { value: '2', label: 'Form 2' },
+                          { value: '3', label: 'Form 3' },
+                        ].map((opt) => (
+                          <label key={opt.value} className="flex items-center space-x-1.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="applicable_forms"
+                              value={opt.value}
+                              checked={subjectFormData.applicable_forms === opt.value}
+                              onChange={(e) => setSubjectFormData({ ...subjectFormData, applicable_forms: e.target.value })}
+                              className="text-school-green-600 focus:ring-school-green-500"
+                            />
+                            <span className="text-sm text-gray-700">{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Leave as "All Forms" unless this subject is only taught in specific forms (e.g., Form 1 & 2 only).</p>
+                    </div>
                     <div className="flex justify-end space-x-3">
                       <button
                         type="button"
@@ -1153,6 +1196,12 @@ export function CourseManagement() {
                             {!course && (
                               <span className="text-sm text-gray-500">All Courses</span>
                             )}
+                            {subject.applicable_forms && (
+                              <span className="text-sm font-medium text-gray-500">
+                                | Form{subject.applicable_forms.split(',').length > 1 ? 's ' : ' '}
+                                {subject.applicable_forms.split(',').map(f => ` ${f}`).join(',')} only
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -1170,7 +1219,8 @@ export function CourseManagement() {
                                 name: subject.name,
                                 code: subject.code,
                                 course_id: subject.course_id ? subject.course_id.toString() : '',
-                                is_core: subject.is_core
+                                is_core: subject.is_core,
+                                applicable_forms: subject.applicable_forms || ''
                               });
                               setShowSubjectForm(true);
                             }}
@@ -1178,6 +1228,13 @@ export function CourseManagement() {
                             title="Edit Subject"
                           >
                             <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSubject(subject)}
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            title="Delete Subject"
+                          >
+                            <TrashIcon className="h-5 w-5" />
                           </button>
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                             subject.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'

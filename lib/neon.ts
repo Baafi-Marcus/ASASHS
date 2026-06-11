@@ -328,9 +328,19 @@ export const db = {
     // Save student subjects if provided
     const academicYear = new Date().getFullYear() + '/' + (new Date().getFullYear() + 1);
     
-    // Get core subjects for the course
+    // Get core subjects for the course, filtered by applicable forms
+    let studentForm: number | null = null;
+    if (studentData.current_class_id) {
+      try {
+        const classInfo = await sql`SELECT form FROM classes WHERE id = ${studentData.current_class_id}`;
+        if (classInfo.length > 0) studentForm = classInfo[0].form;
+      } catch {}
+    }
     const coreSubjects = await sql`
-      SELECT id FROM subjects WHERE (course_id = ${studentData.programme_id || studentData.course_id} OR course_id IS NULL) AND is_core = true
+      SELECT id FROM subjects 
+      WHERE (course_id = ${studentData.programme_id || studentData.course_id} OR course_id IS NULL) 
+        AND is_core = true
+        AND (applicable_forms IS NULL OR applicable_forms = '' OR ${studentForm} IS NULL OR applicable_forms::text LIKE '%' || ${String(studentForm || '')} || '%')
     `;
     
     // Insert core subjects
@@ -1111,12 +1121,40 @@ export const db = {
     return await sql`SELECT * FROM subjects WHERE is_active = true ORDER BY is_core DESC, name`;
   },
   async createSubject(subjectData: any) {
+    await this.ensureSubjectFormsColumn();
     const result = await sql`
-      INSERT INTO subjects (name, code, course_id, is_core)
-      VALUES (${subjectData.name}, ${subjectData.code}, ${subjectData.course_id}, ${subjectData.is_core})
+      INSERT INTO subjects (name, code, course_id, is_core, applicable_forms)
+      VALUES (${subjectData.name}, ${subjectData.code}, ${subjectData.course_id}, ${subjectData.is_core}, ${subjectData.applicable_forms || null})
       RETURNING *
     `;
     return result[0];
+  },
+
+  async updateSubject(id: number, subjectData: any) {
+    await this.ensureSubjectFormsColumn();
+    const result = await sql`
+      UPDATE subjects SET
+        name = ${subjectData.name},
+        code = ${subjectData.code},
+        course_id = ${subjectData.course_id},
+        is_core = ${subjectData.is_core},
+        applicable_forms = ${subjectData.applicable_forms || null}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return result[0];
+  },
+
+  async deleteSubject(id: number) {
+    await sql`DELETE FROM subjects WHERE id = ${id}`;
+  },
+
+  async ensureSubjectFormsColumn() {
+    try {
+      await sql`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS applicable_forms VARCHAR(20)`;
+    } catch (e) {
+      // column already exists
+    }
   },
   async updateElectiveSubjects() {
     try {
@@ -1535,6 +1573,15 @@ export const db = {
 
       const { current_class_id, course_id, class_name } = student[0];
 
+      // Get student's form from class
+      let studentForm: number | null = null;
+      if (current_class_id) {
+        try {
+          const classInfo = await sql`SELECT form FROM classes WHERE id = ${current_class_id}`;
+          if (classInfo.length > 0) studentForm = classInfo[0].form;
+        } catch {}
+      }
+
       // Merge subjects from all sources, deduplicated by subject_id
       const seen = new Set<number>();
       const allSubjects: any[] = [];
@@ -1544,7 +1591,9 @@ export const db = {
         SELECT s.id as subject_id, s.name as subject_name, s.code as subject_code,
                s.is_core, ${class_name} as class_name
         FROM subjects s
-        WHERE s.course_id = ${course_id} AND s.is_core = true AND s.is_active = true
+        WHERE (s.course_id = ${course_id} OR s.course_id IS NULL)
+          AND s.is_core = true AND s.is_active = true
+          AND (s.applicable_forms IS NULL OR s.applicable_forms = '' OR ${studentForm} IS NULL OR s.applicable_forms::text LIKE '%' || ${String(studentForm || '')} || '%')
       `;
       for (const sub of coreSubjects) {
         if (!seen.has(sub.subject_id)) {
