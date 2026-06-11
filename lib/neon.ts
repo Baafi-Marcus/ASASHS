@@ -1298,6 +1298,42 @@ export const db = {
     }
   },
 
+  async getClassTeachers(classId: number) {
+    try {
+      const result = await sql`
+        SELECT ts.id, s.name as subject_name, s.id as subject_id, c.class_name, c.id as class_id, c.form, c.stream, t.surname as teacher_surname, t.other_names as teacher_other_names, t.id as teacher_id
+        FROM teacher_subjects ts
+        JOIN subjects s ON ts.subject_id = s.id
+        JOIN classes c ON ts.class_id = c.id
+        JOIN teachers t ON ts.teacher_id = t.id
+        WHERE ts.class_id = ${classId} AND ts.is_active = true
+        ORDER BY s.name
+      `;
+      return result;
+    } catch (error) {
+      console.error('Error fetching class teachers:', error);
+      return [];
+    }
+  },
+
+  async getSubjectTeachers(subjectId: number) {
+    try {
+      const result = await sql`
+        SELECT ts.id, s.name as subject_name, s.id as subject_id, c.class_name, c.id as class_id, c.form, c.stream, t.surname as teacher_surname, t.other_names as teacher_other_names, t.id as teacher_id
+        FROM teacher_subjects ts
+        JOIN subjects s ON ts.subject_id = s.id
+        JOIN classes c ON ts.class_id = c.id
+        JOIN teachers t ON ts.teacher_id = t.id
+        WHERE ts.subject_id = ${subjectId} AND ts.is_active = true
+        ORDER BY c.form, c.stream, s.name
+      `;
+      return result;
+    } catch (error) {
+      console.error('Error fetching subject teachers:', error);
+      return [];
+    }
+  },
+
   // Announcements
   async getAnnouncements(classId?: number) {
     try {

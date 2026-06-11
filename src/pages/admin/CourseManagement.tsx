@@ -170,9 +170,7 @@ export function CourseManagement() {
       // Fetch students in the class
       const students = await db.getClassStudents(classId);
       
-      // For teachers, we need to get teachers assigned to subjects in this class
-      // This requires a custom query to get teachers for this class
-      const teachers = await db.getTimetableEntries({ class_id: classId });
+      const teachers = await db.getClassTeachers(classId);
       
       setClassStudents(students as ClassStudent[]);
       setClassTeachers(teachers as TeacherSubject[]);
@@ -195,9 +193,7 @@ export function CourseManagement() {
   const fetchSubjectDetails = async (subjectId: number) => {
     try {
       setLoadingSubjectDetails(true);
-      // Fetch teachers teaching this subject
-      // We'll need to get this from timetable entries or teacher_subjects
-      const teachers = await db.getTimetableEntries({ subject_id: subjectId });
+      const teachers = await db.getSubjectTeachers(subjectId);
       
       setSubjectTeachers(teachers as TeacherSubject[]);
       
