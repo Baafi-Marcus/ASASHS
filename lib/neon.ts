@@ -243,6 +243,7 @@ export const db = {
   },
 
   async createStudent(studentData: any) {
+    await this.ensureSubjectFormsColumn();
     // Generate student ID and admission number
     const year = new Date().getFullYear();
     
@@ -1598,6 +1599,7 @@ export const db = {
 
   async getStudentSubjects(studentId: number) {
     try {
+      await this.ensureSubjectFormsColumn();
       // Get student's class and course info
       const student = await sql`
         SELECT s.current_class_id, c.course_id, c.class_name
