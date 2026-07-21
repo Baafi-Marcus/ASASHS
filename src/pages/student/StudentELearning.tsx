@@ -111,13 +111,13 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                       ) : ended ? (
                         <span className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg">Ended</span>
                       ) : (
-                        <div className="flex flex-col gap-2 items-end">
+                        <div className="flex flex-col gap-2.5 items-end w-full sm:w-auto mt-3 sm:mt-0">
                           <PortalButton 
                             onClick={() => setSelectedQuizId(quiz.id)}
-                            size="sm"
+                            className="w-full sm:w-auto py-3 md:py-3.5 px-5 text-xs md:text-sm font-black shadow-sm"
                             disabled={upcoming}
                           >
-                            {upcoming ? 'Not Yet Available' : 'Start Quiz'}
+                            {upcoming ? 'Not Yet Available' : 'Start E-Learning Quiz'}
                           </PortalButton>
                           {quiz.allow_offline !== false && !upcoming && (
                             <button
@@ -126,9 +126,10 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                                   await syncEngine.checkOutAssessment(studentId, quiz.id);
                                 } catch (e) {}
                               }}
-                              className="text-[11px] font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border border-school-green-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-sm"
+                              className="w-full sm:w-auto text-xs md:text-sm font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border-2 border-school-green-300 px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
                             >
-                              <span>📥 Check-Out to APK Vault</span>
+                              <span className="text-sm">📥</span>
+                              <span>Check-Out to APK Vault</span>
                             </button>
                           )}
                         </div>

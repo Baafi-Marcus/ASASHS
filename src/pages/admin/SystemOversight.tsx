@@ -548,37 +548,13 @@ export default function SystemOversight() {
         </div>
       </div>
 
-      {/* Test Accounts Management */}
+      {/* Test Accounts Cleanup */}
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Test Accounts</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Test Accounts Cleanup</h3>
         <p className="text-sm text-gray-500 mb-4">
-          Test accounts allow external users to explore the portal without affecting real data.
+          Clean up and remove any remaining test accounts from the system database.
         </p>
         <div className="flex flex-wrap gap-3">
-          <button
-            onClick={async () => {
-              if (!confirm('Seed demo quizzes for all subjects? This is a one-time operation.')) return;
-              try {
-                const r = await db.seedDemoQuizzes();
-                toast.success(r.message || `Created ${r.count} demo quizzes.`);
-              } catch { toast.error('Failed to seed demo quizzes.'); }
-            }}
-            className="bg-school-green-600 text-white px-4 py-2 rounded-lg hover:bg-school-green-700 transition-colors font-medium"
-          >
-            Seed Demo Quizzes
-          </button>
-          <button
-            onClick={async () => {
-              if (!confirm('Seed demo exams for all subjects? This is a one-time operation.')) return;
-              try {
-                const r = await db.seedDemoExams();
-                toast.success(r.message || `Created ${r.count} demo exams.`);
-              } catch { toast.error('Failed to seed demo exams.'); }
-            }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Seed Demo Exams
-          </button>
           <button
             onClick={async () => {
               if (!confirm('Delete ALL test accounts? This cannot be undone.')) return;

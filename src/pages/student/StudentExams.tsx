@@ -85,10 +85,10 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
                 {exam.has_theory && <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium border border-purple-200">Theory Included</span>}
               </div>
               
-              <div className="pt-4 border-t border-gray-100 space-y-2">
+              <div className="pt-4 border-t border-gray-100 space-y-3">
                 <PortalButton 
                   onClick={() => setSelectedExam(exam)}
-                  className="w-full"
+                  className="w-full py-3.5 md:py-4 text-sm md:text-base font-black shadow-md"
                   disabled={getExamStatus(exam).ended}
                 >
                   {getExamStatus(exam).ended ? 'Exam Ended' : 'Enter Exam Portal'}
@@ -100,9 +100,10 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
                         await syncEngine.checkOutAssessment(studentId, exam.quiz_id);
                       } catch (e) {}
                     }}
-                    className="w-full text-xs font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border border-school-green-200 py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm"
+                    className="w-full text-xs md:text-sm font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border-2 border-school-green-300 py-3 md:py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-sm active:scale-98"
                   >
-                    <span>📥 Check-Out to APK Vault</span>
+                    <span className="text-base">📥</span>
+                    <span>Check-Out to APK Vault</span>
                   </button>
                 )}
               </div>

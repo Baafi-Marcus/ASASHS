@@ -396,11 +396,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                             Access Student Portal
                         </button>
                     </div>
-                    {onTesterSignup && (
-                        <button onClick={onTesterSignup} className="mt-4 text-white/60 hover:text-white text-sm underline underline-offset-2 transition-colors">
-                            Want to test the portal? Get a demo account
-                        </button>
-                    )}
+
                 </div>
             </section>
 

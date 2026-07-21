@@ -128,13 +128,7 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
               </div>
             </form>
 
-            {onTesterSignup && (
-              <div className="mt-4 text-center">
-                <button onClick={onTesterSignup} className="text-xs text-school-green-600 hover:text-school-green-700 font-semibold underline underline-offset-2">
-                  Want to test the portal? Get a demo account
-                </button>
-              </div>
-            )}
+
             <div className="mt-6 pt-6 border-t border-gray-100">
               <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                 Security Policy: Official School Access Only

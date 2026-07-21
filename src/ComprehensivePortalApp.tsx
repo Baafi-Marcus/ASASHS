@@ -7,7 +7,7 @@ import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
 import { LandingNavbar } from './components/LandingNavbar';
 import { UnifiedLogin } from './pages/UnifiedLogin';
 import { PortalLayout } from './components/PortalLayout';
-import { TesterSignup } from './pages/TesterSignup';
+
 
 // Shared Components
 import { AuthContext } from '../AuthContext';
@@ -41,10 +41,7 @@ import { AdminProfile } from './pages/admin/AdminProfile';
 
 // Student Portal Components
 import { StudentDashboard } from './pages/student/StudentDashboard';
-import TestStudentView from './pages/student/TestStudentView';
 
-// Teacher Portal Components
-import TestTeacherView from './pages/teacher/TestTeacherView';
 
 function ComprehensivePortalApp() {
   const { user, signIn, signOut, loading } = useContext(AuthContext);
@@ -52,7 +49,6 @@ function ComprehensivePortalApp() {
   const [showNewsPage, setShowNewsPage] = useState(false);
   const [showStaffPage, setShowStaffPage] = useState(false);
   const [showCalendarPage, setShowCalendarPage] = useState(false);
-  const [showTesterSignup, setShowTesterSignup] = useState(false);
   const [testRole, setTestRole] = useState<'admin' | 'teacher' | 'student'>('admin');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [hasActiveElection, setHasActiveElection] = useState(false);
@@ -62,13 +58,7 @@ function ComprehensivePortalApp() {
   useEffect(() => {
     if (user) {
       if (user.is_test_account) {
-        (async () => {
-          const q = await db.seedDemoQuizzes();
-          if (q.count > 0) console.log(`Seeded ${q.count} demo quizzes`);
-          const e = await db.seedDemoExams();
-          if (e.count > 0) console.log(`Seeded ${e.count} demo exams`);
-          db.setReadOnlyMode(true);
-        })();
+        db.setReadOnlyMode(true);
         setTestRole('admin');
       } else {
         db.setReadOnlyMode(false);
@@ -122,15 +112,6 @@ function ComprehensivePortalApp() {
   }, []);
 
   const goToLogin = () => {
-    setShowLandingPage(false);
-    setShowNewsPage(false);
-    setShowStaffPage(false);
-    setShowCalendarPage(false);
-    setShowTesterSignup(false);
-  };
-
-  const goToTesterSignup = () => {
-    setShowTesterSignup(true);
     setShowLandingPage(false);
     setShowNewsPage(false);
     setShowStaffPage(false);
@@ -266,20 +247,16 @@ function ComprehensivePortalApp() {
         { id: 'profile', label: 'My Profile', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> }
       ];
 
-      if (user.is_test_account) {
-        content = <TestTeacherView activeTab={activeTab} fullName={user.full_name} />;
-      } else {
-        const teacherProp = {
-          fullName: user.full_name,
-          teacherId: user.teacher_id || 'TEST-TCH',
-          teacherDbId: user.teacher_db_id || 0,
-          department: (user as any).department || 'General',
-          classes: (user as any).classes || [],
-          subjects: (user as any).subjects || []
-        };
+      const teacherProp = {
+        fullName: user.full_name,
+        teacherId: user.teacher_id || 'TEST-TCH',
+        teacherDbId: user.teacher_db_id || 0,
+        department: (user as any).department || 'General',
+        classes: (user as any).classes || [],
+        subjects: (user as any).subjects || []
+      };
 
-        content = <TeacherDashboard teacher={teacherProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
-      }
+      content = <TeacherDashboard teacher={teacherProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
     } else if (effectiveRole === 'student') {
       portalName = 'Student';
       sidebarItems = [
@@ -294,21 +271,17 @@ function ComprehensivePortalApp() {
         { id: 'elearning', label: 'E-Learning', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> }
       ];
 
-      if (user.is_test_account) {
-        content = <TestStudentView activeTab={activeTab} setActiveTab={setActiveTab} fullName={user.full_name} />;
-      } else {
-        const studentProp = {
-          fullName: user.full_name,
-          studentId: user.student_id,
-          id: (user.student_db_id || user.id).toString(),
-          course: (user as any).course || 'General Arts',
-          className: (user as any).class_name || '',
-          current_class_id: (user as any).current_class_id || 1,
-          registration_status: (user as any).registration_status || 'complete'
-        };
+      const studentProp = {
+        fullName: user.full_name,
+        studentId: user.student_id,
+        id: (user.student_db_id || user.id).toString(),
+        course: (user as any).course || 'General Arts',
+        className: (user as any).class_name || '',
+        current_class_id: (user as any).current_class_id || 1,
+        registration_status: (user as any).registration_status || 'complete'
+      };
 
-        content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
-      }
+      content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
     }
 
     return (
@@ -373,18 +346,16 @@ function ComprehensivePortalApp() {
       )}
       
       <div className="relative flex-grow">
-        {showTesterSignup ? (
-          <TesterSignup onBack={handleBackToLanding} onDirectLogin={(id, pass) => signIn(id, pass)} />
-        ) : showNewsPage ? (
+        {showNewsPage ? (
           <NewsEventsPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onCalendarClick={() => {}} />
         ) : showStaffPage ? (
           <StaffDirectoryPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onCalendarClick={() => {}} onNewsClick={() => {}} />
         ) : showCalendarPage ? (
           <AcademicCalendarPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onNewsClick={() => {}} />
         ) : showLandingPage ? (
-          <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onTesterSignup={goToTesterSignup} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
+          <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
         ) : (
-          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} onTesterSignup={goToTesterSignup} />
+          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} />
         )}
       </div>
 
