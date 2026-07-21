@@ -59,30 +59,35 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
 
       {/* Main Login Card */}
       <main className="relative z-10 flex-grow flex items-center justify-center p-6">
-        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white p-10 relative overflow-hidden">
-            {/* Top Bar Decoration */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-school-green-600 to-blue-600"></div>
+        <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 ease-out">
+          <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(15,62,47,0.15)] border border-white/80 p-10 relative overflow-hidden transition-all duration-500 hover:shadow-[0_30px_70px_-15px_rgba(15,62,47,0.25)]">
+            {/* Animated Top Bar Decoration */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-school-green-600 via-amber-500 to-blue-600 animate-pulse"></div>
 
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-3 uppercase">Welcome Back</h2>
-              <p className="text-gray-500 font-medium">Please sign in with your official ID</p>
+              <span className="inline-flex items-center px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-gradient-to-r from-school-green-50 to-amber-50 text-school-green-800 border border-school-green-200/60 mb-4 shadow-sm animate-bounce duration-1000">
+                🏛️ Official Examination Portal
+              </span>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-2.5 uppercase bg-clip-text text-transparent bg-gradient-to-br from-gray-900 via-school-green-950 to-gray-800">
+                Welcome Back
+              </h2>
+              <p className="text-gray-500 font-medium text-xs tracking-wide">Please sign in with your student or staff ID</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">User ID / Staff ID</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-school-green-600 transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-school-green-600 group-focus-within:scale-110 transition-all duration-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   </div>
                   <input
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    placeholder="Enter your ID"
+                    placeholder="Enter your official ID"
                     required
-                    className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-school-green-500 focus:outline-none transition-all font-medium text-gray-900 placeholder-gray-400"
+                    className="w-full pl-11 pr-4 py-4 bg-gray-50/80 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-school-green-600 focus:ring-4 focus:ring-school-green-600/10 focus:outline-none transition-all duration-300 font-semibold text-gray-900 placeholder-gray-400 shadow-inner"
                   />
                 </div>
               </div>
@@ -93,13 +98,13 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[10px] font-black text-school-green-600 hover:text-school-green-700 uppercase tracking-widest"
+                    className="text-[10px] font-black text-school-green-600 hover:text-school-green-700 uppercase tracking-widest transition-transform active:scale-95"
                   >
                     {showPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-school-green-600 transition-colors">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-school-green-600 group-focus-within:scale-110 transition-all duration-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                   </div>
                   <input
@@ -108,7 +113,7 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-school-green-500 focus:outline-none transition-all font-medium text-gray-900"
+                    className="w-full pl-11 pr-4 py-4 bg-gray-50/80 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-school-green-600 focus:ring-4 focus:ring-school-green-600/10 focus:outline-none transition-all duration-300 font-semibold text-gray-900 shadow-inner"
                   />
                 </div>
               </div>
@@ -117,12 +122,15 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
                 <PortalButton
                   type="submit"
                   disabled={isLoading}
-                  className="w-full justify-center py-5 rounded-2xl bg-gradient-to-r from-school-green-600 to-school-green-700 hover:from-school-green-700 hover:to-school-green-800 text-white font-black uppercase tracking-widest shadow-xl shadow-school-green-200 ring-2 ring-white/20 transition-all hover:-translate-y-1 active:scale-95"
+                  className="w-full justify-center py-5 rounded-2xl bg-gradient-to-r from-school-green-600 via-school-green-700 to-emerald-800 hover:from-school-green-700 hover:to-emerald-900 text-white font-black uppercase tracking-widest shadow-xl shadow-school-green-600/25 ring-2 ring-white/20 transition-all duration-300 hover:-translate-y-1 active:scale-95 relative overflow-hidden group"
                 >
                   {isLoading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   ) : (
-                    'Grant Access'
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      Grant Access
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </span>
                   )}
                 </PortalButton>
               </div>
