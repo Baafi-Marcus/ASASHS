@@ -7,7 +7,7 @@ import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
 import { LandingNavbar } from './components/LandingNavbar';
 import { UnifiedLogin } from './pages/UnifiedLogin';
 import { PortalLayout } from './components/PortalLayout';
-
+import { Capacitor } from '@capacitor/core';
 
 // Shared Components
 import { AuthContext } from '../AuthContext';
@@ -271,17 +271,59 @@ function ComprehensivePortalApp() {
         { id: 'elearning', label: 'E-Learning', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg> }
       ];
 
-      const studentProp = {
-        fullName: user.full_name,
-        studentId: user.student_id,
-        id: (user.student_db_id || user.id).toString(),
-        course: (user as any).course || 'General Arts',
-        className: (user as any).class_name || '',
-        current_class_id: (user as any).current_class_id || 1,
-        registration_status: (user as any).registration_status || 'complete'
-      };
+      if (!Capacitor.isNativePlatform()) {
+        content = (
+          <div className="flex items-center justify-center min-h-[75vh] p-4 md:p-6">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border-2 border-school-green-500 p-8 md:p-12 max-w-xl text-center space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-school-green-600 via-yellow-400 to-school-green-800" />
+              <div className="w-20 h-20 bg-school-green-50 rounded-3xl flex items-center justify-center mx-auto ring-4 ring-school-green-200 shadow-inner">
+                <span className="text-4xl">📱</span>
+              </div>
+              <div className="space-y-2">
+                <span className="px-3 py-1 bg-red-100 text-red-800 text-[11px] font-black tracking-widest uppercase rounded-full border border-red-200">
+                  SECURITY POLICY ENFORCED
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
+                  Official APK Required for Student Portal
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm md:text-base leading-relaxed font-medium">
+                For examination integrity, secure PIN check-ins, and offline assessment vault synchronization, <strong>Student Accounts</strong> can only be accessed via the official <strong>ASASHS Student Portal Android APK</strong>.
+              </p>
+              <div className="bg-school-cream-50 rounded-2xl p-4.5 border border-school-cream-200 text-left text-xs md:text-sm text-gray-700 space-y-2.5">
+                <p className="font-bold flex items-center gap-2 text-school-green-800 text-sm">
+                  <span>💡</span> How to access your student account:
+                </p>
+                <ul className="list-disc pl-5 space-y-1.5 leading-snug">
+                  <li>Install the official <strong>ASASHS Student Portal APK</strong> on your school or personal Android tablet.</li>
+                  <li>Launch the app on your tablet and sign in using your admission ID.</li>
+                  <li>If you need assistance or the installation file, please visit the School ICT Lab.</li>
+                </ul>
+              </div>
+              <div className="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={signOut}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-2xl transition shadow-lg text-sm"
+                >
+                  Sign Out & Return Home
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      } else {
+        const studentProp = {
+          fullName: user.full_name,
+          studentId: user.student_id,
+          id: (user.student_db_id || user.id).toString(),
+          course: (user as any).course || 'General Arts',
+          className: (user as any).class_name || '',
+          current_class_id: (user as any).current_class_id || 1,
+          registration_status: (user as any).registration_status || 'complete'
+        };
 
-      content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+        content = <StudentDashboard student={studentProp as any} onLogout={signOut} activeTab={activeTab} setActiveTab={setActiveTab} />;
+      }
     }
 
     return (

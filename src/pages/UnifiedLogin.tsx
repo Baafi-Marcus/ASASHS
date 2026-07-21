@@ -129,7 +129,18 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
             </form>
 
 
-            <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
+              <div className="bg-school-green-50 rounded-xl p-3.5 border border-school-green-200 text-left flex items-start gap-3">
+                <span className="text-lg mt-0.5">📱</span>
+                <div>
+                  <p className="text-xs font-bold text-school-green-900 leading-snug">
+                    Student APK Policy Enforced
+                  </p>
+                  <p className="text-[11px] text-gray-600 leading-tight mt-1">
+                    For examination security and offline synchronization, <strong>Students</strong> must access the portal via the official <strong>ASASHS Android APK</strong>. Web browser access is restricted to Teachers and Administrators.
+                  </p>
+                </div>
+              </div>
               <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                 Security Policy: Official School Access Only
               </p>
