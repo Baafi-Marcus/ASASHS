@@ -45,7 +45,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard';
 
 function ComprehensivePortalApp() {
   const { user, signIn, signOut, loading } = useContext(AuthContext);
-  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showLandingPage, setShowLandingPage] = useState(!Capacitor.isNativePlatform());
   const [showNewsPage, setShowNewsPage] = useState(false);
   const [showStaffPage, setShowStaffPage] = useState(false);
   const [showCalendarPage, setShowCalendarPage] = useState(false);
@@ -119,6 +119,13 @@ function ComprehensivePortalApp() {
   };
 
   const handleBackToLanding = () => {
+    if (Capacitor.isNativePlatform()) {
+      setShowLandingPage(false);
+      setShowNewsPage(false);
+      setShowStaffPage(false);
+      setShowCalendarPage(false);
+      return;
+    }
     setShowLandingPage(true);
     setShowNewsPage(false);
     setShowStaffPage(false);
@@ -376,7 +383,7 @@ function ComprehensivePortalApp() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {(showLandingPage || showNewsPage || showStaffPage || showCalendarPage) && (
+      {(!Capacitor.isNativePlatform() && (showLandingPage || showNewsPage || showStaffPage || showCalendarPage)) && (
         <LandingNavbar 
           onLoginClick={goToLogin} 
           onVoteClick={hasActiveElection ? goToLogin : undefined} 
@@ -397,7 +404,7 @@ function ComprehensivePortalApp() {
         ) : showLandingPage ? (
           <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
         ) : (
-          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={handleBackToLanding} />
+          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={Capacitor.isNativePlatform() ? undefined : handleBackToLanding} />
         )}
       </div>
 
