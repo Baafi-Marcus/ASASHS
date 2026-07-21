@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. Rich ASASHS Emerald/Forest Green Background Gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#062419"
+                android:centerColor="#0F3E2F"
+                android:endColor="#0A2E22"/>
+        </shape>
+    </item>
+
+    <!-- 2. Golden Accent Bar across top edge -->
+    <item android:top="0dp" android:height="6dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="0"
+                android:startColor="#D97706"
+                android:centerColor="#FBBF24"
+                android:endColor="#D97706"/>
+        </shape>
+    </item>
+
+    <!-- 3. Perfectly centered ASASHS School Crest (never stretched or distorted) -->
+    <item android:gravity="center">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/asashs_logo" />
+    </item>
+</layer-list>
