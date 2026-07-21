@@ -1,11 +1,14 @@
 import React from 'react';
 import ComprehensivePortalApp from './ComprehensivePortalApp';
 import AuthProvider from '../AuthContext';
+import { NativeSecurityProvider } from './components/NativeSecurityProvider';
 
 function App() {
   return (
     <AuthProvider>
-      <ComprehensivePortalApp />
+      <NativeSecurityProvider>
+        <ComprehensivePortalApp />
+      </NativeSecurityProvider>
     </AuthProvider>
   );
 }

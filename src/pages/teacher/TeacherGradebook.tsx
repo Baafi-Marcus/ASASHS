@@ -54,11 +54,22 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
   const [loading, setLoading] = useState(false);
   const [editingResult, setEditingResult] = useState<StudentResult | null>(null);
   const [teacherName, setTeacherName] = useState('');
+  const [gradingWeights, setGradingWeights] = useState({ classScore: 30, examScore: 70 });
 
   useEffect(() => {
     console.log('useEffect triggered in TeacherGradebook');
     fetchTeacherSubjects();
+    fetchGradingWeights();
   }, []);
+
+  const fetchGradingWeights = async () => {
+    try {
+      const weights = await db.getGradingWeights();
+      setGradingWeights(weights);
+    } catch (error) {
+      console.error('Failed to fetch grading weights:', error);
+    }
+  };
 
   useEffect(() => {
     if (selectedClass && selectedSubject) {
@@ -146,8 +157,8 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
         'Student ID': result.student_id,
         'Surname': result.surname,
         'Other Names': result.other_names,
-        'Class Score (30%)': '',
-        'Exam Score (70%)': ''
+        [`Class Score (${gradingWeights.classScore}%)`]: '',
+        [`Exam Score (${gradingWeights.examScore}%)`]: ''
       }));
     } else {
       // Create empty template if no student data
@@ -156,8 +167,8 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
           'Student ID': '',
           'Surname': '',
           'Other Names': '',
-          'Class Score (30%)': '',
-          'Exam Score (70%)': ''
+          [`Class Score (${gradingWeights.classScore}%)`]: '',
+          [`Exam Score (${gradingWeights.examScore}%)`]: ''
         }
       ];
     }
@@ -181,8 +192,8 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
     const worksheetData = classResults.map(result => ({
       'Student ID': result.student_id,
       'Student Name': `${result.surname}, ${result.other_names}`,
-      'Class Score (30%)': result.class_score,
-      'Exam Score (70%)': result.exam_score,
+      [`Class Score (${gradingWeights.classScore}%)`]: result.class_score,
+      [`Exam Score (${gradingWeights.examScore}%)`]: result.exam_score,
       'Total Score (100%)': result.total_score,
       'Grade': result.grade,
       'Remarks': result.remarks,
@@ -224,7 +235,9 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
         
         // Validate required columns
         const firstRow = jsonData[0];
-        const requiredColumns = ['Student ID', 'Surname', 'Other Names', 'Class Score (30%)', 'Exam Score (70%)'];
+        const classScoreCol = `Class Score (${gradingWeights.classScore}%)`;
+        const examScoreCol = `Exam Score (${gradingWeights.examScore}%)`;
+        const requiredColumns = ['Student ID', 'Surname', 'Other Names', classScoreCol, examScoreCol];
         const missingColumns = requiredColumns.filter(col => !(col in firstRow));
         
         if (missingColumns.length > 0) {
@@ -236,17 +249,17 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
         const processedResults: any[] = [];
         
         for (const row of jsonData) {
-          const classScore = parseFloat(row['Class Score (30%)']) || 0;
-          const examScore = parseFloat(row['Exam Score (70%)']) || 0;
+          const classScore = parseFloat(row[classScoreCol]) || 0;
+          const examScore = parseFloat(row[examScoreCol]) || 0;
           
           // Validate scores
-          if (classScore < 0 || classScore > 30) {
-            toast.error(`Invalid class score for student ${row['Student ID']}. Must be between 0 and 30.`);
+          if (classScore < 0 || classScore > gradingWeights.classScore) {
+            toast.error(`Invalid class score for student ${row['Student ID']}. Must be between 0 and ${gradingWeights.classScore}.`);
             continue;
           }
           
-          if (examScore < 0 || examScore > 70) {
-            toast.error(`Invalid exam score for student ${row['Student ID']}. Must be between 0 and 70.`);
+          if (examScore < 0 || examScore > gradingWeights.examScore) {
+            toast.error(`Invalid exam score for student ${row['Student ID']}. Must be between 0 and ${gradingWeights.examScore}.`);
             continue;
           }
           
@@ -360,7 +373,7 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Gradebook</h2>
-          <p className="text-gray-600">Record and manage student results (Class: 30%, Exam: 70%)</p>
+          <p className="text-gray-600">Record and manage student results (Class: {gradingWeights.classScore}%, Exam: {gradingWeights.examScore}%)</p>
         </div>
         <div className="flex space-x-2">
           <button
@@ -556,7 +569,7 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
         <div className="bg-school-green-600 text-white p-6">
           <h3 className="text-xl font-bold">Class Results</h3>
           <p className="text-school-green-100">
-            {classResults.length} students | Classwork: 30% | Exams: 70%
+            {classResults.length} students | Classwork: {gradingWeights.classScore}% | Exams: {gradingWeights.examScore}%
           </p>
         </div>
         
@@ -566,8 +579,8 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class Score (30%)</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Exam Score (70%)</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class Score ({gradingWeights.classScore}%)</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Exam Score ({gradingWeights.examScore}%)</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Total Score</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Grade</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Remarks</th>
@@ -592,9 +605,9 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                         value={result.class_score || ''}
                         onChange={(e) => {
                           const newClassScore = parseFloat(e.target.value) || 0;
-                          // Validate class score range (0-30)
-                          if (newClassScore < 0 || newClassScore > 30) {
-                            toast.error('Class score must be between 0 and 30');
+                          // Validate class score range
+                          if (newClassScore < 0 || newClassScore > gradingWeights.classScore) {
+                            toast.error(`Class score must be between 0 and ${gradingWeights.classScore}`);
                             return;
                           }
                           
@@ -617,7 +630,7 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                         }}
                         className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
                         min="0"
-                        max="30"
+                        max={gradingWeights.classScore}
                         step="0.1"
                       />
                     </td>
@@ -627,9 +640,9 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                         value={result.exam_score || ''}
                         onChange={(e) => {
                           const newExamScore = parseFloat(e.target.value) || 0;
-                          // Validate exam score range (0-70)
-                          if (newExamScore < 0 || newExamScore > 70) {
-                            toast.error('Exam score must be between 0 and 70');
+                          // Validate exam score range
+                          if (newExamScore < 0 || newExamScore > gradingWeights.examScore) {
+                            toast.error(`Exam score must be between 0 and ${gradingWeights.examScore}`);
                             return;
                           }
                           
@@ -652,7 +665,7 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                         }}
                         className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
                         min="0"
-                        max="70"
+                        max={gradingWeights.examScore}
                         step="0.1"
                       />
                     </td>

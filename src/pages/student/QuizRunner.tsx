@@ -5,17 +5,21 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { parseDate } from '../../lib/dates';
 import { MathText } from '../../components/MathText';
+import { useNativeSecurity } from '../../components/NativeSecurityProvider';
+import { localDb } from '../../services/localDb';
+import { ScientificCalculator, PeriodicTable } from '../../components/assessments/ResourceLibraries';
 
 interface QuizRunnerProps {
   studentId: number;
   quizId: number;
   onClose: () => void;
   standalone?: boolean;
+  offlineAssessment?: any;
 }
 
 type QuizPhase = 'cover' | 'in-progress' | 'review' | 'finished';
 
-export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunnerProps) {
+export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAssessment }: QuizRunnerProps) {
   const [quiz, setQuiz] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<QuizPhase>('cover');
@@ -29,28 +33,36 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const [blocked, setBlocked] = useState<string | null>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showAnswerReview, setShowAnswerReview] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showPeriodicTable, setShowPeriodicTable] = useState(false);
+  const [pinnedDiagram, setPinnedDiagram] = useState<string | null>(null);
+  const [passageReaderMode, setPassageReaderMode] = useState(false);
   const submitQuizRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     fetchQuiz();
   }, [quizId]);
 
-  // Cheating Detection: Tab Switch
+  const { startLockdown, stopLockdown, violationsCount } = useNativeSecurity();
+
+  // Cheating Detection: Tab Switch & Native Lockdown
   useEffect(() => {
     if (phase === 'in-progress' && attemptId) {
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'hidden') {
-          setTabSwitches(prev => {
-            const newVal = prev + 1;
-            toast.error(`WARNING: Tab switch detected! (${newVal}) Stay on this page.`, { duration: 5000 });
-            return newVal;
-          });
-        }
+      startLockdown(() => {
+        toast.error('Auto-submitting due to maximum security violations!');
+        submitQuizRef.current();
+      });
+      return () => {
+        stopLockdown();
       };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    } else {
+      stopLockdown();
     }
   }, [phase, attemptId]);
+
+  useEffect(() => {
+    setTabSwitches(violationsCount);
+  }, [violationsCount]);
 
   // Timer logic – uses ref to avoid stale closure on submitQuiz
   useEffect(() => {
@@ -104,8 +116,27 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const fetchQuiz = async () => {
     setLoading(true);
     try {
-      const quizData = await db.getQuizById(quizId);
+      let quizData: any = null;
+      let isOffline = false;
+
+      if (offlineAssessment) {
+        quizData = offlineAssessment;
+        isOffline = true;
+      } else if (!navigator.onLine) {
+        quizData = await localDb.getOfflineAssessmentById(studentId, quizId);
+        if (quizData) isOffline = true;
+      } else {
+        try {
+          quizData = await db.getQuizById(quizId);
+        } catch (e) {
+          quizData = await localDb.getOfflineAssessmentById(studentId, quizId);
+          if (quizData) isOffline = true;
+          else throw e;
+        }
+      }
+
       if (!quizData) throw new Error('Quiz not found');
+      if (isOffline) quizData._isOfflineVault = true;
 
       // Check fixed schedule if due_date is set
       if (quizData.due_date) {
@@ -203,6 +234,14 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
         await document.documentElement.requestFullscreen().catch(() => {});
       }
 
+      if (quiz?._isOfflineVault === true) {
+        const localAttemptId = 'offline_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        setAttemptId(localAttemptId as any);
+        setPhase('in-progress');
+        toast.success('Offline assessment started! Stay inside the app.');
+        return;
+      }
+
       const newAttemptId = await db.startQuizAttempt(studentId, quizId);
       setAttemptId(newAttemptId);
       setPhase('in-progress');
@@ -256,6 +295,33 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
           is_correct: isCorrect,
           points_earned: pointsEarned
         });
+      }
+
+      if (quiz._isOfflineVault === true || (typeof attemptId === 'string' && String(attemptId).startsWith('offline_'))) {
+        const totalPoints = parseFloat(quiz.total_points) || responses.length;
+        const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;
+
+        await localDb.saveOfflineAttempt({
+          local_attempt_id: String(attemptId),
+          assessment_id: quiz.id,
+          student_id: studentId,
+          responses,
+          score: totalScore,
+          percentage,
+          tab_switches: tabSwitches,
+          status: 'pending_sync',
+          completed_at: new Date().toISOString()
+        });
+
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+
+        setResult({ score: totalScore, percentage, totalPoints });
+        setPhase('finished');
+        toast.success('Offline assessment completed and saved locally! Please sync when online.');
+        setIsSubmitting(false);
+        return;
       }
 
       // Submit responses sequentially to avoid Neon HTTP connection pool limits
@@ -493,6 +559,21 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
               <p className="text-gray-500">Your answers have been recorded. Results will be available once released by your teacher.</p>
             </div>
           )}
+
+          {/* Digital Attendance Verification Card */}
+          <div className="bg-gray-900 text-white p-5 rounded-2xl border border-gray-800 space-y-2 text-left shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-school-green-400">Digital Attendance PIN Code</span>
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            </div>
+            <div className="text-2xl font-black font-mono tracking-widest text-white py-1.5 border-y border-gray-800 text-center bg-black/40 rounded-xl">
+              {`#ASASHS-${((studentId * 137 + (quiz?.id || 1) * 89) % 9000) + 1000}-OK`}
+            </div>
+            <p className="text-[11px] text-amber-300 leading-relaxed font-medium">
+              📦 <strong>Physical Booklet Handover Required:</strong> Present this Attendance PIN and your Student ID (<strong>#{studentId}</strong>) to your invigilator right now for hall verification.
+            </p>
+          </div>
+
           <div className="flex flex-col gap-3">
             <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
             {canReview && (
@@ -593,6 +674,18 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
   const renderQuestion = (q: any, idx: number) => (
     <PortalCard key={q.id} className="overflow-hidden border-none shadow-xl bg-white flex flex-col mb-6">
       <div className="p-8 space-y-8 flex-1">
+        {(quiz.exam_format === 'theory' || q.question_type === 'theory' || quiz.theory_only === true) && (
+          <div className="p-4 bg-purple-900 text-purple-100 rounded-2xl border border-purple-700 flex items-start gap-4 shadow-md">
+            <div className="text-3xl">✍️</div>
+            <div>
+              <h4 className="font-black text-white text-base tracking-wide uppercase">Theory on Paper — Secure Digital Proctor Mode</h4>
+              <p className="text-xs text-purple-200 mt-1 leading-relaxed">
+                Read your Twi, Ga, Science, or General questions below carefully. Write all your solutions, steps, and diagrams clearly on the physical answer booklet provided by your invigilator. When finished, submit this digital session to record your completion timestamp.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -601,16 +694,35 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
             </div>
             <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} MARKS</span>
           </div>
-          <MathText text={q.question_text} className="text-2xl font-bold text-gray-900 leading-tight" />
-          {q.imageDataUrl && (
-            <div className="mt-4">
-              <img
-                src={q.imageDataUrl}
-                alt="Question diagram"
-                className="w-full max-w-lg rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => window.open(q.imageDataUrl, '_blank')}
-              />
-              <p className="text-xs text-gray-400 mt-1">Click to expand</p>
+
+          {passageReaderMode ? (
+            <div className="bg-amber-50/70 p-6 rounded-2xl border border-amber-200 shadow-inner">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2 flex items-center gap-1">
+                <span>📖 High-Contrast Passage & UTF-8 Reader Mode (Twi / Ga / Ewe / Literature)</span>
+              </div>
+              <MathText text={q.question_text} className="text-2xl font-serif text-gray-950 leading-loose tracking-wide" />
+            </div>
+          ) : (
+            <MathText text={q.question_text} className="text-2xl font-bold text-gray-900 leading-tight" />
+          )}
+
+          {(q.imageDataUrl || q.diagram_url) && (
+            <div className="mt-4 p-4 rounded-2xl bg-gray-50 border flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <img
+                  src={q.imageDataUrl || q.diagram_url}
+                  alt="Question diagram"
+                  className="max-h-48 rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => window.open(q.imageDataUrl || q.diagram_url, '_blank')}
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Click image to expand</p>
+              </div>
+              <button
+                onClick={() => setPinnedDiagram(pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? null : (q.imageDataUrl || q.diagram_url))}
+                className="bg-school-green-100 hover:bg-school-green-200 text-school-green-800 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0"
+              >
+                <span>📌 {pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? 'Unpin Diagram' : 'Pin Diagram to Split-View'}</span>
+              </button>
             </div>
           )}
           {q.diagramDescription && (
@@ -676,6 +788,19 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
           </div>
         )}
 
+        {/* Resource Libraries & Reader Mode Buttons */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setShowCalculator(!showCalculator); setShowPeriodicTable(false); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${showCalculator ? 'bg-amber-500 text-gray-900 shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <span>🖩 Calculator</span>
+          </button>
+          <button onClick={() => { setShowPeriodicTable(!showPeriodicTable); setShowCalculator(false); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${showPeriodicTable ? 'bg-cyan-500 text-gray-900 shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <span>🧪 Periodic Table</span>
+          </button>
+          <button onClick={() => setPassageReaderMode(!passageReaderMode)} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${passageReaderMode ? 'bg-purple-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <span>📖 Reader Mode</span>
+          </button>
+        </div>
+
         <div className={`px-5 py-2 rounded-2xl font-mono text-2xl font-black flex items-center shadow-inner ${timeLeft < 60 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-900 text-school-green-400'}`}>
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -691,6 +816,19 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
             className="bg-school-green-600 h-1 transition-all duration-500"
             style={{ width: `${((currentQuestionIdx + 1) / quiz.questions.length) * 100}%` }}
           ></div>
+        </div>
+      )}
+
+      {/* Pinned Diagram Split-View Banner */}
+      {pinnedDiagram && (
+        <div className="bg-gray-900 text-white p-3 px-6 flex items-center justify-between border-b border-gray-800 shadow-md">
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">📌 Pinned Split-View Diagram</span>
+            <img src={pinnedDiagram} alt="Pinned" className="h-14 rounded border border-gray-700 bg-white cursor-pointer" onClick={() => window.open(pinnedDiagram, '_blank')} />
+          </div>
+          <button onClick={() => setPinnedDiagram(null)} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg font-bold">
+            Unpin Diagram
+          </button>
         </div>
       )}
 
@@ -742,6 +880,18 @@ export function QuizRunner({ studentId, quizId, onClose, standalone }: QuizRunne
           </PortalButton>
         )}
       </div>
+
+      {showCalculator && (
+        <div className="fixed bottom-20 right-6 z-50">
+          <ScientificCalculator onClose={() => setShowCalculator(false)} />
+        </div>
+      )}
+
+      {showPeriodicTable && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-6">
+          <PeriodicTable onClose={() => setShowPeriodicTable(false)} />
+        </div>
+      )}
     </div>
   );
 }

@@ -2238,6 +2238,42 @@ export const db = {
     }
   },
 
+  // --- GRADING SETTINGS ---
+  async getGradingWeights() {
+    try {
+      const results = await sql`
+        SELECT setting_key, setting_value FROM school_settings
+        WHERE setting_key IN ('class_score_weight', 'exam_score_weight')
+      `;
+      const weights = { classScore: 30, examScore: 70 }; // defaults
+      results.forEach((row: any) => {
+        if (row.setting_key === 'class_score_weight') weights.classScore = parseInt(row.setting_value) || 30;
+        if (row.setting_key === 'exam_score_weight') weights.examScore = parseInt(row.setting_value) || 70;
+      });
+      return weights;
+    } catch (error) {
+      console.error('Error fetching grading weights:', error);
+      return { classScore: 30, examScore: 70 };
+    }
+  },
+
+  async setGradingWeights(classScore: number, examScore: number) {
+    try {
+      await sql`
+        INSERT INTO school_settings (setting_key, setting_value) VALUES ('class_score_weight', ${classScore})
+        ON CONFLICT (setting_key) DO UPDATE SET setting_value = ${classScore}
+      `;
+      await sql`
+        INSERT INTO school_settings (setting_key, setting_value) VALUES ('exam_score_weight', ${examScore})
+        ON CONFLICT (setting_key) DO UPDATE SET setting_value = ${examScore}
+      `;
+      return true;
+    } catch (error) {
+      console.error('Error setting grading weights:', error);
+      throw error;
+    }
+  },
+
   // --- VOTING SYSTEM MODULE ---
 
   async createElection(data: { name: string; description?: string; start_time: string; end_time: string }) {
@@ -2622,7 +2658,7 @@ export const db = {
         teacher_id, class_id, subject_id, title, description, instructions, time_limit,
         passing_score, total_points, shuffle_questions, shuffle_options, show_results_immediately,
         allow_answer_review, display_mode, allow_late_grading, due_date, duration_minutes,
-        max_attempts
+        max_attempts, creator_role, assessment_category, assessment_format, sync_to_gradebook, allow_offline
       )
       VALUES (
         ${data.teacher_id}, ${data.class_id}, ${data.subject_id}, ${data.title}, ${data.description},
@@ -2632,7 +2668,8 @@ export const db = {
         ${data.allow_answer_review || false},
         ${data.display_mode || 'all_at_once'}, ${data.allow_late_grading || false},
         ${data.due_date || null}, ${effectiveDuration},
-        ${data.max_attempts ?? 1}
+        ${data.max_attempts ?? 1}, ${data.creator_role || 'teacher'}, ${data.assessment_category || 'quiz'},
+        ${data.assessment_format || 'objective_only'}, ${data.sync_to_gradebook ?? false}, ${data.allow_offline ?? true}
       )
       RETURNING id
     `;
@@ -3005,6 +3042,12 @@ export const db = {
     allow_late_grading?: boolean;
     display_mode?: string;
     max_attempts?: number;
+    allow_offline?: boolean;
+    ca_pdf_url?: string;
+    ca_weight_obj?: number;
+    ca_weight_theory?: number;
+    ca_instructions?: string;
+    ca_columns_json?: string;
   }, classIds: number[]) {
     checkDatabaseConfig();
     
@@ -3020,7 +3063,8 @@ export const db = {
         INSERT INTO elearning_quizzes (
           title, description, instructions, subject_id, shuffle_questions, shuffle_options,
           show_results_immediately, allow_answer_review, allow_late_grading, display_mode, time_limit,
-          due_date, duration_minutes, total_points, max_attempts
+          due_date, duration_minutes, total_points, max_attempts, creator_role, assessment_category,
+          assessment_format, sync_to_gradebook, allow_offline
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.instructions || null},
           ${examData.subject_id},
@@ -3030,7 +3074,9 @@ export const db = {
           ${examData.display_mode || 'all_at_once'}, ${examData.duration_minutes || 60},
           ${examData.due_date}, ${examData.duration_minutes || 60},
           ${totalPoints},
-          ${examData.max_attempts ?? 1}
+          ${examData.max_attempts ?? 1},
+          'admin', 'exam', ${examData.has_theory && examData.has_obj ? 'hybrid' : (examData.has_theory ? 'theory_only' : 'objective_only')},
+          true, ${examData.allow_offline ?? true}
         )
         RETURNING id
       `;
@@ -3088,12 +3134,13 @@ export const db = {
       const typeResult = await sql`SELECT id FROM assignment_types WHERE name ILIKE '%Exam%' LIMIT 1`;
       const assignmentTypeId = typeResult.length > 0 ? typeResult[0].id : 1;
 
-      const result = await sql`
+      const insertAssignment = () => sql`
         INSERT INTO assignments (
           title, description, exam_type, is_general_exam, subject_id, class_id, 
           due_date, duration_minutes, max_score, assignment_type_id, is_active,
           has_obj, has_theory, theory_content_url, obj_answer_key, quiz_id,
-          shuffle_questions, shuffle_options, show_results_immediately, allow_late_grading, display_mode
+          shuffle_questions, shuffle_options, show_results_immediately, allow_late_grading, display_mode,
+          ca_pdf_url, ca_weight_obj, ca_weight_theory, ca_instructions
         ) VALUES (
           ${examData.title}, ${examData.description || null}, ${examData.exam_type}, true,
           ${examData.subject_id}, ${classId}, ${examData.due_date}, ${examData.duration_minutes || 60}, ${examData.max_score}, 
@@ -3102,10 +3149,35 @@ export const db = {
           ${examData.obj_answer_key || null}, ${quizId},
           ${examData.shuffle_questions || false}, ${examData.shuffle_options || false},
           ${examData.show_results_immediately !== false}, ${examData.allow_late_grading || false},
-          ${examData.display_mode || 'all_at_once'}
+          ${examData.display_mode || 'all_at_once'},
+          ${examData.ca_pdf_url || null}, ${examData.ca_weight_obj ?? 40}, ${examData.ca_weight_theory ?? 60}, ${examData.ca_instructions || null}
         )
         RETURNING *
       `;
+
+      let result;
+      try {
+        result = await insertAssignment();
+      } catch (e: any) {
+        const msg = String(e?.message || '');
+        const colMatch = msg.match(/column "([^"]+)" of relation "([^"]+)" does not exist/);
+        if (colMatch) {
+          const [, colName, relName] = colMatch;
+          const typeMap: Record<string, string> = {
+            ca_pdf_url: 'TEXT',
+            ca_weight_obj: 'NUMERIC DEFAULT 40',
+            ca_weight_theory: 'NUMERIC DEFAULT 60',
+            ca_instructions: 'TEXT'
+          };
+          const colType = typeMap[colName] || 'TEXT';
+          try {
+            await sql`ALTER TABLE ${sql.unsafe(relName)} ADD COLUMN IF NOT EXISTS ${sql.unsafe(colName)} ${sql.unsafe(colType)}`;
+          } catch {}
+          result = await insertAssignment();
+        } else {
+          throw e;
+        }
+      }
       results.push(result[0]);
     }
     return results;

@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { getStatusLabel, getStatusColor } from '../../lib/dates';
+import { TeacherInvigilatorDashboard } from '../../components/teacher/TeacherInvigilatorDashboard';
+import { OfficialCAScoreSheetModal } from '../../components/teacher/OfficialCAScoreSheetModal';
 
 export function TeacherExams({ teacherId }: { teacherId: number }) {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedExam, setSelectedExam] = useState<any>(null);
+  const [radarExam, setRadarExam] = useState<any>(null);
+  const [showCaSheetModal, setShowCaSheetModal] = useState(false);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [saving, setSaving] = useState<Record<number, boolean>>({});
@@ -68,6 +72,33 @@ export function TeacherExams({ teacherId }: { teacherId: number }) {
     }
   };
 
+  const handleExportCSV = () => {
+    if (submissions.length === 0) {
+      toast.error('No submissions to export');
+      return;
+    }
+    const headers = ['Student ID', 'Surname', 'Other Names', 'OBJ Score', 'Theory Score', 'Total Exam Score'];
+    const rows = submissions.map(sub => [
+      sub.student_admission_number || sub.student_id,
+      `"${sub.surname}"`,
+      `"${sub.other_names}"`,
+      sub.obj_score !== null ? sub.obj_score : '',
+      sub.theory_score !== null ? sub.theory_score : '',
+      sub.score !== null ? sub.score : ''
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedExam.title.replace(/\s+/g, '_')}_Results.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (selectedExam) {
     return (
       <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -75,11 +106,71 @@ export function TeacherExams({ teacherId }: { teacherId: number }) {
           <button onClick={() => setSelectedExam(null)} className="mr-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
             <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold">{selectedExam.title} - Theory Grading</h2>
             <p className="text-gray-500">{selectedExam.class_name} • {selectedExam.subject_name}</p>
           </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setRadarExam(selectedExam)}
+              className="flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black font-bold text-sm shadow"
+            >
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse mr-2"></span>
+              📡 Live Radar
+            </button>
+            <button
+              onClick={() => setShowCaSheetModal(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm shadow transition"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              📄 Official CA Sheet (with OBJ)
+            </button>
+            <button 
+              onClick={handleExportCSV}
+              className="flex items-center px-4 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700 font-bold text-sm"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export CSV
+            </button>
+          </div>
         </div>
+
+        {/* Admin Continuous Assessment (CA) Policy & Template Banner */}
+        {(selectedExam.ca_pdf_url || selectedExam.ca_instructions || selectedExam.ca_weight_obj) && (
+          <div className="mb-6 p-4 bg-blue-50/90 border border-blue-200 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-sm">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase text-blue-900 flex items-center gap-1.5">
+                  <span>🏛️</span> Admin Continuous Assessment Policy
+                </span>
+                <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-bold">OBJ Weight: {selectedExam.ca_weight_obj || 40}%</span>
+                <span className="px-2 py-0.5 bg-purple-600 text-white rounded text-[10px] font-bold">Theory Weight: {selectedExam.ca_weight_theory || 60}%</span>
+              </div>
+              <p className="text-xs text-blue-800 font-medium">
+                {selectedExam.ca_instructions || "Download the official CA score sheet below with auto-graded OBJ results to write and enter your manual Theory marks."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {selectedExam.ca_pdf_url && (
+                <a
+                  href={selectedExam.ca_pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 bg-white text-blue-700 border border-blue-300 rounded-xl text-xs font-bold hover:bg-blue-100 transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <span>View Admin CA Template PDF</span>
+                </a>
+              )}
+              <button
+                onClick={() => setShowCaSheetModal(true)}
+                className="px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-black hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5"
+              >
+                <span>📄 Generate CA Score Sheet</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {submissionsLoading ? (
           <div className="flex justify-center py-10">
@@ -167,12 +258,34 @@ export function TeacherExams({ teacherId }: { teacherId: number }) {
                   {exam.has_obj && <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">OBJ</span>}
                   {exam.has_theory && <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">Theory</span>}
                 </div>
+                <div className="pt-3 border-t flex justify-between items-center mt-3">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRadarExam(exam); }}
+                    className="w-full px-3 py-2 bg-gray-900 hover:bg-black text-white text-xs font-black rounded-xl flex items-center justify-center gap-2 transition shadow"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                    <span>📡 Live Invigilator Radar</span>
+                  </button>
+                </div>
               </div>
             ))}
             {exams.length === 0 && <p className="text-gray-500 col-span-3">No general exams found for your classes.</p>}
           </div>
         )}
       </div>
+
+      <TeacherInvigilatorDashboard
+        isOpen={!!radarExam}
+        onClose={() => setRadarExam(null)}
+        assessment={radarExam}
+      />
+
+      <OfficialCAScoreSheetModal
+        isOpen={showCaSheetModal}
+        onClose={() => setShowCaSheetModal(false)}
+        exam={selectedExam}
+        submissions={submissions}
+      />
     </div>
   );
 }

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { localDb, OfflineAssessment, OfflineAttempt } from '../../services/localDb';
+import { syncEngine } from '../../services/syncEngine';
+import { QuizRunner } from './QuizRunner';
+import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
 
 interface DownloadItem {
   id: number;
@@ -11,14 +16,35 @@ interface DownloadItem {
   uploader: string;
 }
 
-export const StudentDownloads: React.FC = () => {
+export const StudentDownloads: React.FC<{ studentId?: number }> = ({ studentId = 1 }) => {
+  const [activeTab, setActiveTab] = useState<'vault' | 'materials'>('vault');
   const [downloads, setDownloads] = useState<DownloadItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
+  // Vault State
+  const [offlineAssessments, setOfflineAssessments] = useState<OfflineAssessment[]>([]);
+  const [pendingAttempts, setPendingAttempts] = useState<OfflineAttempt[]>([]);
+  const [selectedOfflineQuiz, setSelectedOfflineQuiz] = useState<OfflineAssessment | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   useEffect(() => {
-    // In a real implementation, this would fetch from the database
-    // For now, we'll use mock data
+    fetchMaterials();
+    fetchVaultData();
+  }, [studentId]);
+
+  const fetchVaultData = async () => {
+    try {
+      const assessments = await localDb.getOfflineAssessments(studentId);
+      const attempts = await localDb.getPendingSyncAttempts();
+      setOfflineAssessments(assessments);
+      setPendingAttempts(attempts);
+    } catch (e) {
+      console.error('Failed to load offline vault:', e);
+    }
+  };
+
+  const fetchMaterials = () => {
     setTimeout(() => {
       setDownloads([
         {
@@ -68,8 +94,28 @@ export const StudentDownloads: React.FC = () => {
         }
       ]);
       setLoading(false);
-    }, 500);
-  }, []);
+    }, 400);
+  };
+
+  const handleSyncPending = async () => {
+    if (!navigator.onLine) {
+      toast.error('You are currently offline. Please connect to the internet to sync results.');
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncEngine.syncPendingAttempts();
+      await fetchVaultData();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleRemoveAssessment = async (id: number) => {
+    await localDb.deleteOfflineAssessment(studentId, id);
+    toast.success('Removed assessment from offline vault.');
+    fetchVaultData();
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -80,144 +126,206 @@ export const StudentDownloads: React.FC = () => {
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'report':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        );
-      case 'circular':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM9 7H4l5-5v5zm6 10V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2z" />
-          </svg>
-        );
-      case 'note':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        );
-    }
-  };
-
   const filteredDownloads = filter === 'all' 
     ? downloads 
     : downloads.filter(item => item.type === filter);
 
-  const handleDownload = (id: number, title: string) => {
-    // In a real implementation, this would download the actual file
-    toast.success(`Downloading ${title}...`);
-  };
+  if (selectedOfflineQuiz) {
+    return (
+      <QuizRunner
+        studentId={studentId}
+        quizId={selectedOfflineQuiz.id}
+        offlineAssessment={selectedOfflineQuiz}
+        standalone={true}
+        onClose={() => {
+          setSelectedOfflineQuiz(null);
+          fetchVaultData();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <h2 className="text-xl font-bold text-gray-900">Downloads</h2>
-          
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'all' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('report')}
-              className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'report' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Reports
-            </button>
-            <button
-              onClick={() => setFilter('circular')}
-              className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'circular' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Circulars
-            </button>
-            <button
-              onClick={() => setFilter('note')}
-              className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'note' 
-                  ? 'bg-purple-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Notes
-            </button>
-          </div>
+      {/* Top Header & Tab Switcher */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Offline APK Vault & Downloads</h2>
+          <p className="text-gray-500 text-sm">Access checked-out assessments offline or download class resources</p>
+        </div>
+
+        <div className="flex bg-gray-100 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab('vault')}
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${
+              activeTab === 'vault'
+                ? 'bg-school-green-600 text-white shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span>📱 APK Offline Vault</span>
+            {pendingAttempts.length > 0 && (
+              <span className="bg-amber-400 text-gray-900 text-[10px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+                {pendingAttempts.length} Sync
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('materials')}
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${
+              activeTab === 'materials'
+                ? 'bg-school-green-600 text-white shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span>📚 Course Materials</span>
+          </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-200 border-t-blue-600"></div>
-          </div>
-        </div>
-      ) : filteredDownloads.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDownloads.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-2 rounded-lg ${getTypeColor(item.type)}`}>
-                  {getTypeIcon(item.type)}
+      {/* VAULT TAB CONTENT */}
+      {activeTab === 'vault' && (
+        <div className="space-y-6">
+          {/* Pending Sync Banner */}
+          {pendingAttempts.length > 0 && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-amber-200 flex items-center justify-center text-amber-800 text-2xl shrink-0">
+                  ⚠️
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getTypeColor(item.type)}`}>
-                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-                </span>
+                <div>
+                  <h4 className="font-bold text-amber-900 text-lg">Pending Offline Results ({pendingAttempts.length})</h4>
+                  <p className="text-amber-700 text-sm">You completed {pendingAttempts.length} assessment(s) offline. Sync now to transmit your scores to the server gradebook.</p>
+                </div>
               </div>
-              
-              <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-600 mb-4">{item.description}</p>
-              
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                <span>{item.fileSize}</span>
-                <span>{item.uploadDate}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">By {item.uploader}</span>
-                <button
-                  onClick={() => handleDownload(item.id, item.title)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center space-x-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  <span>Download</span>
-                </button>
-              </div>
+              <PortalButton
+                onClick={handleSyncPending}
+                disabled={isSyncing}
+                className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap px-6 py-3 shadow-lg"
+              >
+                {isSyncing ? 'Syncing...' : '🔄 Sync Results to Server'}
+              </PortalButton>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-3">📄</div>
-            <p className="text-gray-500 font-medium">No downloads found</p>
-            <p className="text-gray-400 text-sm">Check back later for new downloads</p>
+          )}
+
+          {/* Checked-Out Assessments List */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-900 px-1">Checked-Out Assessments in Local APK Storage</h3>
+            {offlineAssessments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {offlineAssessments.map((assessment) => {
+                  const pendingAttempt = pendingAttempts.find(a => a.assessment_id === assessment.id);
+                  return (
+                    <PortalCard key={assessment.id} className="border-l-4 border-l-school-green-600 shadow-lg bg-white flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="px-2.5 py-1 bg-school-green-100 text-school-green-800 text-xs font-bold rounded-full uppercase tracking-wider">
+                            {assessment.subject_name}
+                          </span>
+                          <span className="text-xs text-gray-400 font-mono">
+                            Checked out: {new Date(assessment.checked_out_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-gray-900">{assessment.title}</h4>
+                        <p className="text-xs text-gray-500 line-clamp-2">{assessment.instructions || 'No special instructions.'}</p>
+                        <div className="flex gap-4 text-xs font-bold text-gray-600 pt-2">
+                          <span>⏱️ {assessment.duration_minutes} Mins</span>
+                          <span>❓ {assessment.questions.length} Questions</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 border-t border-gray-100 flex items-center justify-between gap-3 mt-4">
+                        <button
+                          onClick={() => handleRemoveAssessment(assessment.id)}
+                          className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-2 rounded-xl transition"
+                        >
+                          🗑️ Remove
+                        </button>
+
+                        {pendingAttempt ? (
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-amber-600 bg-amber-100 px-3 py-1.5 rounded-xl">
+                              ⏳ Completed (Pending Sync)
+                            </span>
+                          </div>
+                        ) : (
+                          <PortalButton
+                            onClick={() => setSelectedOfflineQuiz(assessment)}
+                            className="bg-school-green-700 hover:bg-school-green-800 px-6"
+                          >
+                            🚀 Launch Offline
+                          </PortalButton>
+                        )}
+                      </div>
+                    </PortalCard>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-3xl">
+                  📱
+                </div>
+                <h4 className="text-lg font-bold text-gray-900">Your Offline APK Vault is Empty</h4>
+                <p className="text-gray-500 text-sm max-w-md mx-auto">
+                  When connected to the internet, go to **Digital Assessments** or **School Exams** and click **"📥 Check-Out to APK Vault"** to download complete assessments along with all diagrams for offline testing!
+                </p>
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* COURSE MATERIALS TAB CONTENT */}
+      {activeTab === 'materials' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-gray-900">Course Materials & Circulars</h3>
+            <div className="flex space-x-2">
+              {['all', 'report', 'circular', 'note'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold uppercase transition ${
+                    filter === f ? 'bg-school-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {f === 'all' ? 'All' : f + 's'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-school-green-200 border-t-school-green-600"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDownloads.map((item) => (
+                <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                  <div className="flex items-start justify-between mb-4">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getTypeColor(item.type)}`}>
+                      {item.type.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-gray-400">{item.uploadDate}</span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-1">{item.title}</h4>
+                  <p className="text-xs text-gray-500 mb-4 line-clamp-2">{item.description}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50">
+                    <span>{item.fileSize} &bull; {item.uploader}</span>
+                    <button
+                      onClick={() => toast.success(`Downloading ${item.title}...`)}
+                      className="text-school-green-600 font-bold hover:underline flex items-center gap-1"
+                    >
+                      <span>Download</span>
+                      <span>↓</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

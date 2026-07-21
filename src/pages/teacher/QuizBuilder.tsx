@@ -6,6 +6,7 @@ import { PortalButton } from '../../components/PortalButton';
 import { PortalInput } from '../../components/PortalInput';
 import { documentParser } from '../../../lib/documentParser';
 import { aiService, ExtractedQuestion } from '../../lib/aiService';
+import { TeacherQuestionImporter, ImporterQuestion } from '../../components/teacher/TeacherQuestionImporter';
 
 interface QuizBuilderProps {
   teacherId: number;
@@ -34,12 +35,14 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     allow_answer_review: false,
     display_mode: 'all_at_once',
     allow_late_grading: false,
-    max_attempts: 1
+    max_attempts: 1,
+    allow_offline: false
   });
 
   // Questions
   const [questions, setQuestions] = useState<ExtractedQuestion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSmartImporter, setShowSmartImporter] = useState(false);
 
   useEffect(() => {
     fetchTeacherData();
@@ -90,6 +93,23 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
     const newQuestions = [...questions];
     newQuestions[index] = updated;
     setQuestions(newQuestions);
+  };
+
+  const handleImportQuestions = (imported: ImporterQuestion[]) => {
+    const converted: ExtractedQuestion[] = imported.map(q => ({
+      question_text: q.question_text,
+      question_type: q.question_type as any,
+      points: q.points || 1,
+      imageDataUrl: q.imageDataUrl,
+      diagramDescription: q.diagramDescription,
+      options: q.options ? q.options.map((opt, i) => ({
+        id: `opt-${i}-${Date.now()}`,
+        option_text: opt.option_text,
+        is_correct: opt.is_correct
+      })) : undefined,
+      correct_answers: q.correct_answers
+    }));
+    setQuestions(prev => [...prev, ...converted]);
   };
 
   const handleSaveQuiz = async () => {
@@ -232,6 +252,10 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
                 <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
                   <input type="checkbox" checked={quizInfo.allow_answer_review} onChange={e => setQuizInfo({...quizInfo, allow_answer_review: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
                   <span className="text-sm font-medium text-gray-700">Allow students to review their answers</span>
+                </label>
+                <label className="flex items-center space-x-3 bg-gray-50 p-3 rounded-xl border">
+                  <input type="checkbox" checked={quizInfo.allow_offline} onChange={e => setQuizInfo({...quizInfo, allow_offline: e.target.checked})} className="rounded text-school-green-600 w-5 h-5"/>
+                  <span className="text-sm font-medium text-gray-700">Allow Offline APK Access</span>
                 </label>
                 <div className="flex flex-col space-y-1 bg-gray-50 p-3 rounded-xl border">
                   <label className="text-xs font-bold text-gray-500">Display Mode</label>
@@ -380,6 +404,18 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
             </div>
 
             <div className="space-y-6">
+              <PortalCard title="✨ AI Assessment Studio">
+                <p className="text-sm text-gray-600 mb-4">
+                  Smart parse from Word/past papers, insert Ghanaian (`ɔ, ɛ, ŋ`) & STEM symbols, or bulk import CSV spreadsheets.
+                </p>
+                <PortalButton
+                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-black shadow-lg"
+                  onClick={() => setShowSmartImporter(true)}
+                >
+                  ✨ Open Smart Question Studio
+                </PortalButton>
+              </PortalCard>
+
               <PortalCard title="AI Generation">
                 <p className="text-sm text-gray-600 mb-4">
                   Upload lesson notes (PDF, Word, or Text) to automatically generate questions.
@@ -436,6 +472,12 @@ export function QuizBuilder({ teacherId, onClose }: QuizBuilderProps) {
           </div>
         </div>
       )}
+
+      <TeacherQuestionImporter
+        isOpen={showSmartImporter}
+        onClose={() => setShowSmartImporter(false)}
+        onImportQuestions={handleImportQuestions}
+      />
     </div>
   );
 }

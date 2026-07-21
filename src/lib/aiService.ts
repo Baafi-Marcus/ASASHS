@@ -319,6 +319,162 @@ export const aiService = {
     return Array.isArray(rawQuestions) ? rawQuestions.map(mapQuestionFields) : [];
   },
 
+  async analyzeCASheetTemplate(input: { text?: string; image?: Blob }): Promise<{
+    ca_weight_obj: number;
+    ca_weight_theory: number;
+    ca_instructions: string;
+    ca_columns: Array<{ id: string; name: string; weight: number; is_auto_obj: boolean }>;
+  }> {
+    const keys = await db.getAiApiKeys();
+    const activeKeys = keys.filter((k: any) => k.is_active);
+
+    const prompt = this.getCAWeightingPrompt();
+
+    if (activeKeys.length === 0) {
+      return {
+        ca_weight_obj: 40,
+        ca_weight_theory: 60,
+        ca_instructions: 'Standard Continuous Assessment format: 40% Objective section, 60% Theory section.',
+        ca_columns: [
+          { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: 40, is_auto_obj: true },
+          { id: 'col_theory', name: 'Manual Written Theory', weight: 60, is_auto_obj: false }
+        ]
+      };
+    }
+
+    for (const key of activeKeys) {
+      try {
+        if (input.image) {
+          const b64 = await blobToBase64(input.image);
+          if (key.provider === 'gemini') {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.key_value}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  role: "user",
+                  parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: input.image.type || 'application/pdf', data: b64 } }
+                  ]
+                }],
+                generationConfig: { responseMimeType: "application/json" }
+              })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return JSON.parse(data.candidates[0].content.parts[0].text);
+            }
+          } else if (key.provider === 'openai' || key.provider === 'github') {
+            const url = key.provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://models.inference.ai.azure.com/chat/completions';
+            const model = key.provider === 'openai' ? 'gpt-4o-mini' : 'gpt-4o';
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key.key_value}`
+              },
+              body: JSON.stringify({
+                model,
+                response_format: { type: 'json_object' },
+                messages: [{
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: prompt },
+                    { type: 'image_url', image_url: { url: `data:${input.image.type || 'image/jpeg'};base64,${b64}` } }
+                  ]
+                }]
+              })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              let content = data.choices[0].message.content;
+              if (content.startsWith('```json')) content = content.replace(/```json\n?/, '').replace(/```\n?$/, '');
+              else if (content.startsWith('```')) content = content.replace(/```\n?/, '').replace(/```\n?$/, '');
+              return JSON.parse(content.trim());
+            }
+          }
+        } else if (input.text) {
+          if (key.provider === 'gemini') {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key.key_value}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: `${prompt}\n\nDocument/Template Text:\n${input.text}` }] }],
+                generationConfig: { responseMimeType: "application/json" }
+              })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              return JSON.parse(data.candidates[0].content.parts[0].text);
+            }
+          } else {
+            const url = key.provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://models.inference.ai.azure.com/chat/completions';
+            const model = key.provider === 'openai' ? 'gpt-4o-mini' : 'gpt-4o';
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key.key_value}`
+              },
+              body: JSON.stringify({
+                model,
+                response_format: { type: 'json_object' },
+                messages: [
+                  { role: 'system', content: prompt },
+                  { role: 'user', content: input.text }
+                ]
+              })
+            });
+            if (response.ok) {
+              const data = await response.json();
+              let content = data.choices[0].message.content;
+              if (content.startsWith('```json')) content = content.replace(/```json\n?/, '').replace(/```\n?$/, '');
+              else if (content.startsWith('```')) content = content.replace(/```\n?/, '').replace(/```\n?$/, '');
+              return JSON.parse(content.trim());
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`AI CA weighting analysis failed for ${key.provider}:`, error);
+      }
+    }
+
+    return {
+      ca_weight_obj: 40,
+      ca_weight_theory: 60,
+      ca_instructions: 'Standard Continuous Assessment format: 40% Objective section, 60% Theory section.',
+      ca_columns: [
+        { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: 40, is_auto_obj: true },
+        { id: 'col_theory', name: 'Manual Written Theory', weight: 60, is_auto_obj: false }
+      ]
+    };
+  },
+
+  getCAWeightingPrompt() {
+    return `You are an expert curriculum and Continuous Assessment (CA) policy analyzer for schools (Ghana Education Service / ASASHS).
+Analyze the provided Continuous Assessment (CA) score sheet template, table headings, grading rubrics, or text description.
+Identify ALL grading columns/sections required by this sheet (e.g., Class Tests, Group Projects, Homework, Mid-Term, End-of-Term Objective, End-of-Term Theory).
+For each column, determine its percentage weighting and whether it is the auto-graded digital objective test (is_auto_obj: true) or a manual teacher-entered score (is_auto_obj: false).
+
+Also determine the overall ca_weight_obj and ca_weight_theory totals.
+
+Output exactly a JSON object conforming to this schema:
+{
+  "ca_weight_obj": number (e.g. 40),
+  "ca_weight_theory": number (e.g. 60),
+  "ca_instructions": "string summarizing how teachers should grade and submit this exact sheet",
+  "ca_columns": [
+    {
+      "id": "string unique id like col_test1",
+      "name": "string header title like Class Test / Quiz",
+      "weight": number percentage weight like 15,
+      "is_auto_obj": boolean
+    }
+  ]
+}`;
+  },
+
   getPromptSystemInstructions() {
     return `You are an educational assistant designed to extract structured quiz/exam questions from raw text or OCR'd documents.
 Read the provided raw text thoroughly. Identify all the questions, their type, the options provided, and the correct answer if indicated.

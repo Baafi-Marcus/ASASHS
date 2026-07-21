@@ -5,6 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { QuizBuilder } from './QuizBuilder';
 import { getScheduleStatus, parseDate } from '../../lib/dates';
+import { TeacherInvigilatorDashboard } from '../../components/teacher/TeacherInvigilatorDashboard';
 
 function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) {
   const startTime = parseDate(quiz.due_date);
@@ -226,6 +227,7 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
   const [showBuilder, setShowBuilder] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
   const [detailQuiz, setDetailQuiz] = useState<any | null>(null);
+  const [radarQuiz, setRadarQuiz] = useState<any | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -321,9 +323,17 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
                     </button>
                     <button 
                       onClick={() => setDetailQuiz(quiz)}
-                      className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                      className="px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
                     >
                       Details
+                    </button>
+                    <button
+                      onClick={() => setRadarQuiz(quiz)}
+                      className="px-3 py-2 bg-gray-900 hover:bg-black text-white rounded-lg transition-colors text-sm font-bold flex items-center justify-center gap-1.5 shadow"
+                      title="Live Invigilator Radar"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                      <span>Radar</span>
                     </button>
                     <button
                       onClick={async () => {
@@ -388,6 +398,13 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
         <QuizDetailModal
           quiz={detailQuiz}
           onClose={() => setDetailQuiz(null)}
+        />
+      )}
+      {radarQuiz && (
+        <TeacherInvigilatorDashboard
+          isOpen={!!radarQuiz}
+          onClose={() => setRadarQuiz(null)}
+          assessment={radarQuiz}
         />
       )}
     </div>

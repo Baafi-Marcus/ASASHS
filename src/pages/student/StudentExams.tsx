@@ -5,6 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { ExamRunner } from './ExamRunner';
 import { getScheduleStatus, getStatusColor } from '../../lib/dates';
+import { syncEngine } from '../../services/syncEngine';
 
 function getExamStatus(exam: any): { label: string; color: string; ended: boolean } {
   const status = getScheduleStatus(exam.due_date, exam.duration_minutes);
@@ -84,7 +85,7 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
                 {exam.has_theory && <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium border border-purple-200">Theory Included</span>}
               </div>
               
-              <div className="pt-4 border-t border-gray-100">
+              <div className="pt-4 border-t border-gray-100 space-y-2">
                 <PortalButton 
                   onClick={() => setSelectedExam(exam)}
                   className="w-full"
@@ -92,6 +93,18 @@ export function StudentExams({ studentId, classId }: { studentId: number; classI
                 >
                   {getExamStatus(exam).ended ? 'Exam Ended' : 'Enter Exam Portal'}
                 </PortalButton>
+                {exam.quiz_id && exam.allow_offline !== false && !getExamStatus(exam).ended && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await syncEngine.checkOutAssessment(studentId, exam.quiz_id);
+                      } catch (e) {}
+                    }}
+                    className="w-full text-xs font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border border-school-green-200 py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span>📥 Check-Out to APK Vault</span>
+                  </button>
+                )}
               </div>
             </PortalCard>
           ))}

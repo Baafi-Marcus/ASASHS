@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ASASHS Student Portal</string>
+    <string name="title_activity_main">ASASHS Student Portal</string>
+    <string name="package_name">com.asashs.student</string>
+    <string name="custom_url_scheme">com.asashs.student</string>
+</resources>

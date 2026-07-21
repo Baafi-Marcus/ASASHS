@@ -5,6 +5,7 @@ import { PortalCard } from '../../components/PortalCard';
 import { PortalButton } from '../../components/PortalButton';
 import { QuizRunner } from './QuizRunner';
 import { isEnded, isUpcoming } from '../../lib/dates';
+import { syncEngine } from '../../services/syncEngine';
 
 export function StudentELearning({ studentId, classId }: { studentId: number; classId?: number }) {
   const [quizzes, setQuizzes] = useState<any[]>([]);
@@ -110,13 +111,27 @@ export function StudentELearning({ studentId, classId }: { studentId: number; cl
                       ) : ended ? (
                         <span className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg">Ended</span>
                       ) : (
-                        <PortalButton 
-                          onClick={() => setSelectedQuizId(quiz.id)}
-                          size="sm"
-                          disabled={upcoming}
-                        >
-                          {upcoming ? 'Not Yet Available' : 'Start Quiz'}
-                        </PortalButton>
+                        <div className="flex flex-col gap-2 items-end">
+                          <PortalButton 
+                            onClick={() => setSelectedQuizId(quiz.id)}
+                            size="sm"
+                            disabled={upcoming}
+                          >
+                            {upcoming ? 'Not Yet Available' : 'Start Quiz'}
+                          </PortalButton>
+                          {quiz.allow_offline !== false && !upcoming && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await syncEngine.checkOutAssessment(studentId, quiz.id);
+                                } catch (e) {}
+                              }}
+                              className="text-[11px] font-bold text-school-green-700 bg-school-green-50 hover:bg-school-green-100 border border-school-green-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-sm"
+                            >
+                              <span>📥 Check-Out to APK Vault</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </PortalCard>

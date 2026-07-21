@@ -3,7 +3,7 @@ import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../../AuthContext';
 import { SmartExamBuilder } from '../../components/SmartExamBuilder';
-import { ExtractedQuestion } from '../../lib/aiService';
+import { ExtractedQuestion, aiService } from '../../lib/aiService';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { MathText } from '../../components/MathText';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
@@ -122,8 +122,18 @@ export function AdminSchoolExams() {
     max_attempts: 1,
     selectedForms: [] as number[], 
     selectedCourses: [] as number[], 
+    allow_offline: false,
+    ca_pdf_url: '',
+    ca_weight_obj: 40,
+    ca_weight_theory: 60,
+    ca_instructions: '',
+    ca_columns: [
+      { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: 40, is_auto_obj: true },
+      { id: 'col_theory', name: 'Manual Written Theory', weight: 60, is_auto_obj: false }
+    ],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzingCA, setIsAnalyzingCA] = useState(false);
   const [showAiBuilder, setShowAiBuilder] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -207,6 +217,11 @@ export function AdminSchoolExams() {
       max_attempts: exam.max_attempts ?? 1,
       selectedForms: [exam.form],
       selectedCourses: exam.course_id ? [exam.course_id] : [],
+      allow_offline: exam.allow_offline ?? false,
+      ca_pdf_url: exam.ca_pdf_url || '',
+      ca_weight_obj: exam.ca_weight_obj ?? 40,
+      ca_weight_theory: exam.ca_weight_theory ?? 60,
+      ca_instructions: exam.ca_instructions || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -219,7 +234,8 @@ export function AdminSchoolExams() {
       has_obj: true, has_theory: false, theory_content_url: '', obj_answer_key: '',
       extractedQuestions: [], shuffle_questions: false, shuffle_options: false,
       show_results_immediately: true, display_mode: 'all_at_once', max_attempts: 1,
-      selectedForms: [], selectedCourses: [],
+      selectedForms: [], selectedCourses: [], allow_offline: false,
+      ca_pdf_url: '', ca_weight_obj: 40, ca_weight_theory: 60, ca_instructions: '',
     });
   };
 
@@ -296,7 +312,16 @@ export function AdminSchoolExams() {
         shuffle_options: formData.shuffle_options,
         show_results_immediately: formData.show_results_immediately,
         display_mode: formData.display_mode,
-        max_attempts: formData.max_attempts
+        max_attempts: formData.max_attempts,
+        allow_offline: formData.allow_offline,
+        ca_pdf_url: formData.ca_pdf_url || undefined,
+        ca_weight_obj: Number(formData.ca_weight_obj) || 40,
+        ca_weight_theory: Number(formData.ca_weight_theory) || 60,
+        ca_instructions: formData.ca_instructions || undefined,
+        ca_columns_json: JSON.stringify(formData.ca_columns || [
+          { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: Number(formData.ca_weight_obj) || 40, is_auto_obj: true },
+          { id: 'col_theory', name: 'Manual Written Theory', weight: Number(formData.ca_weight_theory) || 60, is_auto_obj: false }
+        ]),
       }, classIds);
 
       toast.success(editingExam ? 'Exam updated successfully!' : `Exam distributed successfully to ${classIds.length} classes!`);
@@ -314,6 +339,47 @@ export function AdminSchoolExams() {
       toast.error(editingExam ? 'Failed to update exam' : 'Failed to create exams');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUploadAndAnalyzeCA = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAnalyzingCA(true);
+    const toastId = toast.loading('🤖 AI analyzing uploaded Continuous Assessment sheet...');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        try {
+          const analysis = await aiService.analyzeCASheetTemplate({
+            image: file.type.includes('image') || file.type.includes('pdf') ? file : undefined,
+            text: `${file.name} - Continuous Assessment Score Sheet Template`
+          });
+
+          setFormData(prev => ({
+            ...prev,
+            ca_pdf_url: dataUrl,
+            ca_weight_obj: analysis.ca_weight_obj || 40,
+            ca_weight_theory: analysis.ca_weight_theory || 60,
+            ca_instructions: analysis.ca_instructions || prev.ca_instructions,
+            ca_columns: analysis.ca_columns && analysis.ca_columns.length > 0 ? analysis.ca_columns : prev.ca_columns
+          }));
+
+          toast.success(`✨ AI analyzed CA sheet! Detected ${analysis.ca_columns?.length || 2} grading columns!`, { id: toastId });
+        } catch (err) {
+          setFormData(prev => ({ ...prev, ca_pdf_url: dataUrl }));
+          toast.success('File uploaded! You can manually adjust weights below.', { id: toastId });
+        } finally {
+          setIsAnalyzingCA(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Failed to process uploaded file', { id: toastId });
+      setIsAnalyzingCA(false);
     }
   };
 
@@ -501,6 +567,10 @@ export function AdminSchoolExams() {
                           <input type="checkbox" checked={formData.show_results_immediately} onChange={e => setFormData({...formData, show_results_immediately: e.target.checked})} className="rounded text-school-green-600"/>
                           <span className="text-sm text-gray-700">Show Results Instantly</span>
                         </label>
+                        <label className="flex items-center space-x-2">
+                          <input type="checkbox" checked={formData.allow_offline} onChange={e => setFormData({...formData, allow_offline: e.target.checked})} className="rounded text-school-green-600"/>
+                          <span className="text-sm text-gray-700">Allow Offline APK Access</span>
+                        </label>
                         <div className="flex flex-col">
                           <label className="text-xs text-gray-500 mb-1">Display Mode</label>
                           <select value={formData.display_mode} onChange={e => setFormData({...formData, display_mode: e.target.value})} className="border rounded px-2 py-1 text-sm">
@@ -545,9 +615,151 @@ export function AdminSchoolExams() {
               )}
             </div>
 
+            {/* Continuous Assessment (CA) Policy Setup */}
+            <div className="bg-school-green-50/50 p-5 rounded-2xl border border-school-green-200 space-y-4 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-school-green-900 flex items-center gap-2">
+                    <span>🏛️ 3. Official Continuous Assessment (CA) & Score Sheet Policy</span>
+                  </h3>
+                  <p className="text-xs text-school-green-700 mt-0.5">
+                    Teachers will download this exact Continuous Assessment PDF template with auto-graded OBJ scores to write their manual Theory results.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-school-green-100 shadow-sm">
+                <div className="md:col-span-1">
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Official CA Sheet Template (Upload or URL)</label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <label className="flex-1 cursor-pointer bg-school-green-600 hover:bg-school-green-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                        <span>📁 Upload from Local Disk</span>
+                        <input 
+                          type="file" 
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={handleUploadAndAnalyzeCA}
+                          className="hidden"
+                          disabled={isAnalyzingCA}
+                        />
+                      </label>
+                      {isAnalyzingCA && (
+                        <div className="flex items-center px-2 text-school-green-700 text-xs font-bold animate-pulse">
+                          🤖 Analyzing...
+                        </div>
+                      )}
+                    </div>
+                    <input 
+                      type="url" 
+                      value={formData.ca_pdf_url} 
+                      onChange={(e) => setFormData({...formData, ca_pdf_url: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
+                      placeholder="Or paste URL: https://.../official_ca_template.pdf"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    💡 Uploading a local sheet triggers <strong>AI analysis</strong> to auto-detect and configure OBJ & Theory weighting!
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">OBJ Weight (%)</label>
+                  <input 
+                    type="number" 
+                    min="0" max="100"
+                    value={formData.ca_weight_obj} 
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setFormData({...formData, ca_weight_obj: val, ca_weight_theory: Math.max(0, 100 - val)});
+                    }}
+                    className="w-full px-3 py-2 border rounded-xl text-sm font-bold text-green-700"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Auto-graded objective percentage weight.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Theory Weight (%)</label>
+                  <input 
+                    type="number" 
+                    min="0" max="100"
+                    value={formData.ca_weight_theory} 
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setFormData({...formData, ca_weight_theory: val, ca_weight_obj: Math.max(0, 100 - val)});
+                    }}
+                    className="w-full px-3 py-2 border rounded-xl text-sm font-bold text-purple-700"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Manual theory written percentage weight.</p>
+                </div>
+
+                <div className="md:col-span-3 pt-2 border-t border-gray-100">
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Teacher Instructions for Theory Grading & Sheet Submission</label>
+                  <input 
+                    type="text" 
+                    value={formData.ca_instructions} 
+                    onChange={(e) => setFormData({...formData, ca_instructions: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-xl text-sm"
+                    placeholder="e.g. Download the official CA sheet below, write handwritten theory scores from physical booklets, and verify Attendance PINs before entering."
+                  />
+                </div>
+
+                {/* Dynamic Columns Detected / Configured */}
+                <div className="md:col-span-3 pt-3 border-t border-gray-100 bg-gray-50/70 p-3 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-gray-800 uppercase">
+                      📊 Dynamic Grading Columns Created from CA Sheet Schema ({formData.ca_columns.length} columns)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newCol = {
+                          id: `col_${Date.now()}`,
+                          name: 'New Assessment Section',
+                          weight: 10,
+                          is_auto_obj: false
+                        };
+                        setFormData({ ...formData, ca_columns: [...formData.ca_columns, newCol] });
+                      }}
+                      className="px-2.5 py-1 bg-school-green-600 text-white rounded-lg text-[11px] font-bold hover:bg-school-green-700 transition"
+                    >
+                      + Add Custom Column
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.ca_columns.map((col, idx) => (
+                      <div key={col.id || idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs shadow-sm">
+                        <span className={col.is_auto_obj ? "font-bold text-green-700" : "font-bold text-purple-700"}>
+                          {col.name} ({col.weight}%)
+                        </span>
+                        <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                          {col.is_auto_obj ? '📱 Auto-OBJ' : '✍️ Teacher Entry'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              ca_columns: formData.ca_columns.filter((_, i) => i !== idx)
+                            });
+                          }}
+                          className="text-red-400 hover:text-red-600 font-bold ml-1"
+                          title="Remove column"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1.5">
+                    When teachers open the CA Score Sheet, exact columns matching the schema above will be dynamically generated!
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Targeting */}
             <div className="bg-gray-50 p-4 rounded-2xl border space-y-4 md:col-span-2">
-              <h3 className="font-bold text-gray-800">3. Distribution Targeting</h3>
+              <h3 className="font-bold text-gray-800">4. Distribution Targeting</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Target Forms *</label>

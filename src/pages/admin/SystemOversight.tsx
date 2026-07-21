@@ -133,12 +133,19 @@ export default function SystemOversight() {
   const [currentAcademicYear, setCurrentAcademicYear] = useState('');
   const [currentSemester, setCurrentSemester] = useState(1);
   const [savingAY, setSavingAY] = useState(false);
+  const [classWeight, setClassWeight] = useState(30);
+  const [examWeight, setExamWeight] = useState(70);
+  const [savingWeights, setSavingWeights] = useState(false);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
     db.getMaintenanceMode().then(setMaintenanceMode).catch(() => {});
     db.getCurrentAcademicYear().then(setCurrentAcademicYear).catch(() => {});
     db.getCurrentSemester().then(setCurrentSemester).catch(() => {});
+    db.getGradingWeights().then(w => {
+      setClassWeight(w.classScore);
+      setExamWeight(w.examScore);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -427,6 +434,70 @@ export default function SystemOversight() {
         >
           {savingAY ? 'Saving...' : 'Save Settings'}
         </button>
+      </div>
+
+      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6 mb-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Grading Settings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class Score Weight (%)</label>
+            <input
+              type="number"
+              value={classWeight}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                setClassWeight(val);
+                setExamWeight(100 - val);
+              }}
+              min="0"
+              max="100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Exam Score Weight (%)</label>
+            <input
+              type="number"
+              value={examWeight}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                setExamWeight(val);
+                setClassWeight(100 - val);
+              }}
+              min="0"
+              max="100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            />
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            setSavingWeights(true);
+            try {
+              await db.setGradingWeights(classWeight, examWeight);
+              await db.logAuditEvent({
+                actor_id: user?.user_id || 'unknown',
+                actor_name: user?.full_name || 'Unknown',
+                action: 'update_grading_settings',
+                entity_type: 'system',
+                details: `Grading weights set to Class: ${classWeight}%, Exam: ${examWeight}%`
+              });
+              toast.success('Grading weights saved');
+            } catch (e) {
+              console.error('Failed to save grading weights:', e);
+              toast.error('Failed to save grading weights');
+            } finally {
+              setSavingWeights(false);
+            }
+          }}
+          disabled={savingWeights || (classWeight + examWeight !== 100)}
+          className="px-6 py-2 bg-school-green-600 text-white rounded-xl font-bold hover:bg-school-green-700 transition-colors disabled:opacity-50"
+        >
+          {savingWeights ? 'Saving...' : 'Save Weights'}
+        </button>
+        {(classWeight + examWeight !== 100) && (
+          <p className="text-red-500 text-sm mt-2">Weights must add up to 100%.</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
