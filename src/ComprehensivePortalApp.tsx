@@ -6,6 +6,7 @@ import { StaffDirectoryPage } from './pages/StaffDirectoryPage';
 import { AcademicCalendarPage } from './pages/AcademicCalendarPage';
 import { LandingNavbar } from './components/LandingNavbar';
 import { UnifiedLogin } from './pages/UnifiedLogin';
+import { PortalSplash } from './components/PortalSplash';
 import { PortalLayout } from './components/PortalLayout';
 import { Capacitor } from '@capacitor/core';
 
@@ -46,6 +47,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard';
 function ComprehensivePortalApp() {
   const { user, signIn, signOut, loading } = useContext(AuthContext);
   const [showLandingPage, setShowLandingPage] = useState(!Capacitor.isNativePlatform());
+  const [showIntroSplash, setShowIntroSplash] = useState(Capacitor.isNativePlatform());
   const [showNewsPage, setShowNewsPage] = useState(false);
   const [showStaffPage, setShowStaffPage] = useState(false);
   const [showCalendarPage, setShowCalendarPage] = useState(false);
@@ -403,6 +405,8 @@ function ComprehensivePortalApp() {
           <AcademicCalendarPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onNewsClick={() => {}} />
         ) : showLandingPage ? (
           <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
+        ) : showIntroSplash ? (
+          <PortalSplash onComplete={() => setShowIntroSplash(false)} />
         ) : (
           <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, 'non-admin')} onHomeRedirect={Capacitor.isNativePlatform() ? undefined : handleBackToLanding} />
         )}
