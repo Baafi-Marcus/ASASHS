@@ -408,7 +408,7 @@ function ComprehensivePortalApp() {
         ) : showIntroSplash ? (
           <PortalSplash onComplete={() => setShowIntroSplash(false)} />
         ) : (
-          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass)} onHomeRedirect={Capacitor.isNativePlatform() ? undefined : handleBackToLanding} />
+          <UnifiedLogin onLogin={(id, pass) => signIn(id, pass, Capacitor.isNativePlatform() ? 'student' : undefined)} onHomeRedirect={Capacitor.isNativePlatform() ? undefined : handleBackToLanding} />
         )}
       </div>
 

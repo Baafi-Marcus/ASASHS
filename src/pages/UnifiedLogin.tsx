@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { PortalButton } from '../components/PortalButton';
+import { Capacitor } from '@capacitor/core';
 
 interface UnifiedLoginProps {
   onLogin: (userId: string, password: string) => Promise<void>;
@@ -56,7 +57,9 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
             </div>
             <div>
               <h1 className="text-xl font-black text-gray-900 tracking-tight">ASASHS</h1>
-              <p className="text-[10px] text-school-green-600 uppercase tracking-[0.2em] font-extrabold italic">Digital Campus</p>
+              <p className="text-[10px] text-school-green-600 uppercase tracking-[0.2em] font-extrabold italic">
+                {Capacitor.isNativePlatform() ? 'Student Android Portal' : 'Digital Campus'}
+              </p>
             </div>
           </div>
         </div>
@@ -71,17 +74,23 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
 
             <div className="text-center mb-8">
               <span className="inline-flex items-center px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-gradient-to-r from-school-green-50 to-amber-50 text-school-green-800 border border-school-green-200/60 mb-3 shadow-sm">
-                🏛️ {getGreeting()}
+                {Capacitor.isNativePlatform() ? '🎓 Student Examination Portal' : `🏛️ ${getGreeting()}`}
               </span>
               <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-2 uppercase bg-clip-text text-transparent bg-gradient-to-br from-gray-900 via-school-green-950 to-gray-800">
-                Welcome Back
+                {Capacitor.isNativePlatform() ? 'Student Login' : 'Welcome Back'}
               </h2>
-              <p className="text-gray-500 font-medium text-xs tracking-wide">Please sign in with your student or staff ID</p>
+              <p className="text-gray-500 font-medium text-xs tracking-wide">
+                {Capacitor.isNativePlatform() 
+                  ? 'Sign in with your Student ID or Admission Number'
+                  : 'Please sign in with your student or staff ID'}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 px-1">User ID / Staff ID</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 px-1">
+                  {Capacitor.isNativePlatform() ? 'Student ID / Admission Number' : 'User ID / Staff ID'}
+                </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-school-green-600 group-focus-within:scale-110 transition-all duration-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -90,7 +99,7 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    placeholder="Enter your official ID"
+                    placeholder={Capacitor.isNativePlatform() ? "e.g. STU2026001 or ASA2026001" : "Enter your official ID"}
                     required
                     className="w-full pl-11 pr-4 py-4 bg-gray-50/80 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-school-green-600 focus:ring-4 focus:ring-school-green-600/10 focus:outline-none transition-all duration-300 font-bold text-gray-900 placeholder-gray-400 shadow-inner"
                   />
@@ -133,7 +142,7 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   ) : (
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      Grant Access
+                      {Capacitor.isNativePlatform() ? 'Access Student Portal' : 'Grant Access'}
                       <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                     </span>
                   )}
@@ -143,13 +152,15 @@ export const UnifiedLogin: React.FC<UnifiedLoginProps> = ({ onLogin, onHomeRedir
 
             <div className="mt-6 pt-5 border-t border-gray-100 space-y-2.5">
               <div className="bg-school-green-50 rounded-xl p-3 border border-school-green-200 text-left flex items-start gap-3">
-                <span className="text-lg mt-0.5">📱</span>
+                <span className="text-lg mt-0.5">{Capacitor.isNativePlatform() ? '🎓' : '📱'}</span>
                 <div>
                   <p className="text-xs font-bold text-school-green-900 leading-snug">
-                    Student APK Policy Enforced
+                    {Capacitor.isNativePlatform() ? 'Student-Only Android Portal' : 'Student APK Policy Enforced'}
                   </p>
                   <p className="text-[11px] text-gray-600 leading-tight mt-0.5">
-                    For examination security and offline synchronization, Students must access via the official <strong>ASASHS Android APK</strong>.
+                    {Capacitor.isNativePlatform()
+                      ? 'This Android app is designed strictly and exclusively for ASASHS Students. Staff & Administrators must access via the Web Portal.'
+                      : 'For examination security and offline synchronization, Students must access via the official ASASHS Android APK.'}
                   </p>
                 </div>
               </div>

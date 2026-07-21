@@ -69,12 +69,16 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         return;
       }
 
-      if (requiredRole === 'non-admin' && authenticatedUser.user_type === 'admin' && !authenticatedUser.is_test_account) {
+      if (requiredRole === 'student' && authenticatedUser.user_type !== 'student') {
+        toast.error('📱 Student APK Policy: This Android app is strictly for Students. Staff & Administrators must access via the Web Portal.');
+        setLoading(false);
+        return;
+      } else if (requiredRole === 'non-admin' && authenticatedUser.user_type === 'admin' && !authenticatedUser.is_test_account) {
         // Pretend credentials don't exist to hide admin existence from students
         toast.error('Invalid credentials. Please check your ID and password.');
         setLoading(false);
         return;
-      } else if (requiredRole && requiredRole !== 'non-admin' && authenticatedUser.user_type !== requiredRole) {
+      } else if (requiredRole && requiredRole !== 'non-admin' && requiredRole !== 'student' && authenticatedUser.user_type !== requiredRole) {
         toast.error(`Access denied. This portal is restricted to ${requiredRole}s only.`);
         setLoading(false);
         return;
