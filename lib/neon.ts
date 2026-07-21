@@ -38,7 +38,7 @@ const getDatabaseUrl = () => {
 const databaseUrl = getDatabaseUrl();
 
 // Create the Neon SQL function only if we have a database URL
-let sql: any;
+export let sql: any;
 if (databaseUrl) {
   try {
     sql = neon(databaseUrl, { disableWarningInBrowsers: true } as any);
@@ -109,6 +109,8 @@ export const db = {
     try {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN DEFAULT false`;
     } catch {}
+    const cleanId = userId.trim();
+    const cleanPassword = password.trim();
     const result = await sql`
       SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
              s.current_class_id,
@@ -119,7 +121,13 @@ export const db = {
       LEFT JOIN students s ON u.id = s.user_id
       LEFT JOIN classes c ON s.current_class_id = c.id
       LEFT JOIN teachers t ON u.id = t.user_id
-      WHERE u.user_id = ${userId} AND u.is_active = true
+      WHERE (
+        UPPER(u.user_id) = UPPER(${cleanId}) OR
+        UPPER(s.student_id) = UPPER(${cleanId}) OR
+        UPPER(s.admission_number) = UPPER(${cleanId}) OR
+        UPPER(t.teacher_id) = UPPER(${cleanId}) OR
+        UPPER(t.staff_id) = UPPER(${cleanId})
+      ) AND u.is_active = true
     `;
     
     if (result.length === 0) {
@@ -127,7 +135,7 @@ export const db = {
     }
     
     const user = result[0];
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash) || await bcrypt.compare(cleanPassword, user.password_hash);
     
     if (!isValidPassword) {
       return null;
