@@ -19,3 +19,12 @@ scripts/inspect-*.cjs
 schema_results.json
 output.txt
 schema_output.txt
+
+# Media & Videos (kept on device, never added to project)
+*.mp4
+*.webm
+*.mov
+*.mkv
+*.avi
+brag-output/
+

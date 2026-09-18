@@ -2,6 +2,7 @@ import React from 'react';
 import db from '../../lib/neon';
 import { LandingFooter } from '../components/LandingFooter';
 import { CrestScrollytelling3D } from '../components/CrestScrollytelling3D';
+import { VideoShowcase } from '../components/VideoShowcase';
 
 interface SchoolLandingPageProps {
     onLoginClick: () => void;
@@ -239,6 +240,13 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                     </div>
                 </div>
             </section>
+
+            {/* Campus Tour & Digital Portal Video Showcase */}
+            <VideoShowcase 
+                variant="landing"
+                title="Akim Asafo SHS • Campus Experience & Showcase"
+                subtitle="Discover our rich heritage, disciplined student community, and cutting-edge digital learning environment."
+            />
 
             {/* Competitions & Extracurricular Excellence */}
             <section className="py-16 px-4 sm:px-6 bg-gray-50 border-b border-gray-200">
