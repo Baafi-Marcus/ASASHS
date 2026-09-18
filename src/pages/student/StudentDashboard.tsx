@@ -12,7 +12,6 @@ import { StudentVoting } from './StudentVoting';
 import { StudentELearning } from './StudentELearning';
 import { StudentExams } from './StudentExams';
 import { Skeleton, SkeletonGrid } from '../../components/SkeletonLoader';
-import { VideoShowcase } from '../../components/VideoShowcase';
 
 export interface Student {
   id: string;
@@ -219,13 +218,6 @@ export const StudentDashboard: React.FC<{
           </div>
         ))}
       </div>
-
-      {/* Campus Tour & Showcase Video Player */}
-      <VideoShowcase 
-        variant="portal" 
-        title="ASASHS Campus & Portal Showcase"
-        subtitle="Explore life at Akim Asafo SHS and the features of your scholar portal."
-      />
     </div>
   );
 
