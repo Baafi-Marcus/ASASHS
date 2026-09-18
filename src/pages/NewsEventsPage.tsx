@@ -154,7 +154,7 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
                                     <img
                                         src={filteredArticles[0].image}
                                         alt={filteredArticles[0].title}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover object-top"
                                     />
                                     <div className="absolute top-3 left-3">
                                         <span className={`px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wider border shadow-sm ${filteredArticles[0].badgeClass}`}>
@@ -206,7 +206,7 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
                                         <img
                                             src={article.image}
                                             alt={article.title}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover object-top"
                                         />
                                         <div className="absolute top-2.5 left-2.5">
                                             <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border shadow-sm ${article.badgeClass}`}>

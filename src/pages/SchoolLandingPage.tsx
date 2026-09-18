@@ -1,7 +1,7 @@
 import React from 'react';
 import db from '../../lib/neon';
 import { LandingFooter } from '../components/LandingFooter';
-import { CrestScrollytelling3D } from '../components/CrestScrollytelling3D';
+import { SchoolHeritageCrest } from '../components/SchoolHeritageCrest';
 
 interface SchoolLandingPageProps {
     onLoginClick: () => void;
@@ -46,7 +46,7 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                     <img
                         src="/hero_school_building.jpg"
                         alt="Akim Asafo Senior High School Campus"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-[center_35%]"
                     />
                 </div>
 
@@ -156,19 +156,19 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                 </div>
             </section>
 
-            {/* Interactive 3D School Crest & Motto Scrollytelling Experience */}
-            <CrestScrollytelling3D onLoginClick={onLoginClick} />
+            {/* Institutional School Crest & Core Pillars Showcase */}
+            <SchoolHeritageCrest onLoginClick={onLoginClick} />
 
             {/* Heritage & Leadership Section */}
             <section className="py-16 px-4 sm:px-6 bg-white border-b border-gray-200" id="about">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     {/* Visual & Quote */}
                     <div className="relative">
-                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm aspect-[4/3] sm:aspect-[6/5] md:aspect-[4/3] lg:h-[420px]">
                             <img
                                 src="/headmistress.jpg"
                                 alt="Mrs. Ama Thompson - Headmistress"
-                                className="w-full h-80 sm:h-[440px] object-cover"
+                                className="w-full h-full object-cover object-top"
                             />
                         </div>
                         <div className="mt-4 p-5 rounded-md border border-gray-200 bg-gray-50 border-l-4 border-l-school-green-700 shadow-sm">
@@ -203,11 +203,13 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                         </div>
 
                         <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm relative">
-                            <img
-                                src="/administration.jpg"
-                                alt="ASASHS Administration Block"
-                                className="w-full h-48 object-cover"
-                            />
+                            <div className="aspect-[16/9] sm:h-52 w-full overflow-hidden">
+                                <img
+                                    src="/administration.jpg"
+                                    alt="ASASHS Administration Block"
+                                    className="w-full h-full object-cover object-[center_35%]"
+                                />
+                            </div>
                             <div className="p-4 bg-gray-50 border-t border-gray-200">
                                 <h3 className="font-bold text-xs uppercase tracking-wide text-gray-900">Administration & Governance</h3>
                                 <p className="text-[11px] text-gray-500 mt-0.5">Committed leadership overseeing academic delivery and student welfare.</p>
@@ -229,11 +231,11 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                             </blockquote>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-md border border-gray-200 overflow-hidden h-32">
-                                <img src="/student_art.jpg" alt="Student Artwork" className="w-full h-full object-cover" />
+                            <div className="rounded-md border border-gray-200 overflow-hidden aspect-[3/4] sm:aspect-[4/5] sm:h-44">
+                                <img src="/student_art.jpg" alt="Student Artwork" className="w-full h-full object-cover object-top" />
                             </div>
-                            <div className="rounded-md border border-gray-200 overflow-hidden h-32">
-                                <img src="/students_campus.jpg" alt="Students on Campus" className="w-full h-full object-cover" />
+                            <div className="rounded-md border border-gray-200 overflow-hidden aspect-[3/4] sm:aspect-[4/5] sm:h-44">
+                                <img src="/students_campus.jpg" alt="Students on Campus" className="w-full h-full object-cover object-top" />
                             </div>
                         </div>
                     </div>
@@ -255,11 +257,11 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* NSMQ Highlight */}
                         <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                            <div className="h-64 overflow-hidden relative">
+                            <div className="aspect-[3/2] sm:h-64 overflow-hidden relative">
                                 <img
                                     src="/nsmq_2025.jpg"
                                     alt="National Science and Maths Quiz Qualifiers"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover object-top"
                                 />
                                 <div className="absolute top-3 left-3">
                                     <span className="bg-yellow-400 text-yellow-950 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-yellow-500/50">
@@ -282,11 +284,11 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
 
                         {/* Sports Highlight */}
                         <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                            <div className="h-64 overflow-hidden relative">
+                            <div className="aspect-[3/2] sm:h-64 overflow-hidden relative">
                                 <img
                                     src="/sports_action.jpg"
                                     alt="School Handball and Sports"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover object-top"
                                 />
                                 <div className="absolute top-3 left-3">
                                     <span className="bg-school-green-700 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-school-green-800">
@@ -407,25 +409,25 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm aspect-[3/4] sm:aspect-[4/3] md:aspect-auto md:h-80">
                             <img
                                 src="/student_portrait.jpg"
                                 alt="ASASHS Student Leader"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-top"
                             />
                         </div>
-                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm aspect-[4/3] md:aspect-auto md:h-80">
                             <img
                                 src="/student_group_1.jpg"
                                 alt="Academic Discussion on Campus"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-top"
                             />
                         </div>
-                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm aspect-[3/4] sm:aspect-[4/3] md:aspect-auto md:h-80">
                             <img
                                 src="/student_group_2.jpg"
                                 alt="Students in Quadrangle"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-top"
                             />
                         </div>
                     </div>
@@ -435,21 +437,21 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
             {/* Institutional Telemetry & Key Facts */}
             <section className="py-12 bg-school-green-900 text-white border-b border-school-green-950">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
-                        <div className="pt-4 md:pt-0">
-                            <p className="text-3xl sm:text-4xl font-extrabold tabular-nums mb-1">1991</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
+                        <div className="p-4 rounded-md bg-white/5 border border-white/10 md:border-0 md:bg-transparent">
+                            <p className="text-2xl sm:text-4xl font-extrabold tabular-nums mb-1">1991</p>
                             <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">Year Founded</p>
                         </div>
-                        <div className="pt-4 md:pt-0">
-                            <p className="text-2xl sm:text-3xl font-extrabold mb-1">Day & Boarding</p>
+                        <div className="p-4 rounded-md bg-white/5 border border-white/10 md:border-0 md:bg-transparent">
+                            <p className="text-xl sm:text-3xl font-extrabold mb-1">Day & Boarding</p>
                             <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">Accommodation</p>
                         </div>
-                        <div className="pt-4 md:pt-0">
-                            <p className="text-2xl sm:text-3xl font-extrabold mb-1">Public (GES)</p>
+                        <div className="p-4 rounded-md bg-white/5 border border-white/10 md:border-0 md:bg-transparent">
+                            <p className="text-xl sm:text-3xl font-extrabold mb-1">Public (GES)</p>
                             <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">School Category</p>
                         </div>
-                        <div className="pt-4 md:pt-0">
-                            <p className="text-3xl sm:text-4xl font-extrabold font-mono tabular-nums mb-1">0021306</p>
+                        <div className="p-4 rounded-md bg-white/5 border border-white/10 md:border-0 md:bg-transparent">
+                            <p className="text-2xl sm:text-4xl font-extrabold font-mono tabular-nums mb-1">0021306</p>
                             <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">GES School Code</p>
                         </div>
                     </div>

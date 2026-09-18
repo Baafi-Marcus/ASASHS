@@ -125,7 +125,7 @@ export const PortalSplash: React.FC<PortalSplashProps> = ({ onComplete }) => {
             <img
               src={slide.url}
               alt={slide.title}
-              className={`w-full h-full object-cover object-center transform transition-transform duration-[6000ms] ease-out ${
+              className={`w-full h-full object-cover object-[center_20%] transform transition-transform duration-[6000ms] ease-out ${
                 index === currentSlide ? 'scale-105' : 'scale-100'
               }`}
             />
