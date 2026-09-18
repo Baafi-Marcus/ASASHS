@@ -6,33 +6,26 @@ import bcrypt from 'bcryptjs';
 
 // Handle environment variables for both Node.js and browser environments
 const getDatabaseUrl = () => {
-  // In browser environment
-  if (typeof window !== 'undefined') {
-    // Try to get from import.meta.env (Vite)
-    // @ts-ignore
-    if (import.meta.env && import.meta.env.VITE_DATABASE_URL) {
-      // @ts-ignore
-      return import.meta.env.VITE_DATABASE_URL;
-    }
-    
-    // Try to get DATABASE_URL as fallback
-    // @ts-ignore
-    if (import.meta.env && import.meta.env.DATABASE_URL) {
-      // @ts-ignore
-      return import.meta.env.DATABASE_URL;
-    }
-    
-    return '';
-  }
-  
-  // In Node.js environment
+  const fallbackUrl = 'postgresql://neondb_owner:npg_OPpsiSX0dEB5@ep-autumn-bush-adzmnun7-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require';
   try {
     // @ts-ignore
-    return process.env.VITE_DATABASE_URL || process.env.DATABASE_URL || '';
-  } catch (e) {
-    // If process is not defined, return empty string
-    return '';
-  }
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      const url = import.meta.env.VITE_DATABASE_URL || import.meta.env.DATABASE_URL;
+      if (url) return url;
+    }
+  } catch {}
+
+  try {
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env) {
+      // @ts-ignore
+      const url = process.env.VITE_DATABASE_URL || process.env.DATABASE_URL;
+      if (url) return url;
+    }
+  } catch {}
+
+  return fallbackUrl;
 };
 
 const databaseUrl = getDatabaseUrl();
@@ -111,26 +104,32 @@ export const db = {
     } catch {}
     const cleanId = userId.trim();
     const cleanPassword = password.trim();
-    const result = await sql`
-      SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
-             s.current_class_id,
-             c.class_name as student_class_name,
-             t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
-             t.id as teacher_db_id
-      FROM users u
-      LEFT JOIN students s ON u.id = s.user_id
-      LEFT JOIN classes c ON s.current_class_id = c.id
-      LEFT JOIN teachers t ON u.id = t.user_id
-      WHERE (
-        UPPER(u.user_id) = UPPER(${cleanId}) OR
-        UPPER(s.student_id) = UPPER(${cleanId}) OR
-        UPPER(s.admission_number) = UPPER(${cleanId}) OR
-        UPPER(t.teacher_id) = UPPER(${cleanId}) OR
-        UPPER(t.staff_id) = UPPER(${cleanId})
-      ) AND u.is_active = true
-    `;
+    let result: any[];
+    try {
+      result = await sql`
+        SELECT u.*, s.id as student_db_id, s.student_id, s.admission_number, s.surname as student_surname, s.other_names as student_other_names,
+               s.current_class_id,
+               c.class_name as student_class_name,
+               t.teacher_id, t.staff_id, t.surname as teacher_surname, t.other_names as teacher_other_names,
+               t.id as teacher_db_id
+        FROM users u
+        LEFT JOIN students s ON u.id = s.user_id
+        LEFT JOIN classes c ON s.current_class_id = c.id
+        LEFT JOIN teachers t ON u.id = t.user_id
+        WHERE (
+          UPPER(u.user_id) = UPPER(${cleanId}) OR
+          UPPER(s.student_id) = UPPER(${cleanId}) OR
+          UPPER(s.admission_number) = UPPER(${cleanId}) OR
+          UPPER(t.teacher_id) = UPPER(${cleanId}) OR
+          UPPER(t.staff_id) = UPPER(${cleanId})
+        ) AND u.is_active = true
+      `;
+    } catch (err: any) {
+      console.error('SQL query execution failed:', err);
+      throw new Error(`Database connection failed (${err?.message || err}). Please check internet connection.`);
+    }
     
-    if (result.length === 0) {
+    if (!result || result.length === 0) {
       return null;
     }
     

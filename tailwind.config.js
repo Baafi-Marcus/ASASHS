@@ -39,6 +39,19 @@ export default {
       fontFamily: {
         'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
       },
+      borderRadius: {
+        'none': '0px',
+        'sm': '4px',
+        'DEFAULT': '4px',
+        'md': '8px',
+        'full': '9999px',
+      },
+      transitionTimingFunction: {
+        'standard': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      transitionDuration: {
+        'fast': '150ms',
+      },
     },
   },
   plugins: [],

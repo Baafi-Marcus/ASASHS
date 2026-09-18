@@ -29,6 +29,7 @@
     "@stackframe/stack": "^2.8.39",
     "@types/bcryptjs": "^2.4.6",
     "@types/katex": "^0.16.8",
+    "@types/three": "^0.186.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "jeep-sqlite": "^2.8.0",
@@ -44,6 +45,7 @@
     "react-is": "^19.2.5",
     "recharts": "^3.2.1",
     "shadcn-ui": "^0.9.5",
+    "three": "^0.186.0",
     "xlsx": "^0.18.5",
     "zod": "^4.0.17"
   },

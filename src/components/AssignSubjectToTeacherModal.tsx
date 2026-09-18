@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../../lib/neon';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { PortalInput } from '../components/PortalInput';
 import { PortalButton } from '../components/PortalButton';
 
 interface Teacher {
@@ -52,7 +50,7 @@ export function AssignSubjectToTeacherModal({
   onClose, 
   teacher, 
   subjects, 
-  classes,
+  classes, 
   existingAssignments = [],
   onAssign,
   onRemoveAssignment
@@ -99,32 +97,47 @@ export function AssignSubjectToTeacherModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="bg-school-green-700 px-6 py-4 rounded-t-2xl">
-          <h2 className="text-xl font-bold text-white">Assign Subject to Teacher</h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-md border border-gray-200 shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
+          <div>
+            <h2 className="text-base font-bold text-gray-900 tracking-tight">Assign Teaching Load</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Attach curriculum subjects and classes to instructor</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-sm transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         
-        <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-6">
-            <div className="bg-school-cream-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-800">
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+            {/* Teacher banner */}
+            <div className="bg-gray-50 p-3.5 rounded-sm border border-gray-200 text-xs">
+              <span className="text-gray-400 block uppercase tracking-wider text-[10px] font-semibold">Assigned Faculty</span>
+              <h3 className="font-semibold text-gray-900 text-sm mt-0.5">
                 {teacher.title} {teacher.surname}, {teacher.other_names}
               </h3>
-              <p className="text-sm text-gray-600">{teacher.department}</p>
+              <p className="text-gray-500 mt-0.5">{teacher.department}</p>
             </div>
             
+            {/* Existing assignments */}
             {existingAssignments.length > 0 && (
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h4 className="text-sm font-semibold text-green-800 mb-2">Currently Assigned</h4>
-                <div className="space-y-2">
+              <div className="bg-gray-50/70 p-3 rounded-sm border border-gray-200">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2">Current Active Assignments ({existingAssignments.length})</h4>
+                <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                   {existingAssignments.map((a) => (
-                    <div key={a.id} className="text-sm text-green-700 flex items-center gap-2 justify-between">
-                      <div className="flex items-center gap-2">
-                        <span>✓</span>
-                        <span className="font-medium">{a.subject_name}</span>
-                        <span>→</span>
-                        <span>{a.class_name}</span>
+                    <div key={a.id} className="text-xs text-gray-700 bg-white p-2 rounded-sm border border-gray-200 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span className="font-medium text-gray-900 truncate">{a.subject_name}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-gray-600">{a.class_name}</span>
                       </div>
                       {onRemoveAssignment && (
                         <button
@@ -134,7 +147,7 @@ export function AssignSubjectToTeacherModal({
                               await onRemoveAssignment(a.id);
                             }
                           }}
-                          className="text-red-500 hover:text-red-700 text-xs font-medium"
+                          className="text-rose-600 hover:text-rose-800 text-[11px] font-medium ml-2 shrink-0 hover:underline"
                         >
                           Remove
                         </button>
@@ -146,11 +159,11 @@ export function AssignSubjectToTeacherModal({
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Subject *</label>
               <select
                 value={selectedSubjectId}
                 onChange={(e) => setSelectedSubjectId(e.target.value)}
-                className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
                 required
               >
                 <option value="">Select Subject</option>
@@ -163,11 +176,11 @@ export function AssignSubjectToTeacherModal({
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Class *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Assigned Class *</label>
               <select
                 value={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
-                className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
                 required
               >
                 <option value="">Select Class</option>
@@ -179,14 +192,12 @@ export function AssignSubjectToTeacherModal({
               </select>
             </div>
             
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> This will assign the selected subject to this teacher for the selected class.
-              </p>
+            <div className="bg-blue-50/60 p-3 rounded-sm border border-blue-200 text-xs text-blue-800">
+              Teacher will gain immediate gradebook entry, continuous assessment, and timetable management privileges for this class.
             </div>
           </div>
           
-          <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+          <div className="flex justify-end gap-2.5 p-4 border-t border-gray-100 bg-gray-50/50">
             <PortalButton
               type="button"
               onClick={onClose}
@@ -200,7 +211,14 @@ export function AssignSubjectToTeacherModal({
               disabled={loading}
               variant="primary"
             >
-              {loading ? 'Assigning...' : 'Assign Subject'}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Assigning...
+                </span>
+              ) : (
+                'Confirm Assignment'
+              )}
             </PortalButton>
           </div>
         </form>

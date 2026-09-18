@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
 import { PortalInput } from '../../components/PortalInput';
 import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface Student {
   id: number;
@@ -114,7 +115,7 @@ export function StudentDetailsModal({
       toast.success('Student details updated successfully');
       setIsEditing(false);
       onStudentUpdated();
-      fetchStudentDetails(); // Refresh the data
+      fetchStudentDetails();
     } catch (error: any) {
       console.error('Failed to update student:', error);
       toast.error(error.message || 'Failed to update student details');
@@ -126,218 +127,215 @@ export function StudentDetailsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">
-              {isEditing ? 'Edit Student Details' : 'Student Details'}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-md border border-gray-200 shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
+          <div>
+            <h2 className="text-base font-bold text-gray-900 tracking-tight">
+              {isEditing ? 'Edit Student Details' : 'Student Dossier'}
             </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
+            <p className="text-xs text-gray-500 mt-0.5">Comprehensive institutional academic profile</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-sm transition-colors"
+            aria-label="Close dialog"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
+        {/* Modal Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+            <div className="flex justify-center items-center h-56">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-school-green-200 border-t-school-green-600"></div>
             </div>
           ) : student ? (
             <div>
               {!isEditing ? (
                 // View Mode
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Student ID</h3>
-                      <p>{student.student_id}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Admission Number</h3>
-                      <p>{student.admission_number}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Full Name</h3>
-                      <p>{student.surname}, {student.other_names}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Gender</h3>
-                      <p>{student.gender}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Date of Birth</h3>
-                      <p>{student.date_of_birth}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Programme</h3>
-                      <p>{student.course_name || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Class</h3>
-                      <p>{student.class_name || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Status</h3>
-                      <p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  {/* Hero Identity Strip */}
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-sm border border-gray-200">
+                    <UserAvatar
+                      name={`${student.surname} ${student.other_names}`}
+                      size="lg"
+                      status={student.is_active ? 'online' : 'offline'}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-base font-bold text-gray-900 leading-snug">
+                          {student.surname}, {student.other_names}
+                        </h3>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium border ${
                           student.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
                           {student.is_active ? 'Active' : 'Deactivated'}
                         </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Personal Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Nationality</h4>
-                        <p>{student.nationality}</p>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Hometown</h4>
-                        <p>{student.hometown || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">District of Origin</h4>
-                        <p>{student.district_of_origin || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Region of Origin</h4>
-                        <p>{student.region_of_origin || 'N/A'}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-1 flex-wrap">
+                        <span>ID: <strong className="font-mono text-gray-800 tabular-nums">{student.student_id}</strong></span>
+                        {student.admission_number && (
+                          <span>Adm: <strong className="font-mono text-gray-800 tabular-nums">{student.admission_number}</strong></span>
+                        )}
+                        <span>Class: <strong className="text-gray-800">{student.class_name || 'Unassigned'}</strong></span>
+                        <span>Gender: <strong className="text-gray-800">{student.gender || '—'}</strong></span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Guardian Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Academic & Class Overview */}
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Academic Placement</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-sm border border-gray-200 text-xs">
                       <div>
-                        <h4 className="font-semibold text-gray-700">Guardian Name</h4>
-                        <p>{student.guardian_name || 'N/A'}</p>
+                        <span className="text-gray-500 block">Programme</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.course_name || 'Not assigned'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Relationship</h4>
-                        <p>{student.guardian_relationship || 'N/A'}</p>
+                        <span className="text-gray-500 block">Class</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.class_name || 'Not assigned'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Phone</h4>
-                        <p>{student.guardian_phone || 'N/A'}</p>
+                        <span className="text-gray-500 block">Residential Status</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.residential_status || 'Day Student'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Alternative Phone</h4>
-                        <p>{student.guardian_phone_alt || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Email</h4>
-                        <p>{student.guardian_email || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Address</h4>
-                        <p>{student.guardian_address || 'N/A'}</p>
+                        <span className="text-gray-500 block">Enrollment Date</span>
+                        <span className="font-mono text-gray-900 mt-0.5 block tabular-nums">{student.enrollment_date || '—'}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Academic Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Personal Demographics */}
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Personal Information</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-sm border border-gray-200 text-xs">
                       <div>
-                        <h4 className="font-semibold text-gray-700">Previous School</h4>
-                        <p>{student.previous_school || 'N/A'}</p>
+                        <span className="text-gray-500 block">Date of Birth</span>
+                        <span className="font-mono text-gray-900 mt-0.5 block tabular-nums">{student.date_of_birth || '—'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Graduation Year</h4>
-                        <p>{student.graduation_year || 'N/A'}</p>
+                        <span className="text-gray-500 block">Nationality</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.nationality || 'Ghanaian'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Enrollment Date</h4>
-                        <p>{student.enrollment_date}</p>
+                        <span className="text-gray-500 block">Hometown</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.hometown || '—'}</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-700">Residential Status</h4>
-                        <p>{student.residential_status || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Medical Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Known Allergies</h4>
-                        <p>{student.known_allergies || 'None'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Chronic Conditions</h4>
-                        <p>{student.chronic_conditions || 'None'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-700">Blood Group</h4>
-                        <p>{student.blood_group || 'N/A'}</p>
+                        <span className="text-gray-500 block">Region / District</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.region_of_origin || '—'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Only show edit button if programmes and classes are provided (admin view) */}
-                  {(programmes.length > 0 || classes.length > 0) && (
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <PortalButton
-                        onClick={onClose}
-                        variant="secondary"
-                      >
-                        Close
-                      </PortalButton>
-                      <PortalButton
-                        onClick={() => {
-                          const creds = prompt('Enter new password for student (leave empty to generate):');
-                          if (creds === null) return;
-                          const reset = async () => {
-                            try {
-                              const result = await db.resetStudentPassword(studentId);
-                              const password = creds || result.password;
-                              alert(`Student ID: ${student.student_id}\nPassword: ${password}\n\nSave these credentials. The student must change password on first login.`);
-                              toast.success('Password reset successfully');
-                            } catch (e) {
-                              toast.error('Failed to reset password');
-                            }
-                          };
-                          reset();
-                        }}
-                        variant="secondary"
-                      >
-                        Reset Password
-                      </PortalButton>
-                      <PortalButton
-                        onClick={() => setIsEditing(true)}
-                        variant="primary"
-                      >
-                        Edit Details
-                      </PortalButton>
+                  {/* Guardian & Contact */}
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Guardian Information</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3.5 rounded-sm border border-gray-200 text-xs">
+                      <div>
+                        <span className="text-gray-500 block">Guardian Name</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.guardian_name || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Relationship</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.guardian_relationship || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Primary Phone</span>
+                        <span className="font-mono text-gray-900 mt-0.5 block tabular-nums">{student.guardian_phone || '—'}</span>
+                      </div>
+                      {student.guardian_email && (
+                        <div className="sm:col-span-2">
+                          <span className="text-gray-500 block">Email Address</span>
+                          <span className="text-gray-900 mt-0.5 block">{student.guardian_email}</span>
+                        </div>
+                      )}
+                      {student.guardian_address && (
+                        <div className="sm:col-span-3">
+                          <span className="text-gray-500 block">Residential Address</span>
+                          <span className="text-gray-900 mt-0.5 block">{student.guardian_address}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  {/* Show close button only if programmes and classes are not provided (teacher view) */}
-                  {(programmes.length === 0 && classes.length === 0) && (
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <PortalButton
-                        onClick={onClose}
-                        variant="secondary"
-                      >
-                        Close
-                      </PortalButton>
+                  </div>
+
+                  {/* Medical Details */}
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Medical Summary</h4>
+                    <div className="grid grid-cols-3 gap-3 bg-white p-3.5 rounded-sm border border-gray-200 text-xs">
+                      <div>
+                        <span className="text-gray-500 block">Blood Group</span>
+                        <span className="font-mono text-gray-900 mt-0.5 block">{student.blood_group || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Known Allergies</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.known_allergies || 'None'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Chronic Conditions</span>
+                        <span className="font-medium text-gray-900 mt-0.5 block">{student.chronic_conditions || 'None'}</span>
+                      </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="flex justify-end gap-2.5 pt-4 border-t border-gray-100">
+                    <PortalButton
+                      onClick={onClose}
+                      variant="secondary"
+                    >
+                      Close
+                    </PortalButton>
+
+                    {(programmes.length > 0 || classes.length > 0) && (
+                      <>
+                        <PortalButton
+                          onClick={() => {
+                            const creds = prompt('Enter new password for student (leave empty to generate):');
+                            if (creds === null) return;
+                            const reset = async () => {
+                              try {
+                                const result = await db.resetStudentPassword(studentId);
+                                const password = creds || result.password;
+                                alert(`Student ID: ${student.student_id}\nPassword: ${password}\n\nSave these credentials. The student must change password on first login.`);
+                                toast.success('Password reset successfully');
+                              } catch (e) {
+                                toast.error('Failed to reset password');
+                              }
+                            };
+                            reset();
+                          }}
+                          variant="secondary"
+                        >
+                          <svg className="w-4 h-4 mr-1 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                          Reset Password
+                        </PortalButton>
+                        <PortalButton
+                          onClick={() => setIsEditing(true)}
+                          variant="primary"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit Profile
+                        </PortalButton>
+                      </>
+                    )}
+                  </div>
                 </div>
               ) : (
-                // Edit Mode - only shown in admin view
-                <form onSubmit={handleSubmit} className="space-y-6">
+                // Edit Mode
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <PortalInput
                       label="Student ID"
@@ -370,17 +368,17 @@ export function StudentDetailsModal({
                       disabled={isSubmitting}
                     />
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Gender *</label>
                       <select
                         value={formData.gender || ''}
                         onChange={(e) => handleInputChange('gender', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                        className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
                         required
                         disabled={isSubmitting}
                       >
                         <option value="">Select gender</option>
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
                       </select>
                     </div>
                     <PortalInput
@@ -392,11 +390,11 @@ export function StudentDetailsModal({
                       disabled={isSubmitting}
                     />
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Programme</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Programme</label>
                       <select
                         value={formData.course_id || ''}
                         onChange={(e) => handleInputChange('course_id', parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                        className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
                         disabled={isSubmitting}
                       >
                         <option value="">Select programme</option>
@@ -406,11 +404,11 @@ export function StudentDetailsModal({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Class</label>
                       <select
                         value={formData.current_class_id || ''}
                         onChange={(e) => handleInputChange('current_class_id', parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                        className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
                         disabled={isSubmitting}
                       >
                         <option value="">Select class</option>
@@ -421,8 +419,8 @@ export function StudentDetailsModal({
                     </div>
                   </div>
 
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Personal Information</h3>
+                  <div className="border-t border-gray-100 pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Personal Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <PortalInput
                         label="Nationality"
@@ -438,25 +436,11 @@ export function StudentDetailsModal({
                         onChange={(e) => handleInputChange('hometown', e.target.value)}
                         disabled={isSubmitting}
                       />
-                      <PortalInput
-                        label="District of Origin"
-                        type="text"
-                        value={formData.district_of_origin || ''}
-                        onChange={(e) => handleInputChange('district_of_origin', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
-                        label="Region of Origin"
-                        type="text"
-                        value={formData.region_of_origin || ''}
-                        onChange={(e) => handleInputChange('region_of_origin', e.target.value)}
-                        disabled={isSubmitting}
-                      />
                     </div>
                   </div>
 
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Guardian Information</h3>
+                  <div className="border-t border-gray-100 pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Guardian Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <PortalInput
                         label="Guardian Name"
@@ -480,100 +464,16 @@ export function StudentDetailsModal({
                         disabled={isSubmitting}
                       />
                       <PortalInput
-                        label="Alternative Phone"
-                        type="text"
-                        value={formData.guardian_phone_alt || ''}
-                        onChange={(e) => handleInputChange('guardian_phone_alt', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
                         label="Email"
                         type="email"
                         value={formData.guardian_email || ''}
                         onChange={(e) => handleInputChange('guardian_email', e.target.value)}
                         disabled={isSubmitting}
                       />
-                      <div className="md:col-span-2">
-                        <PortalInput
-                          label="Address"
-                          as="textarea"
-                          rows={3}
-                          value={formData.guardian_address || ''}
-                          onChange={(e) => handleInputChange('guardian_address', e.target.value)}
-                          disabled={isSubmitting}
-                        />
-                      </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Academic Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <PortalInput
-                        label="Previous School"
-                        type="text"
-                        value={formData.previous_school || ''}
-                        onChange={(e) => handleInputChange('previous_school', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
-                        label="Graduation Year"
-                        type="number"
-                        value={formData.graduation_year || ''}
-                        onChange={(e) => handleInputChange('graduation_year', parseInt(e.target.value))}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
-                        label="Enrollment Date"
-                        type="date"
-                        value={formData.enrollment_date || ''}
-                        onChange={(e) => handleInputChange('enrollment_date', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Residential Status</label>
-                        <select
-                          value={formData.residential_status || ''}
-                          onChange={(e) => handleInputChange('residential_status', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                          disabled={isSubmitting}
-                        >
-                          <option value="">Select status</option>
-                          <option value="Day Student">Day Student</option>
-                          <option value="Boarding Student">Boarding Student</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-school-cream-200 pt-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Medical Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <PortalInput
-                        label="Known Allergies"
-                        type="text"
-                        value={formData.known_allergies || ''}
-                        onChange={(e) => handleInputChange('known_allergies', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
-                        label="Chronic Conditions"
-                        type="text"
-                        value={formData.chronic_conditions || ''}
-                        onChange={(e) => handleInputChange('chronic_conditions', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      <PortalInput
-                        label="Blood Group"
-                        type="text"
-                        value={formData.blood_group || ''}
-                        onChange={(e) => handleInputChange('blood_group', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-3 pt-4">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <PortalButton
                       type="button"
                       onClick={() => setIsEditing(false)}
@@ -588,10 +488,10 @@ export function StudentDetailsModal({
                       variant="primary"
                     >
                       {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                           Saving...
-                        </>
+                        </span>
                       ) : (
                         'Save Changes'
                       )}

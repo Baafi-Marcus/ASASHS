@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import db from '../../../lib/neon';
 import { toast } from 'react-hot-toast';
+import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface StudentVotingProps {
   studentId: number;
@@ -11,6 +13,7 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
   const [elections, setElections] = useState<any[]>([]);
   const [selectedElection, setSelectedElection] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'selection' | 'review' | 'success'>('selection');
   const [votes, setVotes] = useState<Record<number, any>>({}); // positionId -> candidate
   const [readingManifesto, setReadingManifesto] = useState<any>(null);
@@ -25,17 +28,13 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
       const active = all.filter((e: any) => e.status === 'open');
       setElections(active);
       if (active.length > 0) {
-        // Fetch full election details including positions
         const fullElection = await db.getElectionById(active[0].id);
-        
-        // Fetch candidates for each position
         const positionsWithCandidates = await Promise.all(
           fullElection.positions.map(async (pos: any) => {
             const candidates = await db.getCandidates(pos.id);
             return { ...pos, candidates };
           })
         );
-        
         setSelectedElection({ ...fullElection, positions: positionsWithCandidates });
       }
     } catch (error) {
@@ -51,6 +50,7 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
 
   const handleSubmitVotes = async () => {
     try {
+      setIsSubmitting(true);
       const selections = Object.entries(votes).map(([posId, cand]) => ({
         position_id: parseInt(posId),
         candidate_id: cand.id
@@ -58,182 +58,184 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
 
       await db.submitVote(selectedElection.id, studentId, selections);
       setStep('success');
-      toast.success('Vote cast successfully!');
+      toast.success('Ballot officially recorded');
     } catch (error: any) {
       if (error.message === 'ALREADY_VOTED') {
-        toast.error('You have already voted in this election.');
+        toast.error('Your vote has already been recorded for this election.');
       } else {
-        toast.error('Failed to submit votes');
+        toast.error('Failed to submit ballot');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center p-20 space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
-      <p className="text-gray-500 font-medium">Preparing your ballot...</p>
+    <div className="flex flex-col items-center justify-center p-16 space-y-3">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-school-green-200 border-t-school-green-700"></div>
+      <p className="text-gray-500 text-xs">Preparing your official ballot...</p>
     </div>
   );
 
   if (!selectedElection) return (
-    <div className="p-12 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
-      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Elections</h3>
-      <p className="text-gray-500">There are no school elections currently open for voting.</p>
+    <div className="p-10 text-center bg-white rounded-md border border-gray-200 space-y-2">
+      <h3 className="text-sm font-semibold text-gray-900">No Active Elections</h3>
+      <p className="text-gray-500 text-xs">There are no school elections currently open for voting.</p>
     </div>
   );
 
   if (step === 'success') {
     return (
-      <div className="max-w-xl mx-auto bg-white p-12 text-center rounded-[2.5rem] shadow-2xl border border-school-green-100 animate-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-school-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-          <svg className="w-12 h-12 text-school-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="max-w-md mx-auto bg-white p-8 text-center rounded-md border border-gray-200 shadow-xl animate-fade-in space-y-4">
+        <div className="w-12 h-12 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+          ✓
         </div>
-        <h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">VOTE CASTED!</h3>
-        <p className="text-lg text-gray-600 mb-10 leading-relaxed">
-          Your participation strengthens our democracy. Results will be announced once the election concludes.
+        <h3 className="text-lg font-bold text-gray-900">Ballot Successfully Cast</h3>
+        <p className="text-xs text-gray-600 leading-relaxed">
+          Your vote has been securely recorded. Official results will be published once the polls close.
         </p>
-        <button
-          onClick={onComplete}
-          className="w-full bg-gradient-to-r from-school-green-600 to-school-green-700 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-xl hover:scale-[1.02] transition-all"
-        >
-          Return to Dashboard
-        </button>
+        <div className="pt-2">
+          <PortalButton
+            onClick={onComplete}
+            variant="primary"
+            size="md"
+            fullWidth
+          >
+            Return to Student Dashboard
+          </PortalButton>
+        </div>
       </div>
     );
   }
 
   if (step === 'review') {
     return (
-      <div className="max-w-2xl mx-auto space-y-8 animate-in slide-in-from-right-8 duration-500">
+      <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
         <div className="text-center">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Review Your Selections</h2>
-          <p className="text-gray-500 mt-2">Please double-check your choices before final submission.</p>
+          <h2 className="text-lg font-bold text-gray-900 tracking-tight">Review Your Ballot</h2>
+          <p className="text-xs text-gray-500 mt-1">Please confirm your selections before submitting your vote.</p>
         </div>
 
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden">
-          <div className="p-8 space-y-6">
-            {selectedElection.positions.map((pos: any) => (
-              <div key={pos.id} className="flex justify-between items-center pb-6 border-b border-gray-50 last:border-0 last:pb-0">
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{pos.title}</p>
-                  <p className="text-xl font-bold text-gray-900">{votes[pos.id]?.display_name || 'No selection'}</p>
-                </div>
-                <button 
-                  onClick={() => setStep('selection')}
-                  className="text-school-green-600 font-bold hover:underline"
-                >
-                  Change
-                </button>
+        <div className="bg-white rounded-md border border-gray-200 divide-y divide-gray-100">
+          {selectedElection.positions.map((pos: any) => (
+            <div key={pos.id} className="p-4 flex justify-between items-center">
+              <div>
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{pos.title}</p>
+                <p className="text-sm font-bold text-gray-900 mt-0.5">{votes[pos.id]?.display_name || 'No selection made'}</p>
               </div>
-            ))}
-          </div>
+              <button 
+                onClick={() => setStep('selection')}
+                className="text-xs font-semibold text-school-green-800 hover:underline min-h-[36px] flex items-center"
+              >
+                Change
+              </button>
+            </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
+        <div className="flex gap-3">
+          <PortalButton
             onClick={() => setStep('selection')}
-            className="w-full py-4 rounded-2xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-lg"
+            variant="outline"
+            size="md"
+            fullWidth
+            disabled={isSubmitting}
           >
             Back to Ballot
-          </button>
-          <button
+          </PortalButton>
+          <PortalButton
             onClick={handleSubmitVotes}
-            className="w-full bg-school-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-school-green-700 transition-all group"
+            variant="primary"
+            size="md"
+            fullWidth
+            loading={isSubmitting}
+            loadingText="Recording Vote..."
           >
-            Confirm & Submit Vote
-            <svg className="inline-block w-5 h-5 ml-2 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z" />
-            </svg>
-          </button>
+            Confirm & Cast Vote
+          </PortalButton>
         </div>
       </div>
     );
   }
 
+  const selectedCount = Object.keys(votes).length;
+  const totalPositions = selectedElection.positions.length;
+  const isComplete = selectedCount >= totalPositions;
+
   return (
-    <div className="max-w-4xl mx-auto pb-20 space-y-12">
-      <div className="text-center">
-        <span className="bg-school-green-100 text-school-green-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ring-1 ring-school-green-200 mb-4 inline-block">
+    <div className="max-w-3xl mx-auto space-y-8 pb-12">
+      <div className="text-center space-y-1">
+        <span className="text-[11px] font-bold text-school-green-800 bg-school-green-50 border border-school-green-200 px-2.5 py-0.5 rounded-sm uppercase tracking-wider inline-block">
           Official Ballot
         </span>
-        <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight uppercase leading-none">{selectedElection.name}</h2>
-        <div className="h-1.5 w-24 bg-school-green-600 mx-auto mt-6 rounded-full"></div>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{selectedElection.name}</h2>
+        <p className="text-xs text-gray-500">Select one candidate for each student executive position</p>
       </div>
 
-      <div className="space-y-16">
-        {selectedElection.positions.map((pos: any) => (
-          <section key={pos.id} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div className="flex items-center space-x-4">
-                <span className="bg-school-green-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center font-black shadow-lg transform rotate-3">{selectedElection.positions.indexOf(pos) + 1}</span>
-                <h3 className="text-2xl font-bold text-gray-800 uppercase tracking-wide">{pos.title}</h3>
+      <div className="space-y-8">
+        {selectedElection.positions.map((pos: any, posIdx: number) => (
+          <section key={pos.id} className="space-y-3">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-5 h-5 rounded-sm bg-school-green-700 text-white flex items-center justify-center text-xs font-bold tabular-nums">
+                  {posIdx + 1}
+                </span>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">{pos.title}</h3>
               </div>
-              <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-lg uppercase">Select 1 Candidate</span>
+              <span className="text-[11px] text-gray-500 font-medium">Select 1</span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {pos.candidates && pos.candidates.length > 0 ? (
-                pos.candidates.map((cand: any) => (
-                  <div 
-                    key={cand.id}
-                    onClick={() => handleVoteChange(pos.id, cand)}
-                    className={`relative p-6 rounded-[2rem] border-2 transition-all cursor-pointer group hover:shadow-xl ${
-                      votes[pos.id]?.id === cand.id 
-                        ? 'border-school-green-500 bg-school-green-50/30' 
-                        : 'border-transparent bg-white shadow-sm hover:border-gray-200'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center mb-4 transition-all duration-500 overflow-hidden ${
-                        votes[pos.id]?.id === cand.id ? 'bg-school-green-100 scale-110' : 'bg-gray-50 group-hover:bg-gray-100'
-                      }`}>
-                        {cand.image_url ? (
-                          <img src={cand.image_url} alt={cand.display_name} className="w-full h-full object-cover" />
-                        ) : (
-                          <svg className={`w-10 h-10 ${votes[pos.id]?.id === cand.id ? 'text-school-green-600' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                          </svg>
-                        )}
+                pos.candidates.map((cand: any) => {
+                  const isSelected = votes[pos.id]?.id === cand.id;
+                  return (
+                    <div 
+                      key={cand.id}
+                      onClick={() => handleVoteChange(pos.id, cand)}
+                      className={`p-4 rounded-md border transition-all duration-fast ease-standard cursor-pointer flex flex-col justify-between ${
+                        isSelected 
+                          ? 'border-school-green-700 bg-school-green-50/50 shadow-xs' 
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <UserAvatar 
+                          name={cand.display_name} 
+                          src={cand.image_url} 
+                          size="lg" 
+                          className={isSelected ? 'ring-2 ring-school-green-700' : ''}
+                        />
+                        <h4 className="text-sm font-semibold text-gray-900 mt-2.5 leading-snug">{cand.display_name}</h4>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{cand.student_class || 'Candidate'}</p>
                       </div>
-                      
-                      <h4 className="text-xl font-bold text-gray-900 mb-1">{cand.display_name}</h4>
-                      <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mb-4">
-                        {cand.student_class || 'Candidate'}
-                      </p>
-                      
-                      <div className="flex flex-col w-full space-y-2">
+
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-col gap-1.5 w-full">
                         {cand.manifesto && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setReadingManifesto(cand);
                             }}
-                            className="text-xs font-bold text-school-green-600 hover:text-school-green-700 px-3 py-1 rounded-lg border border-school-green-100 hover:bg-school-green-50 transition-colors"
+                            className="min-h-[32px] text-[11px] font-medium text-school-green-800 hover:underline"
                           >
-                            View Manifesto
+                            Read Manifesto
                           </button>
                         )}
-                        <div className={`w-full py-2 rounded-xl text-xs font-bold uppercase transition-all ${
-                          votes[pos.id]?.id === cand.id 
-                            ? 'bg-school-green-600 text-white shadow-lg' 
-                            : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100'
+                        <div className={`w-full py-1.5 rounded-sm text-center text-xs font-semibold select-none border ${
+                          isSelected
+                            ? 'bg-school-green-700 text-white border-school-green-800'
+                            : 'bg-gray-50 text-gray-600 border-gray-200'
                         }`}>
-                          {votes[pos.id]?.id === cand.id ? 'Selected' : 'Select'}
+                          {isSelected ? 'Selected' : 'Select'}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <p className="text-gray-400 italic">No candidates registered for this position.</p>
+                <div className="col-span-full py-6 text-center bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500">
+                  No registered candidates for this office.
                 </div>
               )}
             </div>
@@ -243,53 +245,57 @@ export const StudentVoting: React.FC<StudentVotingProps> = ({ studentId, onCompl
 
       {/* Manifesto Modal */}
       {readingManifesto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h4 className="text-2xl font-black text-gray-900 uppercase">Manifesto</h4>
-                  <p className="text-school-green-600 font-bold mt-1 text-lg">{readingManifesto.display_name}</p>
-                </div>
-                <button onClick={() => setReadingManifesto(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in" onClick={() => setReadingManifesto(null)}>
+          <div className="bg-white w-full max-w-md rounded-md border border-gray-200 shadow-xl p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-100">
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Candidate Manifesto</h4>
+                <p className="text-xs font-semibold text-school-green-800 mt-0.5">{readingManifesto.display_name}</p>
               </div>
-              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 max-h-[40vh] overflow-y-auto">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap italic">
-                  "{readingManifesto.manifesto || 'No manifesto provided by the candidate.'}"
-                </p>
-              </div>
-              <button
+              <button 
                 onClick={() => setReadingManifesto(null)}
-                className="w-full mt-8 bg-black text-white py-4 rounded-2xl font-bold hover:bg-gray-900 transition-all shadow-xl"
+                aria-label="Close manifesto"
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-sm hover:bg-gray-100 text-gray-500"
               >
-                Close Manifesto
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
+            <div className="bg-gray-50 rounded-sm p-4 border border-gray-200 max-h-64 overflow-y-auto text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {readingManifesto.manifesto || 'No manifesto text submitted by candidate.'}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <PortalButton
+                onClick={() => setReadingManifesto(null)}
+                variant="primary"
+                size="sm"
+              >
+                Close
+              </PortalButton>
             </div>
           </div>
         </div>
       )}
 
-      <div className="sticky bottom-6 pt-12">
-        <div className="max-w-md mx-auto relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-school-green-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <button
+      {/* Sticky Bottom Review Bar */}
+      <div className="sticky bottom-4 z-20">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-md p-3 shadow-lg flex items-center justify-between max-w-md mx-auto">
+          <div className="text-xs">
+            <span className="font-semibold text-gray-900 tabular-nums">{selectedCount}</span>
+            <span className="text-gray-500"> of </span>
+            <span className="font-semibold text-gray-900 tabular-nums">{totalPositions}</span>
+            <span className="text-gray-500"> positions chosen</span>
+          </div>
+          <PortalButton
             onClick={() => setStep('review')}
-            disabled={Object.keys(votes).length < selectedElection.positions.length}
-            className="relative w-full bg-school-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-school-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+            disabled={!isComplete}
+            variant="primary"
+            size="sm"
           >
-            {Object.keys(votes).length < selectedElection.positions.length 
-              ? `Select ${selectedElection.positions.length - Object.keys(votes).length} more to continue`
-              : 'Review My Ballot'}
-            <svg className="inline-block w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
+            Review Ballot &rarr;
+          </PortalButton>
         </div>
-        <p className="text-center text-[10px] text-gray-400 mt-4 uppercase tracking-widest font-bold">Secure Encrypted Voting Interface v3.0</p>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
+import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
 
 interface TeacherBulkUploadProps {
   onSuccess: () => void;
@@ -31,7 +33,10 @@ export const TeacherBulkUpload: React.FC<TeacherBulkUploadProps> = ({ onSuccess 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (!selectedFile.name.endsWith('.csv')) { toast.error('Please upload a CSV file'); return; }
+      if (!selectedFile.name.endsWith('.csv')) { 
+        toast.error('Please upload a valid CSV file'); 
+        return; 
+      }
       setFile(selectedFile);
       setResults(null);
       parseCSV(selectedFile);
@@ -106,82 +111,161 @@ export const TeacherBulkUpload: React.FC<TeacherBulkUploadProps> = ({ onSuccess 
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-school-cream-200">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-gray-800">Bulk Teacher Upload</h3>
-        <button onClick={downloadTemplate} className="flex items-center gap-1.5 px-3 py-1.5 bg-school-green-100 text-school-green-700 rounded-lg text-xs font-bold hover:bg-school-green-200 transition-colors">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-          Download Sample CSV
+    <PortalCard
+      title="Bulk Faculty Upload"
+      subtitle="Import multiple faculty and teaching staff profiles from CSV"
+      headerActions={
+        <button
+          onClick={downloadTemplate}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-300 text-gray-700 rounded-sm text-xs font-medium transition-colors"
+        >
+          <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download CSV Template
         </button>
-      </div>
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800">
-        <p className="font-bold mb-1">Required columns:</p>
-        <code className="text-xs">surname, other_names, gender, department, position_rank</code>
-        <p className="font-bold mt-2 mb-1">Optional columns:</p>
-        <code className="text-xs">staff_id, title</code>
-        <p className="text-xs mt-1">Leave <strong>staff_id</strong> blank to auto-generate. <strong>title</strong> defaults to Mr., <strong>gender</strong> defaults to Male.</p>
-      </div>
+      }
+    >
+      <div className="space-y-5">
+        <div className="bg-amber-50/70 border border-amber-200 rounded-sm p-3.5 text-xs text-amber-900 leading-relaxed">
+          <div className="flex items-center gap-1.5 font-semibold text-amber-950 mb-1">
+            <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Column Specifications:
+          </div>
+          <div>
+            <span className="font-medium text-amber-800">Required: </span>
+            <code className="font-mono bg-white/80 px-1 py-0.5 rounded-xs border border-amber-200">surname, other_names, gender, department, position_rank</code>
+          </div>
+          <div className="mt-1">
+            <span className="font-medium text-amber-800">Optional: </span>
+            <code className="font-mono bg-white/80 px-1 py-0.5 rounded-xs border border-amber-200">staff_id, title</code>
+          </div>
+          <p className="mt-1.5 text-amber-700 text-[11px]">
+            Leave staff_id blank to auto-generate standard institutional IDs. Title defaults to Mr. and gender defaults to Male.
+          </p>
+        </div>
 
-      {!results ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-center w-full">
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <span className="text-3xl mb-2 text-gray-400">📄</span>
-                <p className="mb-2 text-sm text-gray-500 font-medium">{file ? file.name : "Click to upload CSV teacher list"}</p>
+        {!results ? (
+          <div className="space-y-4">
+            <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-sm cursor-pointer bg-gray-50/60 hover:bg-gray-100/70 hover:border-gray-400 transition-all">
+              <div className="flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-500 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-700 font-medium">
+                  {file ? file.name : 'Click to select CSV faculty list'}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Maximum 500 staff records per batch</p>
               </div>
               <input type="file" className="hidden" accept=".csv" onChange={handleFileChange} disabled={uploading} title="teacher list csv file"/>
             </label>
-          </div>
-          {preview.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-bold text-gray-700 mb-2">Data Preview (first 5 rows):</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs text-left text-gray-500">
-                  <thead className="bg-gray-50"><tr>{Object.keys(preview[0]).map(h => <th key={h} className="px-2 py-1 font-bold">{h}</th>)}</tr></thead>
-                  <tbody>{preview.map((row, i) => (<tr key={i} className="border-t">{Object.values(row).map((v: any, j) => <td key={j} className="px-2 py-1">{v}</td>)}</tr>))}</tbody>
-                </table>
+
+            {preview.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-600">CSV Sample Preview (First 5 Rows)</h4>
+                <div className="overflow-x-auto border border-gray-200 rounded-sm">
+                  <table className="min-w-full text-xs text-left text-gray-600">
+                    <thead className="bg-gray-50 border-b border-gray-200 font-semibold text-gray-700">
+                      <tr>
+                        {Object.keys(preview[0]).map(h => (
+                          <th key={h} className="px-3 py-2">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {preview.map((row, i) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          {Object.values(row).map((v: any, j) => (
+                            <td key={j} className="px-3 py-2">{v || '—'}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
-          <button onClick={handleUpload} disabled={!file || uploading} className="w-full bg-school-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-school-green-700 transition-all disabled:opacity-50">
-            {uploading ? 'Processing...' : 'Upload & Generate IDs'}
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <p className="text-green-800 font-bold text-lg">{results.length} teachers imported successfully</p>
+            )}
+
+            <PortalButton
+              onClick={handleUpload}
+              disabled={!file || uploading}
+              variant="primary"
+              className="w-full justify-center"
+            >
+              {uploading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Processing Faculty Accounts...
+                </span>
+              ) : (
+                'Upload & Generate Faculty Credentials'
+              )}
+            </PortalButton>
           </div>
-          <div className="max-h-60 overflow-y-auto border rounded-xl">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50"><tr><th className="px-3 py-2 font-bold">#</th><th className="px-3 py-2 font-bold">Name</th><th className="px-3 py-2 font-bold">Teacher ID</th><th className="px-3 py-2 font-bold">Staff ID</th><th className="px-3 py-2 font-bold">Password</th></tr></thead>
-              <tbody>
-                {results.map((r, i) => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
-                    <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                    <td className="px-3 py-2 font-medium">{r.name}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{r.teacherId}</td>
-                    <td className="px-3 py-2 font-mono text-xs">{r.staffId}</td>
-                    <td className="px-3 py-2 font-mono text-xs text-amber-600">{r.tempPassword}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={downloadCredentials} className="flex-1 bg-school-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-school-green-700 transition-all">
-              <span className="flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Download Credentials CSV
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-sm p-4 flex items-center justify-between">
+              <div>
+                <p className="text-emerald-900 font-bold text-sm">Upload Successful</p>
+                <p className="text-emerald-700 text-xs mt-0.5 tabular-nums">{results.length} teacher accounts provisioned</p>
+              </div>
+              <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </span>
-            </button>
-            <button onClick={() => { setResults(null); setPreview([]); setFile(null); }} className="px-6 py-3 border rounded-xl font-bold hover:bg-gray-50 transition-all">
-              Upload More
-            </button>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-sm">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 font-semibold text-gray-700">
+                  <tr>
+                    <th className="px-3 py-2">#</th>
+                    <th className="px-3 py-2">Full Name</th>
+                    <th className="px-3 py-2">Teacher ID</th>
+                    <th className="px-3 py-2">Staff ID</th>
+                    <th className="px-3 py-2">Initial Password</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-mono">
+                  {results.map((r, i) => (
+                    <tr key={i} className="hover:bg-gray-50 tabular-nums">
+                      <td className="px-3 py-2 text-gray-400 font-sans">{i + 1}</td>
+                      <td className="px-3 py-2 font-sans font-medium text-gray-800">{r.name}</td>
+                      <td className="px-3 py-2 text-gray-700 font-semibold">{r.teacherId}</td>
+                      <td className="px-3 py-2 text-gray-500">{r.staffId}</td>
+                      <td className="px-3 py-2 text-school-green-700 font-bold">{r.tempPassword}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <PortalButton
+                onClick={downloadCredentials}
+                variant="primary"
+                className="flex-1 justify-center"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Credentials CSV
+              </PortalButton>
+              <PortalButton
+                onClick={() => { setResults(null); setPreview([]); setFile(null); }}
+                variant="secondary"
+              >
+                Upload Another File
+              </PortalButton>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </PortalCard>
   );
 };

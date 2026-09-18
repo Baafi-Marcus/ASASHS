@@ -7,6 +7,22 @@ import { ExtractedQuestion, aiService } from '../../lib/aiService';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { MathText } from '../../components/MathText';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { PortalButton } from '../../components/PortalButton';
+import {
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  AcademicCapIcon,
+  DocumentTextIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ArrowUpTrayIcon,
+  PlusIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  EyeIcon,
+  AdjustmentsHorizontalIcon,
+} from '@heroicons/react/24/outline';
 
 function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]; onClose: () => void }) {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -29,55 +45,141 @@ function ViewExamModal({ exam, allExams, onClose }: { exam: any; allExams: any[]
   const status = getScheduleStatus(exam.due_date, exam.duration_minutes);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
-        <div className="p-6 border-b flex justify-between items-center bg-school-green-600 text-white shrink-0">
-          <h2 className="text-xl font-bold">{exam.title}</h2>
-          <button onClick={onClose} className="hover:bg-white/20 p-2 rounded-full transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-md border border-gray-200 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50/50 shrink-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-gray-900">{exam.title}</h2>
+              <span className={`px-2 py-0.5 rounded-sm text-[11px] font-semibold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>
+                {status === 'ended' ? 'Concluded' : status === 'upcoming' ? 'Scheduled' : 'In Session'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">School-wide official examination schedule & parameters</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-sm transition-colors"
+          >
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-auto p-6 space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Type</label><p className="font-medium">{exam.exam_type || 'General'}</p></div>
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Subject</label><p className="font-medium">{exam.subject_name}</p></div>
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Status</label><p className={`font-bold ${status === 'ended' ? 'text-red-600' : status === 'upcoming' ? 'text-blue-600' : 'text-green-600'}`}>{status === 'ended' ? 'Ended' : status === 'upcoming' ? 'Upcoming' : 'Active'}</p></div>
-            {start && <div><label className="text-[10px] font-bold text-gray-500 uppercase">Start</label><p className="font-medium">{start.toLocaleString()}</p></div>}
-            {end && <div><label className="text-[10px] font-bold text-gray-500 uppercase">End</label><p className="font-medium">{end.toLocaleString()}</p></div>}
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Duration</label><p className="font-medium">{exam.duration_minutes || 60} mins</p></div>
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Max Score</label><p className="font-medium">{exam.max_score || 100}</p></div>
-            <div className="col-span-2"><label className="text-[10px] font-bold text-gray-500 uppercase">Target Classes</label><p className="font-medium">{targetClasses.join(', ') || 'N/A'}</p></div>
+
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5 bg-gray-50/70 p-4 rounded-sm border border-gray-200 text-xs">
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Exam Category</span>
+              <p className="font-semibold text-gray-900 mt-0.5">{exam.exam_type || 'General Assessment'}</p>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Curriculum Subject</span>
+              <p className="font-semibold text-gray-900 mt-0.5">{exam.subject_name}</p>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Duration</span>
+              <p className="font-semibold text-gray-900 mt-0.5 tabular-nums">{exam.duration_minutes || 60} mins</p>
+            </div>
+            {start && (
+              <div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Scheduled Start</span>
+                <p className="font-semibold text-gray-900 mt-0.5 tabular-nums">{start.toLocaleString()}</p>
+              </div>
+            )}
+            {end && (
+              <div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Scheduled Finish</span>
+                <p className="font-semibold text-gray-900 mt-0.5 tabular-nums">{end.toLocaleString()}</p>
+              </div>
+            )}
+            <div>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Maximum Points</span>
+              <p className="font-semibold text-gray-900 mt-0.5 tabular-nums">{exam.max_score || 100} pts</p>
+            </div>
+            <div className="col-span-2 md:col-span-3 pt-2 border-t border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Target Classes</span>
+              <p className="font-semibold text-gray-800 mt-0.5">{targetClasses.join(', ') || 'School-wide'}</p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            {exam.has_obj && <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-200">Objective</span>}
-            {exam.has_theory && <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-bold border border-purple-200">Theory</span>}
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-600">Assessment Components:</span>
+            {exam.has_obj && (
+              <span className="px-2.5 py-0.5 bg-green-50 text-green-700 rounded-sm text-xs font-semibold border border-green-200">
+                Objective (OBJ)
+              </span>
+            )}
+            {exam.has_theory && (
+              <span className="px-2.5 py-0.5 bg-purple-50 text-purple-700 rounded-sm text-xs font-semibold border border-purple-200">
+                Written Theory
+              </span>
+            )}
           </div>
+
           {exam.instructions && (
-            <div><label className="text-[10px] font-bold text-gray-500 uppercase">Instructions</label><p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{exam.instructions}</p></div>
-          )}
-          {(exam.shuffle_questions || exam.shuffle_options) && (
-            <div className="flex gap-4 text-sm">
-              {exam.shuffle_questions && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Shuffle Questions</span>}
-              {exam.shuffle_options && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Shuffle Options</span>}
+            <div>
+              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">Official Candidate Instructions</span>
+              <div className="text-xs text-gray-700 bg-gray-50 p-3.5 rounded-sm border border-gray-200 whitespace-pre-wrap leading-relaxed">
+                {exam.instructions}
+              </div>
             </div>
           )}
-          {loadingQ && <p className="text-gray-500 text-sm">Loading questions...</p>}
+
+          {(exam.shuffle_questions || exam.shuffle_options) && (
+            <div className="flex gap-4 text-xs font-medium text-gray-600 bg-gray-50 p-3 rounded-sm border border-gray-200">
+              {exam.shuffle_questions && (
+                <span className="flex items-center gap-1.5 text-school-green-700">
+                  <CheckCircleIcon className="w-4 h-4" /> Question Order Randomization
+                </span>
+              )}
+              {exam.shuffle_options && (
+                <span className="flex items-center gap-1.5 text-school-green-700">
+                  <CheckCircleIcon className="w-4 h-4" /> Option Order Randomization
+                </span>
+              )}
+            </div>
+          )}
+
+          {loadingQ && (
+            <div className="flex items-center justify-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-school-green-200 border-t-school-green-600" />
+            </div>
+          )}
+
           {questions.length > 0 && (
             <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase">Questions ({questions.length})</label>
-              <div className="space-y-2 mt-2 max-h-64 overflow-y-auto">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Configured Examination Questions
+                </span>
+                <span className="text-xs text-gray-500 tabular-nums">({questions.length} total questions)</span>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-sm p-2 bg-gray-50/50">
                 {questions.map((q: any, i: number) => (
-                  <div key={q.id} className="bg-gray-50 p-3 rounded-xl border text-sm">
-                    <span className="font-bold text-school-green-600 mr-2">Q{i + 1}.</span>
-                    <MathText text={q.question_text} />
-                    <span className="text-xs text-gray-400 ml-2">({q.points || 1} marks)</span>
+                  <div key={q.id || i} className="bg-white p-3 rounded-sm border border-gray-200 text-xs">
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="font-bold text-school-green-700 mr-2 tabular-nums">Q{i + 1}.</span>
+                      <span className="text-[11px] text-gray-400 tabular-nums font-mono">{q.points || 1} mark(s)</span>
+                    </div>
+                    <div className="text-gray-800">
+                      <MathText text={q.question_text} />
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Dismiss
+          </button>
         </div>
       </div>
     </div>
@@ -190,7 +292,6 @@ export function AdminSchoolExams() {
 
   const handleEdit = async (exam: any) => {
     setEditingExam(exam);
-    // Load questions if using AI builder
     let questions: ExtractedQuestion[] = [];
     if (exam.quiz_id) {
       const data = await db.getQuizById(exam.quiz_id).catch(() => null);
@@ -222,6 +323,10 @@ export function AdminSchoolExams() {
       ca_weight_obj: exam.ca_weight_obj ?? 40,
       ca_weight_theory: exam.ca_weight_theory ?? 60,
       ca_instructions: exam.ca_instructions || '',
+      ca_columns: exam.ca_columns_json ? JSON.parse(exam.ca_columns_json) : [
+        { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: 40, is_auto_obj: true },
+        { id: 'col_theory', name: 'Manual Written Theory', weight: 60, is_auto_obj: false }
+      ],
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -236,6 +341,10 @@ export function AdminSchoolExams() {
       show_results_immediately: true, display_mode: 'all_at_once', max_attempts: 1,
       selectedForms: [], selectedCourses: [], allow_offline: false,
       ca_pdf_url: '', ca_weight_obj: 40, ca_weight_theory: 60, ca_instructions: '',
+      ca_columns: [
+        { id: 'col_obj', name: 'Auto-Graded Objective (APK)', weight: 40, is_auto_obj: true },
+        { id: 'col_theory', name: 'Manual Written Theory', weight: 60, is_auto_obj: false }
+      ],
     });
   };
 
@@ -274,12 +383,10 @@ export function AdminSchoolExams() {
     try {
       setIsSubmitting(true);
       
-      // If editing, delete old exam first
       if (editingExam) {
         await db.deleteGeneralExam(editingExam.title, editingExam.due_date);
       }
 
-      // Filter classes by Form and Course
       const targetClasses = classes.filter(c => {
         const matchesForm = formData.selectedForms.includes(c.form);
         const matchesCourse = formData.selectedCourses.length === 0 || formData.selectedCourses.includes(c.course_id);
@@ -347,7 +454,7 @@ export function AdminSchoolExams() {
     if (!file) return;
 
     setIsAnalyzingCA(true);
-    const toastId = toast.loading('🤖 AI analyzing uploaded Continuous Assessment sheet...');
+    const toastId = toast.loading('AI analyzing uploaded Continuous Assessment sheet...');
 
     try {
       const reader = new FileReader();
@@ -368,7 +475,7 @@ export function AdminSchoolExams() {
             ca_columns: analysis.ca_columns && analysis.ca_columns.length > 0 ? analysis.ca_columns : prev.ca_columns
           }));
 
-          toast.success(`✨ AI analyzed CA sheet! Detected ${analysis.ca_columns?.length || 2} grading columns!`, { id: toastId });
+          toast.success(`CA sheet analyzed! Detected ${analysis.ca_columns?.length || 2} grading columns.`, { id: toastId });
         } catch (err) {
           setFormData(prev => ({ ...prev, ca_pdf_url: dataUrl }));
           toast.success('File uploaded! You can manually adjust weights below.', { id: toastId });
@@ -403,189 +510,233 @@ export function AdminSchoolExams() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">{editingExam ? 'Edit Exam' : 'Schedule School-Wide Exam'}</h2>
+      {/* Schedule / Edit Exam Form Card */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">
+              {editingExam ? `Edit Scheduled Exam: ${editingExam.title}` : 'Schedule School-Wide Examination'}
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Configure parameters, weighting, question banks, and target cohorts
+            </p>
+          </div>
           {editingExam && (
-            <button type="button" onClick={cancelEdit} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
-              Cancel Editing
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="px-3 py-1.5 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              Cancel Edit
             </button>
           )}
         </div>
-        <form onSubmit={handleCreate} className="space-y-6">
+
+        <form onSubmit={handleCreate} className="p-5 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Exam Basics */}
-            <div className="bg-gray-50 p-4 rounded-2xl border space-y-4">
-              <h3 className="font-bold text-gray-800">1. Exam Details</h3>
+            {/* Section 1: Exam Details */}
+            <div className="bg-gray-50/60 p-4 rounded-sm border border-gray-200 space-y-3.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <AcademicCapIcon className="w-4 h-4 text-school-green-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">1. Exam Parameters</h3>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Exam Title *</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Exam Title *</label>
                 <input 
                   type="text" 
                   value={formData.title} 
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                  placeholder="e.g. End of Semester Core Math"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
+                  placeholder="e.g. End of Semester Core Mathematics"
                   required
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Examination Rules & Instructions</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Candidate Instructions & Proctoring Rules</label>
                 <textarea
                   value={formData.instructions}
                   onChange={(e) => setFormData({...formData, instructions: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                  rows={4}
-                  placeholder="List the rules for this exam (e.g., 1. No cheating...)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
+                  rows={3}
+                  placeholder="List instructions (e.g. 1. Answer all objective questions. 2. Mobile devices strictly prohibited.)"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Exam Type</label>
-                <select 
-                  value={formData.exam_type} 
-                  onChange={(e) => setFormData({...formData, exam_type: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                >
-                  <option value="End of Semester">End of Semester Exam</option>
-                  <option value="Mid-Semester">Mid-Semester Exam</option>
-                  <option value="Intervention">Intervention Exam</option>
-                  <option value="Mock Exam">Mock Exam</option>
-                </select>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Exam Category</label>
+                  <select 
+                    value={formData.exam_type} 
+                    onChange={(e) => setFormData({...formData, exam_type: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
+                  >
+                    <option value="End of Semester">End of Semester</option>
+                    <option value="Mid-Semester">Mid-Semester</option>
+                    <option value="Intervention">Intervention Exam</option>
+                    <option value="Mock Exam">Mock Exam</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Curriculum Subject *</label>
+                  <select 
+                    value={formData.subject_id} 
+                    onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
+                    required
+                  >
+                    <option value="">Select Subject</option>
+                    {subjects.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-                <select 
-                  value={formData.subject_id} 
-                  onChange={(e) => setFormData({...formData, subject_id: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                  required
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date & Time *</label>
-                <input 
-                  type="datetime-local" 
-                  value={formData.due_date} 
-                  onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={formData.duration_minutes} 
-                  onChange={(e) => setFormData({...formData, duration_minutes: Number(e.target.value)})}
-                  className="w-full px-4 py-2 border rounded-xl"
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Scheduled Date & Time *</label>
+                  <input 
+                    type="datetime-local" 
+                    value={formData.due_date} 
+                    onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white tabular-nums"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Duration (minutes) *</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    value={formData.duration_minutes} 
+                    onChange={(e) => setFormData({...formData, duration_minutes: Number(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white tabular-nums"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Exam Structure */}
-            <div className="bg-gray-50 p-4 rounded-2xl border space-y-4">
-              <h3 className="font-bold text-gray-800">2. Exam Structure</h3>
-              <div className="flex gap-6">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.has_obj}
-                    onChange={(e) => setFormData({...formData, has_obj: e.target.checked})}
-                    className="w-5 h-5 rounded text-school-green-600"
-                  />
-                  <span className="font-medium text-gray-800">Objective Section (OBJ)</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={formData.has_theory}
-                    onChange={(e) => setFormData({...formData, has_theory: e.target.checked})}
-                    className="w-5 h-5 rounded text-school-green-600"
-                  />
-                  <span className="font-medium text-gray-800">Theory Section</span>
-                </label>
+            {/* Section 2: Exam Structure */}
+            <div className="bg-gray-50/60 p-4 rounded-sm border border-gray-200 space-y-3.5">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <DocumentTextIcon className="w-4 h-4 text-school-green-700" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">2. Assessment Sections</h3>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-medium text-gray-700">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.has_obj}
+                      onChange={(e) => setFormData({...formData, has_obj: e.target.checked})}
+                      className="rounded-xs text-school-green-700 focus:ring-school-green-500"
+                    />
+                    <span>Objective (OBJ)</span>
+                  </label>
+                  <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-medium text-gray-700">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.has_theory}
+                      onChange={(e) => setFormData({...formData, has_theory: e.target.checked})}
+                      className="rounded-xs text-school-green-700 focus:ring-school-green-500"
+                    />
+                    <span>Theory</span>
+                  </label>
+                </div>
               </div>
               
               {formData.has_obj && (
-                <div className="p-4 bg-white rounded-xl border border-green-100 space-y-4">
+                <div className="p-3.5 bg-white rounded-sm border border-gray-200 space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="block text-sm font-bold text-gray-800">Objective Section Setup</label>
+                    <span className="text-xs font-semibold text-gray-800">Objective Section Setup</span>
                     {formData.extractedQuestions.length === 0 && (
                       <button 
                         type="button"
                         onClick={() => setShowAiBuilder(true)}
-                        className="px-3 py-1 bg-school-green-100 text-school-green-700 rounded-lg text-xs font-bold hover:bg-school-green-200"
+                        className="px-2.5 py-1 bg-school-green-50 text-school-green-700 border border-school-green-200 rounded-sm text-xs font-medium hover:bg-school-green-100 transition-colors"
                       >
-                        Use AI Smart Builder
+                        Launch Smart Question Builder
                       </button>
                     )}
                   </div>
                   
                   {formData.extractedQuestions.length > 0 ? (
-                    <div className="bg-green-50 p-4 rounded-xl border border-green-200 flex justify-between items-center">
+                    <div className="bg-green-50/60 p-3 rounded-sm border border-green-200 flex justify-between items-center">
                       <div>
-                        <p className="font-bold text-green-800">{formData.extractedQuestions.length} Questions Extracted via AI</p>
-                        <p className="text-xs text-green-600">Students will answer these structured questions online.</p>
+                        <p className="text-xs font-bold text-green-900 tabular-nums">
+                          {formData.extractedQuestions.length} Questions Loaded
+                        </p>
+                        <p className="text-[11px] text-green-700">Online delivery with auto-scoring enabled.</p>
                       </div>
-                      <button type="button" onClick={() => setFormData({...formData, extractedQuestions: []})} className="text-sm text-red-500 hover:text-red-700 font-bold">Clear</button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, extractedQuestions: []})}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Reset Questions
+                      </button>
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Simple Answer Key (Optional fallback)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Standard Answer Key (Fallback)</label>
                       <input 
                         type="text" 
                         value={formData.obj_answer_key} 
                         onChange={(e) => setFormData({...formData, obj_answer_key: e.target.value})}
-                        className="w-full px-4 py-2 border rounded-xl font-mono uppercase tracking-widest"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-sm font-mono uppercase tracking-widest text-xs"
                         placeholder="e.g. ABCDABCDA..."
                       />
-                      <p className="text-xs text-gray-500 mt-2">If you don't use the AI Builder, enter the correct options (A,B,C,D) here to generate a standard bubble sheet.</p>
+                      <p className="text-[11px] text-gray-500 mt-1">If not using the Question Builder, input ABCD keys for digital optical marking.</p>
                     </div>
                   )}
 
-                  {/* Settings when using AI Questions */}
                   {formData.extractedQuestions.length > 0 && (
-                    <div className="pt-4 border-t space-y-3">
-                      <h4 className="text-xs font-bold text-gray-500 uppercase">Student Display Settings</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <label className="flex items-center space-x-2">
-                          <input type="checkbox" checked={formData.shuffle_questions} onChange={e => setFormData({...formData, shuffle_questions: e.target.checked})} className="rounded text-school-green-600"/>
-                          <span className="text-sm text-gray-700">Shuffle Questions</span>
+                    <div className="pt-3 border-t border-gray-100 space-y-2.5">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Candidate Delivery Settings</span>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <label className="flex items-center space-x-1.5 cursor-pointer">
+                          <input type="checkbox" checked={formData.shuffle_questions} onChange={e => setFormData({...formData, shuffle_questions: e.target.checked})} className="rounded-xs text-school-green-700"/>
+                          <span className="text-gray-700">Shuffle Questions</span>
                         </label>
-                        <label className="flex items-center space-x-2">
-                          <input type="checkbox" checked={formData.shuffle_options} onChange={e => setFormData({...formData, shuffle_options: e.target.checked})} className="rounded text-school-green-600"/>
-                          <span className="text-sm text-gray-700">Shuffle Options</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer">
+                          <input type="checkbox" checked={formData.shuffle_options} onChange={e => setFormData({...formData, shuffle_options: e.target.checked})} className="rounded-xs text-school-green-700"/>
+                          <span className="text-gray-700">Shuffle Options</span>
                         </label>
-                        <label className="flex items-center space-x-2">
-                          <input type="checkbox" checked={formData.show_results_immediately} onChange={e => setFormData({...formData, show_results_immediately: e.target.checked})} className="rounded text-school-green-600"/>
-                          <span className="text-sm text-gray-700">Show Results Instantly</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer">
+                          <input type="checkbox" checked={formData.show_results_immediately} onChange={e => setFormData({...formData, show_results_immediately: e.target.checked})} className="rounded-xs text-school-green-700"/>
+                          <span className="text-gray-700">Instant Score Display</span>
                         </label>
-                        <label className="flex items-center space-x-2">
-                          <input type="checkbox" checked={formData.allow_offline} onChange={e => setFormData({...formData, allow_offline: e.target.checked})} className="rounded text-school-green-600"/>
-                          <span className="text-sm text-gray-700">Allow Offline APK Access</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer">
+                          <input type="checkbox" checked={formData.allow_offline} onChange={e => setFormData({...formData, allow_offline: e.target.checked})} className="rounded-xs text-school-green-700"/>
+                          <span className="text-gray-700">Allow Offline Mode</span>
                         </label>
-                        <div className="flex flex-col">
-                          <label className="text-xs text-gray-500 mb-1">Display Mode</label>
-                          <select value={formData.display_mode} onChange={e => setFormData({...formData, display_mode: e.target.value})} className="border rounded px-2 py-1 text-sm">
-                            <option value="all_at_once">All at Once (Scroll)</option>
-                            <option value="one_by_one">One by One (Paginated)</option>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="text-[11px] text-gray-600 mb-1 block">Display Layout</label>
+                          <select
+                            value={formData.display_mode}
+                            onChange={e => setFormData({...formData, display_mode: e.target.value})}
+                            className="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs"
+                          >
+                            <option value="all_at_once">All at Once (Continuous)</option>
+                            <option value="one_by_one">One by One (Paged)</option>
                           </select>
                         </div>
-                        <div className="flex flex-col">
-                          <label className="text-xs text-gray-500 mb-1">Max Attempts</label>
+                        <div>
+                          <label className="text-[11px] text-gray-600 mb-1 block">Permitted Attempts</label>
                           <input
                             type="number"
                             min="1"
                             value={formData.max_attempts}
                             onChange={e => setFormData({...formData, max_attempts: Math.max(1, parseInt(e.target.value) || 1)})}
-                            className="border rounded px-2 py-1 text-sm"
+                            className="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs tabular-nums"
                           />
                         </div>
                       </div>
@@ -595,75 +746,72 @@ export function AdminSchoolExams() {
               )}
               
               {formData.has_theory && (
-                <div className="p-4 bg-white rounded-xl border border-blue-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Theory Document Link (PDF/DOC)</label>
+                <div className="p-3.5 bg-white rounded-sm border border-gray-200">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Theory Paper Link (Cloud Storage / PDF)</label>
                   <input 
                     type="url" 
                     value={formData.theory_content_url} 
                     onChange={(e) => setFormData({...formData, theory_content_url: e.target.value})}
-                    className="w-full px-4 py-2 border rounded-xl"
-                    placeholder="e.g. Google Drive or OneDrive Share Link"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs"
+                    placeholder="https://drive.google.com/.../theory_paper.pdf"
                   />
-                  <p className="text-xs text-gray-500 mt-2">Paste a viewable link to the theory question paper. Students will view this while answering on physical paper.</p>
+                  <p className="text-[11px] text-gray-500 mt-1">Candidates view this paper on-screen and respond in designated answer booklets.</p>
                 </div>
               )}
               
               {!formData.has_obj && formData.has_theory && (
-                <div className="p-3 bg-yellow-50 text-yellow-800 rounded-xl text-sm border border-yellow-200">
-                  <strong>Note:</strong> This exam is Theory-Only. Teachers will manually grade physical papers and enter scores via the portal.
+                <div className="p-3 bg-amber-50 text-amber-800 rounded-sm text-xs border border-amber-200">
+                  <strong>Theory-Only Format:</strong> Teachers enter grading scores directly into the institutional score sheets.
                 </div>
               )}
             </div>
 
             {/* Continuous Assessment (CA) Policy Setup */}
-            <div className="bg-school-green-50/50 p-5 rounded-2xl border border-school-green-200 space-y-4 md:col-span-2">
-              <div className="flex items-center justify-between">
+            <div className="bg-school-green-50/40 p-4 sm:p-5 rounded-sm border border-school-green-200 space-y-4 md:col-span-2">
+              <div className="flex items-center justify-between pb-2 border-b border-school-green-200/60">
                 <div>
-                  <h3 className="font-bold text-school-green-900 flex items-center gap-2">
-                    <span>🏛️ 3. Official Continuous Assessment (CA) & Score Sheet Policy</span>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-school-green-950 flex items-center gap-2">
+                    <AdjustmentsHorizontalIcon className="w-4 h-4 text-school-green-800" />
+                    3. Continuous Assessment (CA) & Score Sheet Policy
                   </h3>
-                  <p className="text-xs text-school-green-700 mt-0.5">
-                    Teachers will download this exact Continuous Assessment PDF template with auto-graded OBJ scores to write their manual Theory results.
+                  <p className="text-xs text-school-green-800 mt-0.5">
+                    Defines weighting rules for auto-graded objective questions and manual theory scoring columns
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-school-green-100 shadow-sm">
-                <div className="md:col-span-1">
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Official CA Sheet Template (Upload or URL)</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-sm border border-gray-200 shadow-2xs">
+                <div className="md:col-span-1 space-y-2">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Official Template File</label>
                   <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <label className="flex-1 cursor-pointer bg-school-green-600 hover:bg-school-green-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition">
-                        <span>📁 Upload from Local Disk</span>
-                        <input 
-                          type="file" 
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          onChange={handleUploadAndAnalyzeCA}
-                          className="hidden"
-                          disabled={isAnalyzingCA}
-                        />
-                      </label>
-                      {isAnalyzingCA && (
-                        <div className="flex items-center px-2 text-school-green-700 text-xs font-bold animate-pulse">
-                          🤖 Analyzing...
-                        </div>
-                      )}
-                    </div>
+                    <label className="cursor-pointer bg-school-green-700 hover:bg-school-green-800 text-white px-3 py-2 rounded-sm text-xs font-medium flex items-center justify-center gap-2 transition-colors">
+                      <ArrowUpTrayIcon className="w-4 h-4" />
+                      <span>Upload Sheet Template</span>
+                      <input 
+                        type="file" 
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleUploadAndAnalyzeCA}
+                        className="hidden"
+                        disabled={isAnalyzingCA}
+                      />
+                    </label>
+                    {isAnalyzingCA && (
+                      <p className="text-xs text-school-green-700 font-medium animate-pulse">
+                        Analyzing template structure...
+                      </p>
+                    )}
                     <input 
                       type="url" 
                       value={formData.ca_pdf_url} 
                       onChange={(e) => setFormData({...formData, ca_pdf_url: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
-                      placeholder="Or paste URL: https://.../official_ca_template.pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs font-mono"
+                      placeholder="Or enter template URL: https://..."
                     />
                   </div>
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    💡 Uploading a local sheet triggers <strong>AI analysis</strong> to auto-detect and configure OBJ & Theory weighting!
-                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">OBJ Weight (%)</label>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">OBJ Weighting (%)</label>
                   <input 
                     type="number" 
                     min="0" max="100"
@@ -672,13 +820,13 @@ export function AdminSchoolExams() {
                       const val = Number(e.target.value);
                       setFormData({...formData, ca_weight_obj: val, ca_weight_theory: Math.max(0, 100 - val)});
                     }}
-                    className="w-full px-3 py-2 border rounded-xl text-sm font-bold text-green-700"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs font-bold text-green-700 tabular-nums"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">Auto-graded objective percentage weight.</p>
+                  <p className="text-[11px] text-gray-500 mt-1">Weight allocated to digital objective scores.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Theory Weight (%)</label>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Theory Weighting (%)</label>
                   <input 
                     type="number" 
                     min="0" max="100"
@@ -687,27 +835,27 @@ export function AdminSchoolExams() {
                       const val = Number(e.target.value);
                       setFormData({...formData, ca_weight_theory: val, ca_weight_obj: Math.max(0, 100 - val)});
                     }}
-                    className="w-full px-3 py-2 border rounded-xl text-sm font-bold text-purple-700"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs font-bold text-purple-700 tabular-nums"
                   />
-                  <p className="text-[11px] text-gray-500 mt-1">Manual theory written percentage weight.</p>
+                  <p className="text-[11px] text-gray-500 mt-1">Weight allocated to handwritten manual marking.</p>
                 </div>
 
                 <div className="md:col-span-3 pt-2 border-t border-gray-100">
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Teacher Instructions for Theory Grading & Sheet Submission</label>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Teacher Instructions for Assessment Submission</label>
                   <input 
                     type="text" 
                     value={formData.ca_instructions} 
                     onChange={(e) => setFormData({...formData, ca_instructions: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-xl text-sm"
-                    placeholder="e.g. Download the official CA sheet below, write handwritten theory scores from physical booklets, and verify Attendance PINs before entering."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs"
+                    placeholder="e.g. Download the official CA sheet, record marks from booklets, and verify Attendance PINs before entry."
                   />
                 </div>
 
-                {/* Dynamic Columns Detected / Configured */}
-                <div className="md:col-span-3 pt-3 border-t border-gray-100 bg-gray-50/70 p-3 rounded-xl">
+                {/* Dynamic Grading Columns */}
+                <div className="md:col-span-3 pt-3 border-t border-gray-100 bg-gray-50/60 p-3 rounded-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-gray-800 uppercase">
-                      📊 Dynamic Grading Columns Created from CA Sheet Schema ({formData.ca_columns.length} columns)
+                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Assessment Grading Columns ({formData.ca_columns.length})
                     </span>
                     <button
                       type="button"
@@ -720,19 +868,19 @@ export function AdminSchoolExams() {
                         };
                         setFormData({ ...formData, ca_columns: [...formData.ca_columns, newCol] });
                       }}
-                      className="px-2.5 py-1 bg-school-green-600 text-white rounded-lg text-[11px] font-bold hover:bg-school-green-700 transition"
+                      className="px-2.5 py-1 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors"
                     >
-                      + Add Custom Column
+                      + Add Section Column
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.ca_columns.map((col, idx) => (
-                      <div key={col.id || idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-xs shadow-sm">
-                        <span className={col.is_auto_obj ? "font-bold text-green-700" : "font-bold text-purple-700"}>
+                      <div key={col.id || idx} className="flex items-center gap-2 bg-white px-2.5 py-1 rounded-sm border border-gray-200 text-xs">
+                        <span className={col.is_auto_obj ? "font-semibold text-green-700 tabular-nums" : "font-semibold text-purple-700 tabular-nums"}>
                           {col.name} ({col.weight}%)
                         </span>
-                        <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                          {col.is_auto_obj ? '📱 Auto-OBJ' : '✍️ Teacher Entry'}
+                        <span className="text-[10px] uppercase font-bold px-1 py-0.5 rounded-xs bg-gray-100 text-gray-600">
+                          {col.is_auto_obj ? 'Auto-OBJ' : 'Manual'}
                         </span>
                         <button
                           type="button"
@@ -742,7 +890,7 @@ export function AdminSchoolExams() {
                               ca_columns: formData.ca_columns.filter((_, i) => i !== idx)
                             });
                           }}
-                          className="text-red-400 hover:text-red-600 font-bold ml-1"
+                          className="text-gray-400 hover:text-red-600 font-bold ml-1 transition-colors"
                           title="Remove column"
                         >
                           ✕
@@ -750,56 +898,58 @@ export function AdminSchoolExams() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[11px] text-gray-500 mt-1.5">
-                    When teachers open the CA Score Sheet, exact columns matching the schema above will be dynamically generated!
-                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Targeting */}
-            <div className="bg-gray-50 p-4 rounded-2xl border space-y-4 md:col-span-2">
-              <h3 className="font-bold text-gray-800">4. Distribution Targeting</h3>
+            {/* Section 4: Target Cohorts */}
+            <div className="bg-gray-50/60 p-4 rounded-sm border border-gray-200 space-y-3.5 md:col-span-2">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <CalendarDaysIcon className="w-4 h-4 text-school-green-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">4. Target Distribution & Cohorts</h3>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Forms *</label>
-                  <div className="flex gap-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Target Forms *</label>
+                  <div className="flex gap-3">
                     {[1, 2, 3].map(form => (
-                      <label key={form} className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl border cursor-pointer hover:bg-gray-100">
+                      <label key={form} className="flex items-center space-x-2 bg-white px-3.5 py-2 rounded-sm border border-gray-200 cursor-pointer hover:bg-gray-50 text-xs font-medium">
                         <input 
                           type="checkbox" 
                           checked={formData.selectedForms.includes(form)}
                           onChange={() => toggleForm(form)}
-                          className="rounded text-school-green-600"
+                          className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                         />
                         <span>Form {form}</span>
                       </label>
                     ))}
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Departments / Courses</label>
-                  <div className="h-32 overflow-y-auto bg-white border rounded-xl p-2 space-y-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Target Academic Programmes (Optional)</label>
+                  <div className="h-32 overflow-y-auto bg-white border border-gray-200 rounded-sm p-2 space-y-1 text-xs">
                     {courses.map(course => (
-                      <label key={course.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 cursor-pointer rounded">
+                      <label key={course.id} className="flex items-center space-x-2 p-1.5 hover:bg-gray-50 cursor-pointer rounded-xs">
                         <input 
                           type="checkbox" 
                           checked={formData.selectedCourses.includes(course.id)}
                           onChange={() => toggleCourse(course.id)}
-                          className="rounded text-school-green-600"
+                          className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                         />
-                        <span className="text-sm">{course.name}</span>
+                        <span className="text-gray-800">{course.name}</span>
                       </label>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Leave unchecked to target all departments.</p>
+                  <p className="text-[11px] text-gray-400 mt-1">Leave blank to distribute across all academic programmes.</p>
                 </div>
               </div>
             </div>
           </div>
           
           {showAiBuilder ? (
-            <div className="mt-8">
+            <div className="mt-6 border-t border-gray-200 pt-6">
               <SmartExamBuilder 
                 onComplete={(questions) => {
                   setFormData({...formData, extractedQuestions: questions, obj_answer_key: ''});
@@ -809,97 +959,137 @@ export function AdminSchoolExams() {
               />
             </div>
           ) : (
-            <div className="flex justify-end pt-4">
-              <button 
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <PortalButton
                 type="submit" 
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-school-green-600 text-white font-bold rounded-xl hover:bg-school-green-700 disabled:opacity-50"
+                className="px-6 py-2.5 bg-school-green-700 text-white font-medium text-xs rounded-sm hover:bg-school-green-800 transition-colors shadow-2xs"
               >
-                {isSubmitting ? 'Saving...' : editingExam ? 'Update Exam' : 'Create & Distribute Exam'}
-              </button>
+                {isSubmitting ? 'Saving Examination...' : editingExam ? 'Update Examination Schedule' : 'Distribute School Examination'}
+              </PortalButton>
             </div>
           )}
         </form>
       </div>
 
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="text-xl font-bold">Scheduled General Exams</h2>
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      {/* Scheduled Exams List Card */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Scheduled Examination Directory</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Manage existing cohort examinations, proctoring schedules, and answer keys</p>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search exams..."
+              placeholder="Search examinations..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 border rounded-xl text-sm w-64 focus:ring-2 focus:ring-school-green-500 focus:border-school-green-500"
+              className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
             />
           </div>
         </div>
+
         {loading ? (
-          <LoadingSkeleton variant="table" rows={6} columns={8} />
+          <div className="p-6">
+            <LoadingSkeleton variant="table" rows={6} columns={8} />
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-3 rounded-l-xl">Title</th>
-                    <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Structure</th>
-                    <th className="px-4 py-3">Subject</th>
-                    <th className="px-4 py-3">Class</th>
-                    <th className="px-4 py-3">Start Time & Duration</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 rounded-r-xl text-right">Actions</th>
+              <table className="w-full text-left text-xs divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Exam Title</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Structure</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Subject</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Cohort</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Schedule & Duration</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {paginatedExams.map((exam, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{exam.title}</td>
+                    <tr key={exam.id || i} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-gray-900">{exam.title}</td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-sm text-[11px] font-medium">
                           {exam.exam_type || 'General Exam'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          {exam.has_obj && <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">OBJ</span>}
-                          {exam.has_theory && <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Theory</span>}
+                          {exam.has_obj && <span className="px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-sm text-[10px] font-semibold">OBJ</span>}
+                          {exam.has_theory && <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-sm text-[10px] font-semibold">Theory</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3">{exam.subject_name}</td>
-                      <td className="px-4 py-3">{exam.class_name} (Form {exam.form})</td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm">{new Date(exam.due_date).toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
+                      <td className="px-4 py-3 text-gray-700">{exam.subject_name}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {exam.class_name} <span className="text-gray-400 tabular-nums font-mono">(Form {exam.form})</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>{getStatusLabel(exam.due_date, exam.duration_minutes)}</span>
+                        <div className="font-medium text-gray-900 tabular-nums">{new Date(exam.due_date).toLocaleString()}</div>
+                        <div className="text-[11px] text-gray-400 tabular-nums">{exam.duration_minutes ? `${exam.duration_minutes} mins` : '60 mins'}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-sm text-[11px] font-semibold ${getStatusColor(exam.due_date, exam.duration_minutes)}`}>
+                          {getStatusLabel(exam.due_date, exam.duration_minutes)}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => setViewExam(exam)} className="text-school-green-600 hover:text-school-green-800 text-sm font-bold">View</button>
-                          <button onClick={() => handleEdit(exam)} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Edit</button>
-                          <button onClick={() => handleDelete(exam.title, exam.due_date)} className="text-red-500 hover:text-red-700 text-sm font-bold">Delete</button>
+                          <button
+                            onClick={() => setViewExam(exam)}
+                            className="p-1 text-gray-500 hover:text-school-green-700 hover:bg-gray-100 rounded-xs transition-colors"
+                            title="View Exam Details"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(exam)}
+                            className="p-1 text-gray-500 hover:text-blue-700 hover:bg-gray-100 rounded-xs transition-colors"
+                            title="Edit Exam"
+                          >
+                            <PencilSquareIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(exam.title, exam.due_date)}
+                            className="p-1 text-gray-500 hover:text-red-700 hover:bg-gray-100 rounded-xs transition-colors"
+                            title="Delete Exam"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ))}
                   {filteredExams.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-gray-500">{searchQuery ? 'No exams match your search' : 'No general exams scheduled'}</td>
+                      <td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-xs">
+                        {searchQuery ? 'No examinations match your search criteria.' : 'No general examinations currently scheduled.'}
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
+
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4">
-                <span className="text-sm text-gray-500">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredExams.length)} of {filteredExams.length}</span>
-                <div className="flex gap-2">
-                  <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Previous</button>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/50">
+                <span className="text-xs text-gray-500 tabular-nums">
+                  Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredExams.length)} of {filteredExams.length} examinations
+                </span>
+                <div className="flex gap-1.5">
+                  <button
+                    disabled={page <= 1}
+                    onClick={() => setPage(p => p - 1)}
+                    className="px-2.5 py-1 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                     let pageNum: number;
                     if (totalPages <= 5) {
@@ -912,10 +1102,26 @@ export function AdminSchoolExams() {
                       pageNum = page - 2 + i;
                     }
                     return (
-                      <button key={pageNum} onClick={() => setPage(pageNum)} className={`px-3 py-1.5 border rounded-lg text-sm ${pageNum === page ? 'bg-school-green-600 text-white border-school-green-600' : 'hover:bg-gray-50'}`}>{pageNum}</button>
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`px-2.5 py-1 border rounded-sm text-xs font-medium tabular-nums ${
+                          pageNum === page
+                            ? 'bg-school-green-700 text-white border-school-green-700'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
                     );
                   })}
-                  <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Next</button>
+                  <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(p => p + 1)}
+                    className="px-2.5 py-1 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             )}

@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import {
+  UserPlusIcon,
+  ShieldCheckIcon,
+  KeyIcon,
+  TrashIcon,
+  XMarkIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
+import { PortalButton } from '../../components/PortalButton';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 export function AdminSubAdminManagement() {
   const [subAdmins, setSubAdmins] = useState<any[]>([]);
@@ -17,7 +27,7 @@ export function AdminSubAdminManagement() {
     try {
       setLoading(true);
       const admins = await db.getSubAdmins();
-      setSubAdmins(admins);
+      setSubAdmins(admins || []);
     } catch (error) {
       toast.error('Failed to load sub-admins');
     } finally {
@@ -47,10 +57,10 @@ export function AdminSubAdminManagement() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this sub-admin? This cannot be undone.')) return;
+    if (!window.confirm('Are you sure you want to delete this sub-admin account? This cannot be undone.')) return;
     try {
       await db.deleteSubAdmin(id);
-      toast.success('Sub-admin deleted');
+      toast.success('Sub-admin account revoked');
       fetchSubAdmins();
     } catch (error) {
       toast.error('Failed to delete sub-admin');
@@ -58,7 +68,7 @@ export function AdminSubAdminManagement() {
   };
 
   const handleResetPassword = async (id: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to reset the password for ${name}?`)) return;
+    if (!window.confirm(`Are you sure you want to generate a new password for ${name}?`)) return;
     try {
       const result = await db.resetSubAdminPassword(id);
       toast.success('Password reset successfully');
@@ -76,7 +86,7 @@ export function AdminSubAdminManagement() {
   const handleToggleStatus = async (id: number) => {
     try {
       await db.toggleSubAdminStatus(id);
-      toast.success('Status updated');
+      toast.success('Account authorization status updated');
       fetchSubAdmins();
     } catch (error) {
       toast.error('Failed to update status');
@@ -85,96 +95,128 @@ export function AdminSubAdminManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-bold mb-4">Manage Sub-Admins</h2>
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Sub-Administrator Role Delegation</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Provision and supervise administrative sub-accounts with scoped oversight permissions</p>
+        </div>
+      </div>
 
-        {createdCredentials && (
-          <div className="mb-8 p-6 bg-school-green-50 border-2 border-school-green-200 rounded-2xl relative">
-            <button 
-              onClick={() => setCreatedCredentials(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <h3 className="text-lg font-bold text-school-green-800 mb-2">Credentials for {createdCredentials.name}</h3>
-            <p className="text-sm text-school-green-700 mb-4">Please copy these credentials and share them securely. They will not be shown again.</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-3 rounded-xl border border-school-green-100">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">User ID</span>
-                <span className="font-mono text-lg font-medium text-gray-900">{createdCredentials.id}</span>
-              </div>
-              <div className="bg-white p-3 rounded-xl border border-school-green-100">
-                <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Temporary Password</span>
-                <span className="font-mono text-lg font-medium text-gray-900">{createdCredentials.tempPass}</span>
-              </div>
+      {createdCredentials && (
+        <div className="p-4 sm:p-5 bg-green-50/60 border border-green-200 rounded-md relative text-xs">
+          <button 
+            onClick={() => setCreatedCredentials(null)}
+            className="absolute top-3.5 right-3.5 p-1 text-green-700 hover:text-green-900 hover:bg-green-100 rounded-sm"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2 mb-1.5">
+            <ShieldCheckIcon className="w-4 h-4 text-green-700" />
+            <h3 className="font-bold text-green-900">Generated Credentials: {createdCredentials.name}</h3>
+          </div>
+          <p className="text-green-800 mb-3">Copy and deliver these credentials securely. The temporary key will not be displayed again.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+            <div className="bg-white p-3 rounded-sm border border-green-200">
+              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Administrative User ID</span>
+              <span className="font-mono text-sm font-bold text-gray-900 tabular-nums">{createdCredentials.id}</span>
+            </div>
+            <div className="bg-white p-3 rounded-sm border border-green-200">
+              <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Temporary Access Key</span>
+              <span className="font-mono text-sm font-bold text-gray-900 tabular-nums">{createdCredentials.tempPass}</span>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <form onSubmit={handleCreate} className="flex gap-4 items-end mb-8">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+      {/* Provision Sub-Admin Form Card */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 space-y-4">
+        <div className="pb-3 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-900">Provision Sub-Admin Officer</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Enter the full legal name of the delegated staff member to generate an authorized account</p>
+        </div>
+
+        <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3 items-end text-xs">
+          <div className="flex-1 w-full">
+            <label className="block font-medium text-gray-700 mb-1">Officer Full Name *</label>
             <input 
               type="text" 
               value={newAdminName} 
               onChange={(e) => setNewAdminName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-school-green-500 focus:border-transparent outline-none transition-all"
-              placeholder="e.g. John Doe"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+              placeholder="e.g. Samuel Kofi Mensah"
               required
             />
           </div>
-          <button 
+          <PortalButton 
             type="submit" 
             disabled={isSubmitting}
-            className="px-6 py-3 bg-school-green-600 text-white font-bold rounded-xl hover:bg-school-green-700 disabled:opacity-50 transition-colors shadow-sm shadow-school-green-200"
+            className="w-full sm:w-auto px-5 py-2 bg-school-green-700 text-white rounded-sm font-medium hover:bg-school-green-800 disabled:opacity-40 transition-colors shadow-2xs"
           >
-            {isSubmitting ? 'Creating...' : 'Create Sub-Admin'}
-          </button>
+            {isSubmitting ? 'Provisioning...' : 'Provision Account'}
+          </PortalButton>
         </form>
+      </div>
+
+      {/* Sub-Admins Directory */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">Delegated Sub-Administrators</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Active delegated personnel with portal administration rights</p>
+          </div>
+          <span className="text-xs text-gray-500 tabular-nums font-mono">
+            {subAdmins.length} registered
+          </span>
+        </div>
 
         {loading ? (
-          <div className="py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-school-green-200 border-t-school-green-600"></div>
+          <div className="p-6">
+            <LoadingSkeleton variant="table" rows={4} columns={5} />
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-gray-100">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-6 py-4 font-bold text-gray-700 text-sm">User ID</th>
-                  <th className="px-6 py-4 font-bold text-gray-700 text-sm">Full Name</th>
-                  <th className="px-6 py-4 font-bold text-gray-700 text-sm">Status</th>
-                  <th className="px-6 py-4 font-bold text-gray-700 text-sm">Created</th>
-                  <th className="px-6 py-4 font-bold text-gray-700 text-sm text-right">Actions</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">User ID</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Officer Name</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Provisioned Date</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {subAdmins.map(admin => (
-                  <tr key={admin.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-sm font-medium text-gray-900">{admin.user_id}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{admin.full_name}</td>
-                    <td className="px-6 py-4">
+                  <tr key={admin.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3 font-mono font-medium text-gray-900 tabular-nums">{admin.user_id}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">{admin.full_name}</td>
+                    <td className="px-4 py-3">
                       <button 
                         onClick={() => handleToggleStatus(admin.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${admin.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                        className={`px-2 py-0.5 rounded-sm text-[11px] font-semibold border transition-colors ${
+                          admin.is_active 
+                            ? 'bg-green-50 text-green-800 border-green-200 hover:bg-green-100' 
+                            : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                        }`}
+                        title="Click to toggle account access"
                       >
-                        {admin.is_active ? 'Active' : 'Disabled'}
+                        {admin.is_active ? 'Active' : 'Revoked'}
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(admin.created_at).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-3 text-gray-500 tabular-nums">{new Date(admin.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-3">
                         <button 
                           onClick={() => handleResetPassword(admin.id, admin.full_name)}
-                          className="text-school-green-600 hover:text-school-green-800 font-medium text-sm transition-colors"
+                          className="text-school-green-700 hover:text-school-green-900 font-medium transition-colors"
                         >
-                          Reset Password
+                          Reset Credentials
                         </button>
                         <button 
                           onClick={() => handleDelete(admin.id)}
-                          className="text-red-500 hover:text-red-700 font-medium text-sm transition-colors"
+                          className="text-red-600 hover:text-red-800 font-medium transition-colors"
                         >
-                          Delete
+                          Revoke Access
                         </button>
                       </div>
                     </td>
@@ -182,8 +224,8 @@ export function AdminSubAdminManagement() {
                 ))}
                 {subAdmins.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                      No sub-admins found. Create one above to get started.
+                    <td colSpan={5} className="px-4 py-10 text-center text-gray-400 text-xs">
+                      No sub-administrators provisioned. Use the form above to grant access.
                     </td>
                   </tr>
                 )}

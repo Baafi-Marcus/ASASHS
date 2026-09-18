@@ -359,31 +359,40 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
   if (showSubmitConfirm) {
     return (
       <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-6">
-        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center space-y-6">
-          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <PortalCard className="max-w-md w-full p-6 sm:p-8 text-center space-y-6">
+          <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-md flex items-center justify-center mx-auto text-amber-600">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Submit Assessment?</h3>
-          <p className="text-gray-500">Are you sure you want to submit your quiz? This action cannot be undone.</p>
-          <div className="flex gap-3 justify-center">
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-gray-900">Submit Assessment?</h3>
+            <p className="text-sm text-gray-500">
+              Are you sure you want to finish and submit? You will not be able to edit your answers after confirmation.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-center pt-2">
             <PortalButton variant="secondary" onClick={() => setShowSubmitConfirm(false)}>
-              Cancel
+              Keep Editing
             </PortalButton>
-            <PortalButton onClick={() => { setShowSubmitConfirm(false); submitQuiz(); }}>
-              Submit
+            <PortalButton
+              variant="primary"
+              loading={isSubmitting}
+              loadingText="Submitting..."
+              onClick={() => { setShowSubmitConfirm(false); submitQuiz(); }}
+            >
+              Confirm & Submit
             </PortalButton>
           </div>
-        </div>
+        </PortalCard>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-school-cream-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-school-green-200 border-t-school-green-600"></div>
       </div>
     );
   }
@@ -392,17 +401,19 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
   if (blocked) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <PortalCard className="max-w-lg w-full shadow-2xl">
-          <div className="p-8 text-center space-y-6">
-            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">{quiz?.title || 'Exam'}</h2>
-            <p className="text-gray-600">{blocked}</p>
-            <PortalButton variant="secondary" onClick={handleCloseStandalone}>Return to Dashboard</PortalButton>
+        <PortalCard className="max-w-lg w-full p-8 text-center space-y-6">
+          <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-md flex items-center justify-center mx-auto text-amber-600">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-gray-900">{quiz?.title || 'Assessment'}</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">{blocked}</p>
+          </div>
+          <PortalButton variant="secondary" onClick={handleCloseStandalone}>
+            Return to Dashboard
+          </PortalButton>
         </PortalCard>
       </div>
     );
@@ -412,52 +423,58 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
   if (phase === 'cover') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <PortalCard className="max-w-2xl w-full shadow-2xl">
-          <div className="p-8 space-y-8">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{quiz.title}</h1>
-              <p className="text-school-green-600 font-bold">{quiz.subject_name || ''}</p>
-            </div>
+        <PortalCard className="max-w-2xl w-full p-8 sm:p-10 space-y-8">
+          <div className="text-center space-y-2">
+            <span className="inline-block px-2.5 py-0.5 rounded-sm text-xs font-semibold bg-school-green-50 text-school-green-700 border border-school-green-200 uppercase tracking-wider">
+              {quiz.subject_name || 'General Assessment'}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{quiz.title}</h1>
+          </div>
 
-            <div className="bg-amber-50 border-l-4 border-amber-400 p-6 space-y-4 rounded-r-xl">
-              <h3 className="font-bold text-amber-800 flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Examination Rules & Instructions
-              </h3>
-              <div className="text-amber-900 text-sm whitespace-pre-wrap leading-relaxed">
-                {quiz.instructions || "No specific instructions provided."}
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-amber-200">
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-amber-700">Duration</div>
-                  <div className="font-bold">{quiz.duration_minutes || quiz.time_limit} Minutes</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-amber-700">Questions</div>
-                  <div className="font-bold">{quiz.questions?.length || 0}</div>
+          <div className="bg-amber-50/60 border border-amber-200 rounded-md p-6 space-y-4">
+            <h3 className="font-semibold text-amber-900 text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Assessment Instructions
+            </h3>
+            <div className="text-amber-900/90 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
+              {quiz.instructions || "No specific instructions provided. Answer all questions to the best of your ability."}
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-amber-200/80">
+              <div>
+                <div className="text-[10px] uppercase font-semibold text-amber-700 tracking-wider">Duration</div>
+                <div className="font-mono font-bold text-sm text-amber-950 tabular-nums">
+                  {quiz.duration_minutes || quiz.time_limit} Minutes
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="text-xs text-gray-500 text-center italic">
-                By clicking "Start Assessment", the browser will enter fullscreen mode and tab switching will be logged.
+              <div>
+                <div className="text-[10px] uppercase font-semibold text-amber-700 tracking-wider">Total Questions</div>
+                <div className="font-mono font-bold text-sm text-amber-950 tabular-nums">
+                  {quiz.questions?.length || 0}
+                </div>
               </div>
-              <PortalButton
-                className="w-full py-4 text-lg font-bold shadow-lg shadow-school-green-100"
-                onClick={handleStartQuiz}
-              >
-                Start Assessment
-              </PortalButton>
-              <button
-                onClick={handleCloseStandalone}
-                className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium"
-              >
-                Cancel and Return
-              </button>
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 text-center">
+              The assessment runs in locked mode. Screen changes and tab switches are logged.
+            </p>
+            <PortalButton
+              variant="primary"
+              className="w-full"
+              onClick={handleStartQuiz}
+            >
+              Start Assessment
+            </PortalButton>
+            <PortalButton
+              variant="secondary"
+              className="w-full"
+              onClick={handleCloseStandalone}
+            >
+              Cancel and Return
+            </PortalButton>
           </div>
         </PortalCard>
       </div>
@@ -472,16 +489,19 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
     if (showAnswerReview && canReview) {
       return (
         <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
-          <div className="max-w-5xl mx-auto p-6 space-y-6">
-            <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="max-w-4xl mx-auto p-6 space-y-6">
+            <PortalCard className="p-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Answer Review</h2>
-                <p className="text-gray-500">{result?.score} / {result?.totalPoints} marks ({Math.round(result?.percentage || 0)}%)</p>
+                <h2 className="text-lg font-bold text-gray-900">Answer Review</h2>
+                <p className="text-xs text-gray-500 tabular-nums">
+                  {result?.score} / {result?.totalPoints} marks ({Math.round(result?.percentage || 0)}%)
+                </p>
               </div>
               <PortalButton variant="secondary" onClick={() => setShowAnswerReview(false)}>
-                Back
+                Back to Summary
               </PortalButton>
-            </div>
+            </PortalCard>
+
             {quiz.questions.map((q: any, idx: number) => {
               const studentAnswer = answers[q.id] || '(no answer)';
               const opts = q.options || [];
@@ -489,37 +509,49 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
               const correctOption = opts.find((o: any) => o.is_correct);
               const isCorrect = selectedOption?.is_correct || false;
               return (
-                <div key={q.id} className={`bg-white rounded-2xl shadow-sm border-l-4 p-6 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                <PortalCard
+                  key={q.id}
+                  className={`p-6 border-l-4 ${isCorrect ? 'border-l-school-green-600' : 'border-l-red-500'}`}
+                >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Question {idx + 1}</span>
-                    <span className={`text-xs font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {isCorrect ? '+' + (q.points || 1) + ' marks' : '0 marks'}
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider tabular-nums">
+                      Question {idx + 1}
+                    </span>
+                    <span className={`text-xs font-bold tabular-nums ${isCorrect ? 'text-school-green-700' : 'text-red-600'}`}>
+                      {isCorrect ? `+${q.points || 1} mark` : '0 marks'}
                     </span>
                   </div>
-                  <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
+                  <MathText text={q.question_text} className="text-base font-semibold text-gray-900 mb-4" />
                   {q.imageDataUrl && (
                     <div className="mb-4">
-                      <img src={q.imageDataUrl} alt="Diagram" className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg" onClick={() => window.open(q.imageDataUrl, '_blank')} />
+                      <img
+                        src={q.imageDataUrl}
+                        alt="Diagram"
+                        className="w-full max-w-md rounded-sm border border-gray-200 cursor-pointer hover:opacity-90"
+                        onClick={() => window.open(q.imageDataUrl, '_blank')}
+                      />
                     </div>
                   )}
                   {q.diagramDescription && (
-                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
-                      <span className="font-bold text-yellow-700">Diagram:</span> {q.diagramDescription}
+                    <div className="mb-4 p-3 bg-amber-50/60 border border-amber-200 rounded-sm text-xs text-amber-900">
+                      <span className="font-semibold">Diagram:</span> {q.diagramDescription}
                     </div>
                   )}
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1.5 text-xs pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-500">Your answer:</span>
-                      <span className={`${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{studentAnswer}</span>
+                      <span className={`font-medium ${isCorrect ? 'text-school-green-800' : 'text-red-700'}`}>
+                        {studentAnswer}
+                      </span>
                     </div>
                     {!isCorrect && correctOption && (
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-500">Correct answer:</span>
-                        <span className="text-green-700">{correctOption.option_text}</span>
+                        <span className="font-medium text-school-green-800">{correctOption.option_text}</span>
                       </div>
                     )}
                   </div>
-                </div>
+                </PortalCard>
               );
             })}
           </div>
@@ -529,60 +561,72 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-lg w-full text-center space-y-6">
+        <PortalCard className="p-8 sm:p-10 max-w-lg w-full text-center space-y-6">
           {showScore ? (
             <>
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto ${result?.percentage >= 50 ? 'bg-school-green-100 text-school-green-600' : 'bg-red-100 text-red-600'}`}>
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d={result?.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
+              <div className={`w-16 h-16 rounded-md flex items-center justify-center mx-auto border ${
+                result?.percentage >= 50
+                  ? 'bg-school-green-50 border-school-green-200 text-school-green-700'
+                  : 'bg-red-50 border-red-200 text-red-600'
+              }`}>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={result?.percentage >= 50 ? "M5 13l4 4L19 7" : "M6 18L18 6M6 6l12 12"} />
                 </svg>
               </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold text-gray-900">Assessment Completed!</h2>
-                <p className="text-gray-500">You scored {result?.score} out of {result?.totalPoints}</p>
-                <div className="text-5xl font-black text-school-green-600">{Math.round(result?.percentage || 0)}%</div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-gray-900">Assessment Completed</h2>
+                <p className="text-xs text-gray-500 tabular-nums">
+                  You scored {result?.score} out of {result?.totalPoints}
+                </p>
+                <div className="text-4xl font-extrabold text-school-green-700 tabular-nums py-2">
+                  {Math.round(result?.percentage || 0)}%
+                </div>
                 {tabSwitches > 0 && (
-                  <div className="text-xs text-red-500 font-bold uppercase py-1 px-3 bg-red-50 rounded-full inline-block">
-                    {tabSwitches} TAB SWITCHES LOGGED
+                  <div className="text-[11px] text-red-700 font-semibold uppercase py-1 px-3 bg-red-50 border border-red-200 rounded-sm inline-block tabular-nums">
+                    {tabSwitches} security interruption{tabSwitches > 1 ? 's' : ''} logged
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <div className="text-center space-y-4">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-school-green-100 text-school-green-600">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            <div className="space-y-3">
+              <div className="w-16 h-16 rounded-md flex items-center justify-center mx-auto bg-school-green-50 border border-school-green-200 text-school-green-700">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Submitted Successfully!</h2>
-              <p className="text-gray-500">Your answers have been recorded. Results will be available once released by your teacher.</p>
+              <h2 className="text-xl font-bold text-gray-900">Submitted Successfully</h2>
+              <p className="text-xs text-gray-500">
+                Your responses have been saved. Final grades will be visible once published by your course instructor.
+              </p>
             </div>
           )}
 
           {/* Digital Attendance Verification Card */}
-          <div className="bg-gray-900 text-white p-5 rounded-2xl border border-gray-800 space-y-2 text-left shadow-lg">
+          <div className="bg-gray-900 text-white p-5 rounded-md border border-gray-800 space-y-2 text-left">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-school-green-400">Digital Attendance PIN Code</span>
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-school-green-400">Digital Attendance PIN</span>
+              <span className="w-2 h-2 rounded-full bg-school-green-400 animate-pulse"></span>
             </div>
-            <div className="text-2xl font-black font-mono tracking-widest text-white py-1.5 border-y border-gray-800 text-center bg-black/40 rounded-xl">
+            <div className="text-2xl font-bold font-mono tracking-widest text-white py-1.5 border-y border-gray-800 text-center bg-black/40 rounded-sm tabular-nums">
               {`#ASASHS-${((studentId * 137 + (quiz?.id || 1) * 89) % 9000) + 1000}-OK`}
             </div>
             <p className="text-[11px] text-amber-300 leading-relaxed font-medium">
-              📦 <strong>Physical Booklet Handover Required:</strong> Present this Attendance PIN and your Student ID (<strong>#{studentId}</strong>) to your invigilator right now for hall verification.
+              📦 <strong>Physical Booklet Handover:</strong> Present this Attendance PIN and your Student ID (<strong className="tabular-nums">#{studentId}</strong>) to your invigilator for desk verification.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">Close and Return</PortalButton>
+          <div className="flex flex-col gap-2.5 pt-2">
+            <PortalButton onClick={handleCloseStandalone} variant="secondary" className="w-full">
+              Close and Return
+            </PortalButton>
             {canReview && (
               <PortalButton onClick={() => setShowAnswerReview(true)} variant="primary" className="w-full">
-                View Answers
+                Review Questions
               </PortalButton>
             )}
           </div>
-        </div>
+        </PortalCard>
       </div>
     );
   }
@@ -593,75 +637,116 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
 
     return (
       <div className="fixed inset-0 z-[100] bg-gray-50 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
-          <div className="flex items-center justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          <PortalCard className="p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Review Your Answers</h2>
-              <p className="text-gray-500">{answeredCount} of {quiz.questions.length} questions answered</p>
+              <h2 className="text-lg font-bold text-gray-900">Review Your Answers</h2>
+              <p className="text-xs text-gray-500 tabular-nums">
+                {answeredCount} of {quiz.questions.length} questions completed
+              </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
                 Back to Editing
               </PortalButton>
-              <PortalButton onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+              <PortalButton
+                variant="primary"
+                onClick={() => setShowSubmitConfirm(true)}
+                loading={isSubmitting}
+                loadingText="Submitting..."
+              >
+                Submit Assessment
               </PortalButton>
             </div>
-          </div>
+          </PortalCard>
 
           {quiz.questions.map((q: any, idx: number) => {
             const answer = answers[q.id] || '';
+            const isAnswered = !!answer.trim();
             return (
-              <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-school-cream-200 overflow-hidden border-l-4" style={{ borderLeftColor: answer ? '#16a34a' : '#d1d5db' }}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-gray-800 text-white w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold">
-                        {idx + 1}
+              <PortalCard
+                key={q.id}
+                className={`p-6 border-l-4 ${isAnswered ? 'border-l-school-green-600' : 'border-l-gray-300'}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-sm bg-gray-900 text-white flex items-center justify-center text-xs font-bold font-mono tabular-nums">
+                      {idx + 1}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase text-gray-500 tracking-wider">
+                      {q.question_type.replace('_', ' ')}
+                    </span>
+                    {q.group_id > 0 && (
+                      <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm font-semibold">
+                        Follow-up
                       </span>
-                      <span className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">{q.question_type}</span>
-                      {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
-                    </div>
-                    <span className="text-xs font-bold text-gray-300">{q.points || 1} MARKS</span>
+                    )}
                   </div>
-                  <MathText text={q.question_text} className="text-lg font-bold text-gray-900 mb-4" />
-                  {q.imageDataUrl && (
-                    <div className="mb-4">
-                      <img src={q.imageDataUrl} alt="Diagram" className="w-full max-w-md rounded-xl border cursor-pointer hover:shadow-lg" onClick={() => window.open(q.imageDataUrl, '_blank')} />
-                    </div>
-                  )}
-                  {q.diagramDescription && (
-                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
-                      <span className="font-bold text-yellow-700">Diagram:</span> {q.diagramDescription}
-                    </div>
-                  )}
-                  {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
-                    <div className="flex flex-wrap gap-2">
-                      {(q.options || []).map((opt: any) => (
-                        <div key={opt.id} className={`px-4 py-2 rounded-xl text-sm font-medium border-2 ${answer === opt.option_text ? 'border-school-green-600 bg-school-green-50 text-school-green-800' : 'border-gray-200 text-gray-500'}`}>
-                          <MathText text={opt.option_text} />
-                          {answer === opt.option_text && <span className="ml-2 text-green-600">✓</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 bg-gray-50 rounded-xl text-lg font-medium">
-                      {answer || <span className="text-gray-400 italic">No answer provided</span>}
-                    </div>
-                  )}
+                  <span className="text-xs font-semibold text-gray-400 tabular-nums uppercase">
+                    {q.points || 1} {Number(q.points || 1) === 1 ? 'mark' : 'marks'}
+                  </span>
                 </div>
-              </div>
+                <MathText text={q.question_text} className="text-base font-semibold text-gray-900 mb-4" />
+                {q.imageDataUrl && (
+                  <div className="mb-4">
+                    <img
+                      src={q.imageDataUrl}
+                      alt="Diagram"
+                      className="w-full max-w-md rounded-sm border border-gray-200 cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(q.imageDataUrl, '_blank')}
+                    />
+                  </div>
+                )}
+                {q.diagramDescription && (
+                  <div className="mb-4 p-3 bg-amber-50/60 border border-amber-200 rounded-sm text-xs text-amber-900">
+                    <span className="font-semibold">Diagram:</span> {q.diagramDescription}
+                  </div>
+                )}
+                {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
+                  <div className="flex flex-wrap gap-2">
+                    {(q.options || []).map((opt: any) => {
+                      const isSelected = answer === opt.option_text;
+                      return (
+                        <div
+                          key={opt.id}
+                          className={`px-3 py-1.5 rounded-sm text-xs font-medium border ${
+                            isSelected
+                              ? 'border-school-green-600 bg-school-green-50 text-school-green-900 font-semibold'
+                              : 'border-gray-200 text-gray-600 bg-gray-50/50'
+                          }`}
+                        >
+                          <MathText text={opt.option_text} />
+                          {isSelected && <span className="ml-1.5 text-school-green-700 font-bold">✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-sm text-sm">
+                    {answer ? (
+                      <span className="text-gray-900 font-medium">{answer}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">No answer provided</span>
+                    )}
+                  </div>
+                )}
+              </PortalCard>
             );
           })}
 
-          <div className="flex justify-between bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky bottom-4">
+          <PortalCard className="p-6 flex justify-between items-center sticky bottom-4">
             <PortalButton variant="secondary" onClick={() => setPhase('in-progress')}>
               Back to Editing
             </PortalButton>
-            <PortalButton onClick={() => setShowSubmitConfirm(true)} disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
+            <PortalButton
+              variant="primary"
+              onClick={() => setShowSubmitConfirm(true)}
+              loading={isSubmitting}
+              loadingText="Submitting..."
+            >
+              Submit Assessment
             </PortalButton>
-          </div>
+          </PortalCard>
         </div>
       </div>
     );
@@ -669,151 +754,187 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
 
   // --- IN-PROGRESS (answering questions) ---
   const isOneByOne = quiz.display_mode === 'one_by_one';
-  const allQuestionsAnswered = quiz.questions.every((q: any) => !!answers[q.id]?.trim());
 
   const renderQuestion = (q: any, idx: number) => (
-    <PortalCard key={q.id} className="overflow-hidden border-none shadow-xl bg-white flex flex-col mb-6">
-      <div className="p-8 space-y-8 flex-1">
-        {(quiz.exam_format === 'theory' || q.question_type === 'theory' || quiz.theory_only === true) && (
-          <div className="p-4 bg-purple-900 text-purple-100 rounded-2xl border border-purple-700 flex items-start gap-4 shadow-md">
-            <div className="text-3xl">✍️</div>
-            <div>
-              <h4 className="font-black text-white text-base tracking-wide uppercase">Theory on Paper — Secure Digital Proctor Mode</h4>
-              <p className="text-xs text-purple-200 mt-1 leading-relaxed">
-                Read your Twi, Ga, Science, or General questions below carefully. Write all your solutions, steps, and diagrams clearly on the physical answer booklet provided by your invigilator. When finished, submit this digital session to record your completion timestamp.
-              </p>
-            </div>
+    <PortalCard key={q.id} className="p-6 sm:p-8 space-y-6 mb-6">
+      {(quiz.exam_format === 'theory' || q.question_type === 'theory' || quiz.theory_only === true) && (
+        <div className="p-4 bg-purple-900 text-purple-100 rounded-sm border border-purple-800 flex items-start gap-3">
+          <div className="text-xl">✍️</div>
+          <div>
+            <h4 className="font-bold text-white text-xs tracking-wide uppercase">Theory on Paper — Proctor Mode</h4>
+            <p className="text-xs text-purple-200 mt-1 leading-relaxed">
+              Read questions carefully. Write all solutions and diagrams clearly in the physical answer booklet provided. Submit this session when finished to record your completion time.
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black text-school-green-600 uppercase tracking-[0.2em]">Question {idx + 1} of {quiz.questions.length}</span>
-              {q.group_id > 0 && <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold">Follow-up</span>}
-            </div>
-            <span className="text-[11px] font-bold text-gray-300 uppercase">{q.points || 1} MARKS</span>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-school-green-700 uppercase tracking-wider tabular-nums">
+              Question {idx + 1} of {quiz.questions.length}
+            </span>
+            {q.group_id > 0 && (
+              <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-sm font-semibold">
+                Follow-up
+              </span>
+            )}
           </div>
-
-          {passageReaderMode ? (
-            <div className="bg-amber-50/70 p-6 rounded-2xl border border-amber-200 shadow-inner">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-2 flex items-center gap-1">
-                <span>📖 High-Contrast Passage & UTF-8 Reader Mode (Twi / Ga / Ewe / Literature)</span>
-              </div>
-              <MathText text={q.question_text} className="text-2xl font-serif text-gray-950 leading-loose tracking-wide" />
-            </div>
-          ) : (
-            <MathText text={q.question_text} className="text-2xl font-bold text-gray-900 leading-tight" />
-          )}
-
-          {(q.imageDataUrl || q.diagram_url) && (
-            <div className="mt-4 p-4 rounded-2xl bg-gray-50 border flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <img
-                  src={q.imageDataUrl || q.diagram_url}
-                  alt="Question diagram"
-                  className="max-h-48 rounded-xl border cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => window.open(q.imageDataUrl || q.diagram_url, '_blank')}
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Click image to expand</p>
-              </div>
-              <button
-                onClick={() => setPinnedDiagram(pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? null : (q.imageDataUrl || q.diagram_url))}
-                className="bg-school-green-100 hover:bg-school-green-200 text-school-green-800 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0"
-              >
-                <span>📌 {pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? 'Unpin Diagram' : 'Pin Diagram to Split-View'}</span>
-              </button>
-            </div>
-          )}
-          {q.diagramDescription && (
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-gray-700">
-              <span className="font-bold text-yellow-700">Diagram description:</span> {q.diagramDescription}
-            </div>
-          )}
+          <span className="text-xs font-semibold text-gray-400 tabular-nums uppercase">
+            {q.points || 1} {Number(q.points || 1) === 1 ? 'mark' : 'marks'}
+          </span>
         </div>
 
-        <div className="space-y-4 pt-6">
-          {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
-            <div className="grid grid-cols-1 gap-3">
-              {(q.options || []).map((option: any) => (
+        {passageReaderMode ? (
+          <div className="bg-amber-50/70 p-5 rounded-sm border border-amber-200">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-800 mb-2">
+              📖 High-Contrast Passage Mode
+            </div>
+            <MathText text={q.question_text} className="text-lg font-serif text-gray-950 leading-relaxed" />
+          </div>
+        ) : (
+          <MathText text={q.question_text} className="text-lg font-semibold text-gray-900 leading-snug" />
+        )}
+
+        {(q.imageDataUrl || q.diagram_url) && (
+          <div className="mt-3 p-3 rounded-sm bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+              <img
+                src={q.imageDataUrl || q.diagram_url}
+                alt="Question diagram"
+                className="max-h-48 rounded-sm border border-gray-200 cursor-pointer hover:opacity-95"
+                onClick={() => window.open(q.imageDataUrl || q.diagram_url, '_blank')}
+              />
+              <p className="text-[10px] text-gray-400 mt-1">Click image to expand</p>
+            </div>
+            <button
+              onClick={() => setPinnedDiagram(pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? null : (q.imageDataUrl || q.diagram_url))}
+              className="min-h-[36px] bg-school-green-50 hover:bg-school-green-100 text-school-green-800 border border-school-green-200 text-xs font-semibold px-3 py-1.5 rounded-sm transition flex items-center gap-1.5 shrink-0"
+            >
+              <span>📌 {pinnedDiagram === (q.imageDataUrl || q.diagram_url) ? 'Unpin Diagram' : 'Pin to Split-View'}</span>
+            </button>
+          </div>
+        )}
+        {q.diagramDescription && (
+          <div className="mt-3 p-3 bg-amber-50/60 border border-amber-200 rounded-sm text-xs text-amber-900">
+            <span className="font-semibold">Diagram description:</span> {q.diagramDescription}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 pt-4 border-t border-gray-100">
+        {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? (
+          <div className="grid grid-cols-1 gap-2.5">
+            {(q.options || []).map((option: any) => {
+              const isSelected = answers[q.id] === option.option_text;
+              return (
                 <button
                   key={option.id}
                   onClick={() => setAnswers({ ...answers, [q.id]: option.option_text })}
-                  className={`group p-5 rounded-2xl border-2 text-left transition-all ${
-                    answers[q.id] === option.option_text
-                      ? 'border-school-green-600 bg-school-green-50 text-school-green-900 shadow-md'
-                      : 'border-gray-50 bg-gray-50 hover:border-gray-300'
+                  className={`group p-4 rounded-sm border text-left transition-all min-h-[44px] flex items-center ${
+                    isSelected
+                      ? 'border-school-green-600 bg-school-green-50/60 text-school-green-950 font-medium'
+                      : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50/50'
                   }`}
                 >
-                    <div className="flex items-center">
-                    <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${answers[q.id] === option.option_text ? 'border-school-green-600 bg-school-green-600' : 'border-gray-300 group-hover:border-gray-400'}`}>
-                      {answers[q.id] === option.option_text && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
-                    </div>
-                    <MathText text={option.option_text} className="text-lg font-medium" />
+                  <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center shrink-0 transition-colors ${
+                    isSelected
+                      ? 'border-school-green-600 bg-school-green-600'
+                      : 'border-gray-400 group-hover:border-gray-500'
+                  }`}>
+                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
                   </div>
+                  <MathText text={option.option_text} className="text-sm" />
                 </button>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <input
-                type="text"
-                className="w-full p-6 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:border-school-green-600 focus:bg-white outline-none transition-all text-xl font-medium"
-                placeholder="Type your answer here..."
-                value={answers[q.id] || ''}
-                onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-              />
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div>
+            <input
+              type="text"
+              className="w-full min-h-[44px] px-3.5 py-2 bg-white border border-gray-300 rounded-sm focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 outline-none transition text-sm text-gray-900"
+              placeholder="Type your answer here..."
+              value={answers[q.id] || ''}
+              onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+            />
+          </div>
+        )}
       </div>
     </PortalCard>
   );
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-gray-50 flex flex-col">
       {/* LOCKED HUD */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-lg px-6 py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center space-x-4">
-          <div className="bg-school-green-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
-            {quiz.subject_name || 'Exam'}
-          </div>
-          <h2 className="text-sm font-bold text-gray-900 truncate max-w-[200px]">{quiz.title}</h2>
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center space-x-3">
+          <span className="bg-school-green-700 text-white px-2.5 py-0.5 rounded-sm font-semibold text-xs uppercase tracking-wider">
+            {quiz.subject_name || 'Assessment'}
+          </span>
+          <h2 className="text-sm font-bold text-gray-900 truncate max-w-[200px] sm:max-w-[320px]">{quiz.title}</h2>
         </div>
 
-        {/* Progress indicator (simple text, no clickable grid) */}
+        {/* Progress indicator */}
         {isOneByOne && (
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-xs text-gray-500 font-mono tabular-nums font-semibold">
             {currentQuestionIdx + 1} / {quiz.questions.length}
           </div>
         )}
 
         {/* Resource Libraries & Reader Mode Buttons */}
         <div className="flex items-center gap-2">
-          <button onClick={() => { setShowCalculator(!showCalculator); setShowPeriodicTable(false); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${showCalculator ? 'bg-amber-500 text-gray-900 shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+          <button
+            onClick={() => { setShowCalculator(!showCalculator); setShowPeriodicTable(false); }}
+            className={`min-h-[36px] px-3 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition border ${
+              showCalculator
+                ? 'bg-amber-500 text-gray-950 border-amber-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
             <span>🖩 Calculator</span>
           </button>
-          <button onClick={() => { setShowPeriodicTable(!showPeriodicTable); setShowCalculator(false); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${showPeriodicTable ? 'bg-cyan-500 text-gray-900 shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+          <button
+            onClick={() => { setShowPeriodicTable(!showPeriodicTable); setShowCalculator(false); }}
+            className={`min-h-[36px] px-3 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition border ${
+              showPeriodicTable
+                ? 'bg-cyan-500 text-gray-950 border-cyan-600'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
             <span>🧪 Periodic Table</span>
           </button>
-          <button onClick={() => setPassageReaderMode(!passageReaderMode)} className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition ${passageReaderMode ? 'bg-purple-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-            <span>📖 Reader Mode</span>
+          <button
+            onClick={() => setPassageReaderMode(!passageReaderMode)}
+            className={`min-h-[36px] px-3 py-1 rounded-sm text-xs font-semibold flex items-center gap-1 transition border ${
+              passageReaderMode
+                ? 'bg-purple-700 text-white border-purple-800'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <span>📖 Reader</span>
           </button>
-        </div>
 
-        <div className={`px-5 py-2 rounded-2xl font-mono text-2xl font-black flex items-center shadow-inner ${timeLeft < 60 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-900 text-school-green-400'}`}>
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {formatTime(timeLeft)}
+          {/* Tabular timer display */}
+          <div className={`min-h-[36px] px-3 py-1 rounded-sm font-mono tabular-nums text-sm font-bold flex items-center border ${
+            timeLeft < 60
+              ? 'bg-red-50 text-red-700 border-red-200 animate-pulse'
+              : 'bg-gray-900 text-school-green-400 border-gray-800'
+          }`}>
+            <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {formatTime(timeLeft)}
+          </div>
         </div>
       </div>
 
-      {/* Progress Line (visual only) */}
+      {/* Linear progress indicator */}
       {isOneByOne && (
         <div className="w-full bg-gray-200 h-1">
           <div
-            className="bg-school-green-600 h-1 transition-all duration-500"
+            className="bg-school-green-600 h-1 transition-all duration-300"
             style={{ width: `${((currentQuestionIdx + 1) / quiz.questions.length) * 100}%` }}
           ></div>
         </div>
@@ -821,20 +942,28 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
 
       {/* Pinned Diagram Split-View Banner */}
       {pinnedDiagram && (
-        <div className="bg-gray-900 text-white p-3 px-6 flex items-center justify-between border-b border-gray-800 shadow-md">
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">📌 Pinned Split-View Diagram</span>
-            <img src={pinnedDiagram} alt="Pinned" className="h-14 rounded border border-gray-700 bg-white cursor-pointer" onClick={() => window.open(pinnedDiagram, '_blank')} />
+        <div className="bg-gray-900 text-white p-3 px-6 flex items-center justify-between border-b border-gray-800 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">📌 Pinned Diagram</span>
+            <img
+              src={pinnedDiagram}
+              alt="Pinned"
+              className="h-12 rounded-sm border border-gray-700 bg-white cursor-pointer hover:opacity-95"
+              onClick={() => window.open(pinnedDiagram, '_blank')}
+            />
           </div>
-          <button onClick={() => setPinnedDiagram(null)} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg font-bold">
-            Unpin Diagram
+          <button
+            onClick={() => setPinnedDiagram(null)}
+            className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-sm font-medium border border-gray-700"
+          >
+            Unpin
           </button>
         </div>
       )}
 
       {/* Question content - scrollable */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6 pb-32">
+        <div className="max-w-4xl mx-auto p-6 pb-28">
           {isOneByOne ? (
             renderQuestion(quiz.questions[currentQuestionIdx], currentQuestionIdx)
           ) : (
@@ -844,7 +973,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
       </div>
 
       {/* FOOTER ACTIONS - fixed at bottom */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-between items-center shrink-0">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center shrink-0">
         {isOneByOne ? (
           <PortalButton
             variant="secondary"
@@ -852,7 +981,6 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
               setCurrentQuestionIdx(prev => Math.max(0, prev - 1));
             }}
             disabled={currentQuestionIdx === 0}
-            className="px-8"
           >
             ← Previous
           </PortalButton>
@@ -866,15 +994,13 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
             onClick={() => {
               setCurrentQuestionIdx(prev => Math.min(quiz.questions.length - 1, prev + 1));
             }}
-            className="px-8"
           >
-            Next →
+            Next Question →
           </PortalButton>
         ) : (
           <PortalButton
             variant="primary"
             onClick={() => setPhase('review')}
-            className="px-12 py-4 bg-school-green-700 shadow-xl"
           >
             Review Answers
           </PortalButton>
@@ -882,7 +1008,7 @@ export function QuizRunner({ studentId, quizId, onClose, standalone, offlineAsse
       </div>
 
       {showCalculator && (
-        <div className="fixed bottom-20 right-6 z-50">
+        <div className="fixed bottom-16 right-6 z-50 shadow-lg">
           <ScientificCalculator onClose={() => setShowCalculator(false)} />
         </div>
       )}

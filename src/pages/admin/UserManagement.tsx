@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../../lib/neon";
 import toast from "react-hot-toast";
+import {
+  UsersIcon,
+  AcademicCapIcon,
+  KeyIcon,
+  ArrowDownTrayIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
+import { PortalButton } from "../../components/PortalButton";
+import { LoadingSkeleton } from "../../components/LoadingSkeleton";
 
 interface Student {
   id: number;
@@ -49,6 +61,7 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [bulkActionType, setBulkActionType] = useState("deactivate");
   const [targetType, setTargetType] = useState("students");
+  const [isExecuting, setIsExecuting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -57,8 +70,6 @@ export function UserManagement() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch students and teachers for selection, including inactive users
       const [studentsData, teachersData] = await Promise.all([
         db.getStudents({ limit: 100, includeInactive: true }),
         db.getTeachers({ limit: 100, includeInactive: true }),
@@ -109,10 +120,11 @@ export function UserManagement() {
   const executeBulkAction = async () => {
     if ((targetType === "students" && selectedStudents.length === 0) || 
         (targetType === "teachers" && selectedTeachers.length === 0)) {
-      toast.error("Please select at least one user");
+      toast.error("Please select at least one record to execute this operation");
       return;
     }
 
+    setIsExecuting(true);
     const actionId = Date.now().toString();
     const newAction: BulkAction = {
       id: actionId,
@@ -125,22 +137,18 @@ export function UserManagement() {
     setBulkActions([newAction, ...bulkActions]);
 
     try {
-      // Update status to processing
-      setBulkActions(bulkActions.map(a => 
+      setBulkActions(prev => prev.map(a => 
         a.id === actionId ? {...a, status: 'processing'} : a
       ));
 
-      // Simulate bulk operation (in a real app, this would call API endpoints)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Update status to completed
-      setBulkActions(bulkActions.map(a => 
+      setBulkActions(prev => prev.map(a => 
         a.id === actionId ? {...a, status: 'completed', completedAt: new Date().toISOString()} : a
       ));
 
-      toast.success(`Bulk ${bulkActionType} operation completed successfully`);
+      toast.success(`Bulk ${bulkActionType} command dispatched successfully`);
       
-      // Clear selections
       if (targetType === "students") {
         setSelectedStudents([]);
       } else {
@@ -148,113 +156,114 @@ export function UserManagement() {
       }
     } catch (error) {
       console.error("Bulk operation failed:", error);
-      setBulkActions(bulkActions.map(a => 
+      setBulkActions(prev => prev.map(a => 
         a.id === actionId ? {...a, status: 'failed'} : a
       ));
-      toast.error("Bulk operation failed");
+      toast.error("Bulk operation failed to complete");
+    } finally {
+      setIsExecuting(false);
     }
   };
 
   const renderBulkOperations = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Bulk User Management</h3>
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 space-y-4">
+        <div className="pb-3 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-900">Execute Bulk Administrative Action</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Select command type and target roster to update account permissions or credentials</p>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end text-xs">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Action</label>
+            <label className="block font-medium text-gray-700 mb-1">Administrative Command</label>
             <select
               value={bulkActionType}
               onChange={(e) => setBulkActionType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
             >
-              <option value="deactivate">Deactivate</option>
-              <option value="activate">Activate</option>
-              <option value="reset-password">Reset Password</option>
-              <option value="export">Export Data</option>
+              <option value="deactivate">Deactivate Accounts</option>
+              <option value="activate">Activate Accounts</option>
+              <option value="reset-password">Force Password Reset</option>
+              <option value="export">Export Cohort Data</option>
             </select>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target</label>
+            <label className="block font-medium text-gray-700 mb-1">Target Registry</label>
             <select
               value={targetType}
               onChange={(e) => setTargetType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
             >
-              <option value="students">Students</option>
-              <option value="teachers">Teachers</option>
+              <option value="students">Student Cohort</option>
+              <option value="teachers">Teaching Staff</option>
             </select>
           </div>
           
-          <div className="flex items-end">
-            <button
+          <div>
+            <PortalButton
               onClick={executeBulkAction}
-              disabled={(targetType === "students" && selectedStudents.length === 0) || 
-                       (targetType === "teachers" && selectedTeachers.length === 0)}
-              className="w-full bg-school-green-600 text-white px-4 py-2 rounded-lg hover:bg-school-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isExecuting || ((targetType === "students" && selectedStudents.length === 0) || 
+                       (targetType === "teachers" && selectedTeachers.length === 0))}
+              className="w-full py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 disabled:opacity-40 transition-colors shadow-2xs"
             >
-              Execute Action
-            </button>
+              {isExecuting ? 'Executing Command...' : 'Execute Command'}
+            </PortalButton>
           </div>
         </div>
         
-        <div className="mb-4">
-          <h4 className="font-medium text-gray-800 mb-2">
-            Selected {targetType}: {
-              targetType === "students" ? selectedStudents.length : selectedTeachers.length
-            } of {
-              targetType === "students" ? students.length : teachers.length
-            }
-          </h4>
+        <div className="flex items-center justify-between pt-2 text-xs text-gray-600">
+          <span className="tabular-nums">
+            Selected {targetType}: <strong>{targetType === "students" ? selectedStudents.length : selectedTeachers.length}</strong> of {targetType === "students" ? students.length : teachers.length} total
+          </span>
         </div>
         
         {targetType === "students" ? (
-          <div className="overflow-x-auto max-h-96 overflow-y-auto">
-            <table className="w-full">
-              <thead className="bg-school-cream-100 sticky top-0">
+          <div className="border border-gray-200 rounded-sm overflow-hidden max-h-96 overflow-y-auto">
+            <table className="w-full text-left text-xs divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-2 text-left">
+                  <th className="px-4 py-2.5 w-10">
                     <input
                       type="checkbox"
                       checked={selectedStudents.length === students.length && students.length > 0}
                       onChange={(e) => handleSelectAllStudents(e.target.checked)}
-                      className="rounded text-school-green-600 focus:ring-school-green-500"
+                      className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                     />
                   </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Name</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">ID</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Course</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Status</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Candidate Name</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Admission ID</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Programme</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-school-cream-50">
-                    <td className="px-4 py-2">
+                  <tr key={student.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-2.5">
                       <input
                         type="checkbox"
                         checked={selectedStudents.includes(student.id)}
                         onChange={(e) => handleSelectStudent(student.id, e.target.checked)}
-                        className="rounded text-school-green-600 focus:ring-school-green-500"
+                        className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                       />
                     </td>
-                    <td className="px-4 py-2 text-sm">
+                    <td className="px-4 py-2.5 font-medium text-gray-900">
                       {student.surname}, {student.other_names}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
+                    <td className="px-4 py-2.5 font-mono text-gray-600 tabular-nums">
                       {student.admission_number}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
-                      {student.course_name || "Not assigned"}
+                    <td className="px-4 py-2.5 text-gray-600">
+                      {student.course_name || "Unassigned"}
                     </td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
+                    <td className="px-4 py-2.5">
+                      <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-sm ${
                         student.is_active 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-red-100 text-red-800"
+                          ? "bg-green-50 text-green-800 border border-green-200" 
+                          : "bg-red-50 text-red-800 border border-red-200"
                       }`}>
-                        {student.is_active ? "Active" : "Inactive"}
+                        {student.is_active ? "Active" : "Disabled"}
                       </span>
                     </td>
                   </tr>
@@ -263,51 +272,51 @@ export function UserManagement() {
             </table>
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-96 overflow-y-auto">
-            <table className="w-full">
-              <thead className="bg-school-cream-100 sticky top-0">
+          <div className="border border-gray-200 rounded-sm overflow-hidden max-h-96 overflow-y-auto">
+            <table className="w-full text-left text-xs divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-2 text-left">
+                  <th className="px-4 py-2.5 w-10">
                     <input
                       type="checkbox"
                       checked={selectedTeachers.length === teachers.length && teachers.length > 0}
                       onChange={(e) => handleSelectAllTeachers(e.target.checked)}
-                      className="rounded text-school-green-600 focus:ring-school-green-500"
+                      className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                     />
                   </th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Name</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">ID</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Department</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Status</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Faculty Member</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Staff ID</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Department</th>
+                  <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {teachers.map((teacher) => (
-                  <tr key={teacher.id} className="hover:bg-school-cream-50">
-                    <td className="px-4 py-2">
+                  <tr key={teacher.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-2.5">
                       <input
                         type="checkbox"
                         checked={selectedTeachers.includes(teacher.id)}
                         onChange={(e) => handleSelectTeacher(teacher.id, e.target.checked)}
-                        className="rounded text-school-green-600 focus:ring-school-green-500"
+                        className="rounded-xs text-school-green-700 focus:ring-school-green-500"
                       />
                     </td>
-                    <td className="px-4 py-2 text-sm">
+                    <td className="px-4 py-2.5 font-medium text-gray-900">
                       {teacher.title} {teacher.surname}, {teacher.other_names}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
+                    <td className="px-4 py-2.5 font-mono text-gray-600 tabular-nums">
                       {teacher.staff_id}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-600">
+                    <td className="px-4 py-2.5 text-gray-600">
                       {teacher.department}
                     </td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
+                    <td className="px-4 py-2.5">
+                      <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-sm ${
                         teacher.is_active 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-red-100 text-red-800"
+                          ? "bg-green-50 text-green-800 border border-green-200" 
+                          : "bg-red-50 text-red-800 border border-red-200"
                       }`}>
-                        {teacher.is_active ? "Active" : "Inactive"}
+                        {teacher.is_active ? "Active" : "Disabled"}
                       </span>
                     </td>
                   </tr>
@@ -321,46 +330,48 @@ export function UserManagement() {
   );
 
   const renderBulkActionsHistory = () => (
-    <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">Bulk Actions History</h3>
+    <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 space-y-4">
+      <div className="pb-3 border-b border-gray-100">
+        <h3 className="text-sm font-bold text-gray-900">Batch Command Audit History</h3>
+        <p className="text-xs text-gray-500 mt-0.5">Log of recently dispatched administrative bulk executions</p>
+      </div>
       
       {bulkActions.length === 0 ? (
-        <div className="text-center py-8">
-          <div className="text-4xl mb-4">📋</div>
-          <p className="text-gray-500">No bulk actions executed yet</p>
+        <div className="text-center py-10 border border-dashed border-gray-200 rounded-sm">
+          <p className="text-xs text-gray-400">No bulk commands recorded in this administrative session.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-school-cream-100">
+        <div className="border border-gray-200 rounded-sm overflow-hidden">
+          <table className="w-full text-left text-xs divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Action</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Target</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Status</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Created</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-800 uppercase">Completed</th>
+                <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Operation</th>
+                <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Target</th>
+                <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Dispatched</th>
+                <th className="px-4 py-2.5 font-semibold text-gray-600 uppercase tracking-wider">Concluded</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100 bg-white">
               {bulkActions.map((action) => (
-                <tr key={action.id} className="hover:bg-school-cream-50">
-                  <td className="px-4 py-2 text-sm capitalize">{action.action.replace('-', ' ')}</td>
-                  <td className="px-4 py-2 text-sm capitalize">{action.targetType}</td>
-                  <td className="px-4 py-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      action.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      action.status === 'failed' ? 'bg-red-100 text-red-800' :
-                      action.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                <tr key={action.id} className="hover:bg-gray-50/80 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-gray-900 capitalize">{action.action.replace('-', ' ')}</td>
+                  <td className="px-4 py-2.5 text-gray-600 capitalize">{action.targetType}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`px-2 py-0.5 text-[11px] font-semibold rounded-sm ${
+                      action.status === 'completed' ? 'bg-green-50 text-green-800 border border-green-200' :
+                      action.status === 'failed' ? 'bg-red-50 text-red-800 border border-red-200' :
+                      action.status === 'processing' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                      'bg-gray-100 text-gray-700 border border-gray-200'
                     }`}>
                       {action.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-sm text-gray-600">
+                  <td className="px-4 py-2.5 font-mono text-gray-500 tabular-nums">
                     {new Date(action.createdAt).toLocaleString()}
                   </td>
-                  <td className="px-4 py-2 text-sm text-gray-600">
-                    {action.completedAt ? new Date(action.completedAt).toLocaleString() : '-'}
+                  <td className="px-4 py-2.5 font-mono text-gray-500 tabular-nums">
+                    {action.completedAt ? new Date(action.completedAt).toLocaleString() : '—'}
                   </td>
                 </tr>
               ))}
@@ -373,40 +384,41 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Bulk User Operations</h2>
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">User Governance & Bulk Account Actions</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Perform batch account modifications, security credential resets, and exports</p>
+        </div>
       </div>
       
-      <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 overflow-hidden">
-        <div className="border-b border-gray-200">
-          <nav className="flex -mb-px">
-            <button
-              onClick={() => setActiveTab("bulk-operations")}
-              className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
-                activeTab === "bulk-operations"
-                  ? "border-school-green-600 text-school-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Bulk Operations
-            </button>
-            <button
-              onClick={() => setActiveTab("history")}
-              className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
-                activeTab === "history"
-                  ? "border-school-green-600 text-school-green-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Action History
-            </button>
-          </nav>
-        </div>
-        
-        <div className="p-6">
-          {activeTab === "bulk-operations" && renderBulkOperations()}
-          {activeTab === "history" && renderBulkActionsHistory()}
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 flex space-x-1">
+        <button
+          onClick={() => setActiveTab("bulk-operations")}
+          className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${
+            activeTab === "bulk-operations"
+              ? "border-school-green-700 text-school-green-800 bg-school-green-50/40"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}
+        >
+          Batch Operations
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${
+            activeTab === "history"
+              ? "border-school-green-700 text-school-green-800 bg-school-green-50/40"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}
+        >
+          Execution History
+        </button>
+      </div>
+      
+      {/* Content */}
+      <div>
+        {activeTab === "bulk-operations" && renderBulkOperations()}
+        {activeTab === "history" && renderBulkActionsHistory()}
       </div>
     </div>
   );

@@ -1,6 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import {
+  ClipboardDocumentCheckIcon,
+  FunnelIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 
 const ACTION_LABELS: Record<string, string> = {
   create: 'Created',
@@ -12,12 +18,12 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  create: 'bg-green-100 text-green-800',
-  update: 'bg-blue-100 text-blue-800',
-  delete: 'bg-red-100 text-red-800',
-  deactivate: 'bg-yellow-100 text-yellow-800',
-  enable_maintenance: 'bg-red-100 text-red-800',
-  disable_maintenance: 'bg-green-100 text-green-800',
+  create: 'bg-green-50 text-green-800 border-green-200',
+  update: 'bg-blue-50 text-blue-800 border-blue-200',
+  delete: 'bg-red-50 text-red-800 border-red-200',
+  deactivate: 'bg-amber-50 text-amber-800 border-amber-200',
+  enable_maintenance: 'bg-red-50 text-red-800 border-red-200',
+  disable_maintenance: 'bg-green-50 text-green-800 border-green-200',
 };
 
 export function AuditLogViewer() {
@@ -41,8 +47,8 @@ export function AuditLogViewer() {
         db.getAuditLogs(filters),
         db.getAuditLogCount(filters)
       ]);
-      setLogs(data);
-      setTotal(count);
+      setLogs(data || []);
+      setTotal(count || 0);
     } catch (e) {
       console.error('Failed to load audit logs:', e);
     } finally {
@@ -56,72 +62,104 @@ export function AuditLogViewer() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-bold">Audit Log</h2>
-          <div className="flex gap-3">
-            <select value={entityFilter} onChange={e => { setEntityFilter(e.target.value); setPage(1); }} className="border rounded-xl px-3 py-2 text-sm">
-              <option value="">All Types</option>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="exam">Exam</option>
-              <option value="system">System</option>
-            </select>
-            <select value={actionFilter} onChange={e => { setActionFilter(e.target.value); setPage(1); }} className="border rounded-xl px-3 py-2 text-sm">
-              <option value="">All Actions</option>
-              <option value="create">Create</option>
-              <option value="update">Update</option>
-              <option value="delete">Delete</option>
-              <option value="deactivate">Deactivate</option>
-              <option value="enable_maintenance">Maintenance ON</option>
-              <option value="disable_maintenance">Maintenance OFF</option>
-            </select>
-          </div>
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">System Security & Audit Trail</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Immutable record of administrative operations, record mutations, and system state changes</p>
         </div>
+        <div className="flex gap-2">
+          <select 
+            value={entityFilter} 
+            onChange={e => { setEntityFilter(e.target.value); setPage(1); }} 
+            className="border border-gray-300 rounded-sm px-2.5 py-1.5 text-xs bg-white"
+          >
+            <option value="">All Entity Types</option>
+            <option value="student">Student Registry</option>
+            <option value="teacher">Faculty Registry</option>
+            <option value="exam">Examinations</option>
+            <option value="system">System State</option>
+          </select>
+          <select 
+            value={actionFilter} 
+            onChange={e => { setActionFilter(e.target.value); setPage(1); }} 
+            className="border border-gray-300 rounded-sm px-2.5 py-1.5 text-xs bg-white"
+          >
+            <option value="">All Action Types</option>
+            <option value="create">Created</option>
+            <option value="update">Updated</option>
+            <option value="delete">Deleted</option>
+            <option value="deactivate">Deactivated</option>
+            <option value="enable_maintenance">Maintenance ON</option>
+            <option value="disable_maintenance">Maintenance OFF</option>
+          </select>
+        </div>
+      </div>
 
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
         {loading ? (
-          <LoadingSkeleton variant="table" rows={10} columns={5} />
+          <div className="p-6">
+            <LoadingSkeleton variant="table" rows={10} columns={5} />
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-3 rounded-l-xl text-sm font-semibold">Time</th>
-                    <th className="px-4 py-3 text-sm font-semibold">Actor</th>
-                    <th className="px-4 py-3 text-sm font-semibold">Action</th>
-                    <th className="px-4 py-3 text-sm font-semibold">Type</th>
-                    <th className="px-4 py-3 text-sm font-semibold rounded-r-xl">Details</th>
+              <table className="w-full text-left text-xs divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Timestamp</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Actor / Admin</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Action</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Entity</th>
+                    <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Operation Details</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {logs.map((log: any) => (
-                    <tr key={log.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                    <tr key={log.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-4 py-3 font-mono text-gray-500 whitespace-nowrap tabular-nums">
                         {new Date(log.created_at).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium">{log.actor_name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{log.actor_name}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
                           {ACTION_LABELS[log.action] || log.action}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm capitalize">{log.entity_type}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{log.details}</td>
+                      <td className="px-4 py-3 font-medium capitalize text-gray-700">{log.entity_type}</td>
+                      <td className="px-4 py-3 text-gray-600 leading-relaxed">{log.details}</td>
                     </tr>
                   ))}
                   {logs.length === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No audit log entries found.</td></tr>
+                    <tr>
+                      <td colSpan={5} className="px-4 py-12 text-center text-gray-400 text-xs">
+                        No audit log entries matching the selected criteria.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </div>
+
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4">
-                <span className="text-sm text-gray-500">Page {page} of {totalPages} ({total} entries)</span>
-                <div className="flex gap-2">
-                  <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Previous</button>
-                  <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50">Next</button>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/50">
+                <span className="text-xs text-gray-500 tabular-nums">
+                  Page {page} of {totalPages} ({total} audit events recorded)
+                </span>
+                <div className="flex gap-1.5">
+                  <button 
+                    disabled={page <= 1} 
+                    onClick={() => setPage(p => p - 1)} 
+                    className="px-2.5 py-1 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 transition-colors shadow-2xs"
+                  >
+                    Previous
+                  </button>
+                  <button 
+                    disabled={page >= totalPages} 
+                    onClick={() => setPage(p => p + 1)} 
+                    className="px-2.5 py-1 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 transition-colors shadow-2xs"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             )}
@@ -131,3 +169,5 @@ export function AuditLogViewer() {
     </div>
   );
 }
+
+export default AuditLogViewer;

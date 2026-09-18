@@ -3,12 +3,16 @@ import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import { parseDate, getScheduleStatus, getStatusLabel, getStatusColor } from '../../lib/dates';
 import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 import { StudentProfile } from './StudentProfile';
 import { StudentDownloads } from './StudentDownloads';
 import { StudentMessages } from './StudentMessages';
 import { StudentVoting } from './StudentVoting';
 import { StudentELearning } from './StudentELearning';
 import { StudentExams } from './StudentExams';
+import { Skeleton, SkeletonGrid } from '../../components/SkeletonLoader';
+
 export interface Student {
   id: string;
   student_id: string;
@@ -75,6 +79,7 @@ export const StudentDashboard: React.FC<{
   const [submissions, setSubmissions] = useState<Record<number, any>>({});
   const [showSubmitModal, setShowSubmitModal] = useState<Assignment | null>(null);
   const [submissionData, setSubmissionData] = useState({ text: '', file: null as File | null });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -127,72 +132,89 @@ export const StudentDashboard: React.FC<{
   };
 
   const renderOverview = () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {student && student.registration_status !== 'complete' && !isVotingMode && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-[1px] rounded-2xl shadow-lg animate-pulse">
-          <div className="bg-white/95 backdrop-blur-sm p-4 rounded-[15px] flex items-center">
-            <div className="flex-shrink-0 bg-amber-100 p-2 rounded-full mr-4">
-              <span className="text-xl">⚠️</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-amber-700 uppercase tracking-wider">Registration Incomplete</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Your official school registration is currently pending. Please visit the <strong>ICT Department</strong> with your documents to complete your full profile.
-              </p>
-            </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start space-x-3 text-amber-900">
+          <span className="text-base flex-shrink-0 mt-0.5">⚠️</span>
+          <div className="text-xs">
+            <p className="font-semibold uppercase tracking-wider text-amber-800">Registration Incomplete</p>
+            <p className="mt-1 text-amber-700">
+              Official school registration is currently pending. Visit the ICT Department with documents to finalize your records.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Premium Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-school-green-800 via-school-green-700 to-teal-900 rounded-[2rem] p-8 md:p-10 shadow-2xl text-white">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-10 w-40 h-40 bg-teal-400 opacity-20 rounded-full blur-2xl"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:space-x-8">
-          <div className="bg-white/10 p-5 rounded-3xl backdrop-blur-md border border-white/20 shadow-inner mb-6 md:mb-0">
-            <span className="text-5xl block">🎓</span>
+      {/* Clean Structured Academic Banner */}
+      <div className="bg-school-green-800 border border-school-green-900/60 rounded-md p-6 text-white">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center space-x-4">
+            <UserAvatar name={student.fullName} size="xl" className="ring-2 ring-white/30" />
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-white">{student.fullName}</h2>
+              <p className="text-xs text-school-green-200 mt-0.5">
+                Class: <span className="font-semibold text-white">{className || 'Not Assigned'}</span>
+              </p>
+            </div>
           </div>
-          <div className="text-center md:text-left flex-1">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-2">Welcome back, {student.fullName}!</h2>
-            <p className="text-school-green-100 text-lg opacity-90 mb-6">Here's your academic dashboard for this semester.</p>
-            
-            <div className="flex flex-wrap justify-center md:justify-start gap-4">
-              <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
-                <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Student ID</span>
-                <div className="font-bold text-lg">{student.studentId || student.id}</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10">
-                <span className="text-xs text-school-green-100 uppercase tracking-wider block mb-1">Academic Year</span>
-                <div className="font-bold text-lg">{academicYear} (Semester {term})</div>
-              </div>
+          
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="bg-black/20 border border-white/10 px-4 py-2.5 rounded-sm">
+              <span className="text-[11px] uppercase tracking-wider text-school-green-200 block">Student ID</span>
+              <span className="text-sm font-semibold tabular-nums text-white">{student.studentId || student.id}</span>
+            </div>
+            <div className="bg-black/20 border border-white/10 px-4 py-2.5 rounded-sm">
+              <span className="text-[11px] uppercase tracking-wider text-school-green-200 block">Academic Term</span>
+              <span className="text-sm font-semibold tabular-nums text-white">{academicYear || '2025/2026'} • Sem {term}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats Grid - Hero Numbers with Clean 1px Borders */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { title: 'Enrolled Subjects', value: subjects?.length || 0, icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', color: 'from-blue-500 to-indigo-500', bg: 'bg-blue-50' },
-          { title: 'Graded Results', value: results?.filter(r => r?.grade)?.length || 0, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-50' },
-          { title: 'Active Assignments', value: assignments?.length || 0, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', color: 'from-purple-500 to-pink-500', bg: 'bg-purple-50' },
+          { 
+            title: 'Enrolled Subjects', 
+            value: subjects?.length || 0, 
+            icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', 
+            clickable: true 
+          },
+          { 
+            title: 'Graded Results', 
+            value: results?.filter(r => r?.grade)?.length || 0, 
+            icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' 
+          },
+          { 
+            title: 'Active Assignments', 
+            value: assignments?.length || 0, 
+            icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' 
+          },
         ].map((stat, idx) => (
-          <div key={idx} className="group relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
-            onClick={() => { if (idx === 0) setShowSubjectModal(true); }}
+          <div 
+            key={idx} 
+            onClick={() => { if (stat.clickable) setShowSubjectModal(true); }}
+            className={`bg-white rounded-md p-4 border border-gray-200 transition-all duration-fast ease-standard ${
+              stat.clickable ? 'cursor-pointer hover:border-school-green-600 hover:-translate-y-0.5' : ''
+            }`}
           >
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.color} opacity-10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`}></div>
-            <div className="relative z-10 flex items-center space-x-5">
-              <div className={`${stat.bg} p-4 rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
-                <svg className="w-8 h-8 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.title}</p>
+                <h3 className="text-2xl font-bold text-gray-900 tabular-nums mt-1">{stat.value}</h3>
+              </div>
+              <div className="w-10 h-10 rounded-sm bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-700">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
                 </svg>
               </div>
-              <div>
-                <h3 className="text-4xl font-black text-gray-900 tracking-tight">{stat.value}</h3>
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">{stat.title}</p>
-              </div>
             </div>
+            {stat.clickable && (
+              <p className="text-[11px] font-medium text-school-green-700 mt-3 flex items-center gap-1">
+                <span>View enrolled subjects</span>
+                <span aria-hidden="true">&rarr;</span>
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -203,22 +225,28 @@ export const StudentDashboard: React.FC<{
   const renderSubjectModal = () => {
     if (!showSubjectModal) return null;
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowSubjectModal(false)}>
-        <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900">Enrolled Subjects ({subjects.length})</h3>
-            <button onClick={() => setShowSubjectModal(false)} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setShowSubjectModal(false)}>
+        <div className="bg-white rounded-md border border-gray-200 p-6 w-full max-w-lg shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+            <h3 className="text-base font-semibold text-gray-900">
+              Enrolled Subjects (<span className="tabular-nums">{subjects.length}</span>)
+            </h3>
+            <button 
+              onClick={() => setShowSubjectModal(false)}
+              aria-label="Close modal"
+              className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-sm hover:bg-gray-100 text-gray-500 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="space-y-1.5 max-h-80 overflow-y-auto">
             {subjects.length > 0 ? subjects.map((s: any, i: number) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                <span className="font-medium text-gray-800">{s.subject_name || s.name}</span>
-                <span className="text-xs text-gray-500 font-mono">{s.subject_code || s.code}</span>
+              <div key={i} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-sm border border-gray-200/60 hover:bg-gray-100 transition-colors text-xs">
+                <span className="font-medium text-gray-900">{s.subject_name || s.name}</span>
+                <span className="text-gray-500 font-mono tabular-nums">{s.subject_code || s.code}</span>
               </div>
             )) : (
-              <p className="text-center text-gray-500 py-8">No subjects found.</p>
+              <p className="text-center text-gray-500 text-xs py-6">No subjects found.</p>
             )}
           </div>
         </div>
@@ -231,78 +259,90 @@ export const StudentDashboard: React.FC<{
       case 'overview': return renderOverview();
       case 'profile': return <StudentProfile student={{ ...student, className } as any} onLogout={onLogout} />;
       case 'grades': return (
-        <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">My Grades</h3>
-          <div className="overflow-x-auto rounded-2xl border border-gray-100">
-            <table className="min-w-full divide-y divide-gray-100">
+        <PortalCard title="Academic Results">
+          <div className="overflow-x-auto rounded-sm border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grade</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Subject</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">Code</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider">Score</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider">Grade</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {results.map((result) => (
                   <tr key={result.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">{result.subject_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800">
-                        {result.grade || 'N/A'}
+                    <td className="px-4 py-3 font-medium text-gray-900">{result.subject_name || '-'}</td>
+                    <td className="px-4 py-3 text-gray-500 font-mono tabular-nums">{result.subject_code || '-'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900 tabular-nums">
+                      {result.score !== undefined && result.score !== null ? result.score : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-bold tabular-nums text-school-green-700">
+                        {result.grade || '-'}
                       </span>
                     </td>
                   </tr>
                 ))}
                 {results.length === 0 && (
                   <tr>
-                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500 font-medium">No grades available yet.</td>
+                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                      No grades recorded for this semester yet.
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </PortalCard>
       );
       case 'assignments': return (
-        <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Assignments</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <PortalCard title="Course Assignments">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {assignments.map((ass) => {
               const durationMin = Math.round((new Date(ass.due_date).getTime() - new Date(ass.created_at).getTime()) / 60000);
+              const isSubmitted = !!submissions[ass.id];
               return (
-              <div key={ass.id} className="p-6 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-gray-900 group-hover:text-school-green-600 transition-colors">{ass.title}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(ass.created_at, durationMin)}`}>{getStatusLabel(ass.created_at, durationMin)}</span>
-                    {submissions[ass.id] ? (
-                      <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Submitted</span>
-                    ) : (
-                      <span className="text-xs font-bold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">Pending</span>
+                <div key={ass.id} className="p-4 rounded-md border border-gray-200 bg-white hover:-translate-y-0.5 transition-all duration-fast ease-standard flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <h4 className="font-semibold text-sm text-gray-900 leading-snug">{ass.title}</h4>
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-sm border ${
+                        isSubmitted 
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {isSubmitted ? 'Submitted' : 'Pending'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 line-clamp-2 mb-4">{ass.description}</p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-gray-100 text-xs">
+                    <span className="text-gray-500 tabular-nums">
+                      Due: {new Date(ass.due_date).toLocaleDateString()}
+                    </span>
+                    {!isSubmitted && (
+                      <PortalButton 
+                        size="sm" 
+                        variant="primary" 
+                        onClick={() => setShowSubmitModal(ass)}
+                      >
+                        Submit Response
+                      </PortalButton>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-6 line-clamp-2">{ass.description}</p>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                   <div className="flex items-center text-xs text-gray-500 font-medium">
-                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                     Due: {new Date(ass.due_date).toLocaleDateString()}
-                   </div>
-                   {!submissions[ass.id] && (
-                     <button onClick={() => setShowSubmitModal(ass)} className="text-xs font-bold bg-school-green-600 hover:bg-school-green-700 text-white px-4 py-2 rounded-xl transition-colors shadow-md shadow-school-green-200">
-                       Submit Now
-                     </button>
-                   )}
-                </div>
-              </div>
-            );
+              );
             })}
             {assignments.length === 0 && (
-              <div className="col-span-full py-10 text-center bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-gray-500 font-medium">No active assignments.</p>
+              <div className="col-span-full py-8 text-center bg-gray-50 rounded-md border border-gray-200 text-xs text-gray-500">
+                No active assignments for your class.
               </div>
             )}
           </div>
-        </div>
+        </PortalCard>
       );
       case 'downloads': return <StudentDownloads />;
       case 'messages': return <StudentMessages />;
@@ -314,43 +354,73 @@ export const StudentDashboard: React.FC<{
   };
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-6 pb-10">
       {loading && activeTab === 'overview' ? (
-        <div className="flex justify-center items-center h-[60vh]">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-school-green-200 border-t-school-green-600"></div>
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-white p-6 rounded-md border border-gray-200 space-y-4">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
+              <div className="space-y-2 flex-grow">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-3.5 w-1/2" />
+              </div>
+            </div>
+          </div>
+          <SkeletonGrid count={3} columns={3} />
         </div>
       ) : renderContent()}
 
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn">
-          <div className="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl transform transition-all">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black text-gray-900">Submit Assignment</h3>
-              <button onClick={() => setShowSubmitModal(null)} className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-md p-6 w-full max-w-md border border-gray-200 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900">Submit Assignment</h3>
+              <button 
+                onClick={() => setShowSubmitModal(null)}
+                aria-label="Close modal"
+                className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-sm hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <p className="text-sm font-semibold text-school-green-700 mb-4">{showSubmitModal.title}</p>
+            <p className="text-xs font-semibold text-school-green-800 mb-3">{showSubmitModal.title}</p>
             <textarea 
-               className="w-full p-4 border-2 border-gray-100 bg-gray-50 rounded-2xl mb-6 focus:ring-4 focus:ring-school-green-100 focus:border-school-green-500 transition-all resize-none font-medium" 
-               rows={5} 
-               placeholder="Type your response here..." 
-               value={submissionData.text}
-               onChange={e => setSubmissionData({...submissionData, text: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-sm mb-4 focus:ring-1 focus:ring-school-green-700 focus:border-school-green-700 text-xs transition-colors resize-none" 
+              rows={5} 
+              placeholder="Type your response here..." 
+              value={submissionData.text}
+              onChange={e => setSubmissionData({...submissionData, text: e.target.value})}
             />
-            <div className="flex gap-4">
-              <button onClick={() => setShowSubmitModal(null)} className="flex-1 py-3 text-gray-600 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
-              <button 
-                onClick={async () => {
-                  await db.submitAssignment(showSubmitModal.id, parseInt(student.id), undefined);
-                  toast.success('Successfully Submitted! 🎉');
-                  setShowSubmitModal(null);
-                  fetchData();
-                }}
-                className="flex-1 py-3 font-bold bg-school-green-600 hover:bg-school-green-700 text-white rounded-xl shadow-lg shadow-school-green-200 transition-all transform hover:-translate-y-1"
+            <div className="flex gap-3 justify-end">
+              <PortalButton 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowSubmitModal(null)}
+                disabled={isSubmitting}
               >
-                Submit
-              </button>
+                Cancel
+              </PortalButton>
+              <PortalButton 
+                variant="primary" 
+                size="sm"
+                loading={isSubmitting}
+                loadingText="Submitting..."
+                onClick={async () => {
+                  try {
+                    setIsSubmitting(true);
+                    await db.submitAssignment(showSubmitModal.id, parseInt(student.id), undefined);
+                    toast.success('Assignment submitted successfully');
+                    setShowSubmitModal(null);
+                    fetchData();
+                  } catch (err: any) {
+                    toast.error('Failed to submit assignment');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+              >
+                Submit Response
+              </PortalButton>
             </div>
           </div>
         </div>

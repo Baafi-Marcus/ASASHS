@@ -94,7 +94,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
     } catch (error: any) {
       console.error('Authentication error:', error);
-      toast.error('Login failed. Please try again.');
+      const msg = error?.message || 'Login failed. Please try again.';
+      toast.error(msg.includes('fetch') || msg.includes('network') ? 'Network connection failed. Check tablet Wi-Fi/Internet.' : msg);
       throw error;
     } finally {
       setLoading(false);

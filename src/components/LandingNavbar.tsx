@@ -23,13 +23,13 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 40);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogoClick = (e: React.MouseEvent) => {
+  const handleLogoClick = () => {
     if (onHomeClick) {
       onHomeClick();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -41,11 +41,10 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
       if (onHomeClick) {
         e.preventDefault();
         onHomeClick();
-        // Increased timeout to ensure landing page components handle mounting
         setTimeout(() => {
           const element = document.getElementById(href.substring(1));
           if (element) {
-            const offset = 80; // Navbar height offset
+            const offset = 80;
             const bodyRect = document.body.getBoundingClientRect().top;
             const elementRect = element.getBoundingClientRect().top;
             const elementPosition = elementRect - bodyRect;
@@ -56,7 +55,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
               behavior: 'smooth'
             });
           }
-        }, 200);
+        }, 150);
       }
     }
   };
@@ -70,14 +69,14 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
         { name: 'Academic Calendar', onClick: onCalendarClick },
         { name: 'Staff Directory', onClick: onStaffClick },
         { name: 'Latest News', onClick: onNewsClick },
-        { name: 'Courses', href: '#academics' }
+        { name: 'Academic Courses', href: '#academics' }
       ]
     },
     { 
       name: 'Admissions', 
       dropdown: [
-        { name: 'Online Admission', href: 'https://www.myshsadmission.net/site/schools/ASASHS/' },
-        { name: 'Requirements', href: '#admissions' }
+        { name: 'Online Admission Portal', href: 'https://www.myshsadmission.net/site/schools/ASASHS/' },
+        { name: 'Admission Requirements', href: '#admissions' }
       ]
     },
     { name: 'Contact', href: '#contact' },
@@ -85,51 +84,61 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
 
   return (
     <nav
-      className={`fixed w-full z-50 transition-all duration-300 ${isScrolled
-          ? 'bg-white shadow-md py-2'
-          : 'bg-transparent py-4'
-        }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-200 ${
+        isScrolled
+          ? 'bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm py-2.5'
+          : 'bg-transparent py-4 text-white'
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          {/* Logo Area */}
+        <div className="flex justify-between items-center h-12">
+          {/* Logo & Identity */}
           <button 
             onClick={handleLogoClick}
-            className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity"
+            className="flex items-center space-x-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-school-green-600 rounded-sm"
           >
-            <div className={`p-1.5 md:p-2 rounded-lg ${isScrolled ? 'bg-school-green-50' : 'bg-white/10 backdrop-blur-sm'}`}>
+            <div className={`p-1.5 rounded-sm border ${
+              isScrolled 
+                ? 'bg-school-green-50 border-school-green-200' 
+                : 'bg-white/10 backdrop-blur-sm border-white/20'
+            }`}>
               <img
                 src="/asashs-logo.png"
                 alt="ASASHS Logo"
-                className="w-8 h-8 md:w-10 md:h-10"
+                className="w-7 h-7 md:w-8 md:h-8 object-contain"
               />
             </div>
-            <div className="flex flex-col text-left">
-              <h1 className={`text-lg md:text-xl font-bold leading-tight ${isScrolled ? 'text-school-green-800' : 'text-white'}`}>
+            <div>
+              <span className={`block text-base md:text-lg font-bold tracking-tight leading-none ${
+                isScrolled ? 'text-gray-900' : 'text-white'
+              }`}>
                 ASASHS
-              </h1>
-              <p className={`text-[10px] md:text-xs tracking-wider hidden sm:block ${isScrolled ? 'text-school-green-600' : 'text-white/90'}`}>
-                AKIM ASAFO SENIOR HIGH
-              </p>
+              </span>
+              <span className={`block text-[10px] tracking-wider uppercase font-semibold mt-0.5 ${
+                isScrolled ? 'text-school-green-700' : 'text-gray-200'
+              }`}>
+                Akim Asafo Senior High
+              </span>
             </div>
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <div 
                 key={link.name} 
-                className="relative group h-full flex items-center"
+                className="relative h-full flex items-center"
                 onMouseEnter={() => link.dropdown && setActiveDropdown(link.name)}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 {link.onClick ? (
                   <button
                     onClick={link.onClick}
-                    className={`text-sm font-semibold uppercase tracking-wide transition-colors ${isScrolled
-                        ? 'text-gray-600 hover:text-school-green-600'
-                        : 'text-white/90 hover:text-white'
-                      }`}
+                    className={`text-xs font-semibold uppercase tracking-wider py-2 px-1 border-b-2 border-transparent transition-colors focus-visible:outline-none ${
+                      isScrolled
+                        ? 'text-gray-700 hover:text-school-green-800 hover:border-school-green-600'
+                        : 'text-gray-100 hover:text-white hover:border-white'
+                    }`}
                   >
                     {link.name}
                   </button>
@@ -137,87 +146,109 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
                   <a
                     href={link.href}
                     onClick={(e) => handleAnchorClick(e, link.href!)}
-                    className={`text-sm font-semibold uppercase tracking-wide transition-colors ${isScrolled
-                        ? 'text-gray-600 hover:text-school-green-600'
-                        : 'text-white/90 hover:text-white'
-                      }`}
+                    className={`text-xs font-semibold uppercase tracking-wider py-2 px-1 border-b-2 border-transparent transition-colors focus-visible:outline-none ${
+                      isScrolled
+                        ? 'text-gray-700 hover:text-school-green-800 hover:border-school-green-600'
+                        : 'text-gray-100 hover:text-white hover:border-white'
+                    }`}
                   >
                     {link.name}
                   </a>
                 ) : (
-                  <div className="flex items-center cursor-default">
-                    <span className={`text-sm font-semibold uppercase tracking-wide transition-colors ${isScrolled
-                        ? 'text-gray-600 hover:text-school-green-600'
-                        : 'text-white/90 hover:text-white'
-                      }`}>
-                      {link.name}
-                    </span>
+                  <button
+                    className={`flex items-center space-x-1 text-xs font-semibold uppercase tracking-wider py-2 px-1 border-b-2 border-transparent transition-colors focus-visible:outline-none ${
+                      isScrolled
+                        ? 'text-gray-700 hover:text-school-green-800 hover:border-school-green-600'
+                        : 'text-gray-100 hover:text-white hover:border-white'
+                    }`}
+                  >
+                    <span>{link.name}</span>
                     {link.dropdown && (
-                      <svg className={`w-4 h-4 ml-1 transition-transform ${activeDropdown === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg 
+                        className={`w-3.5 h-3.5 transition-transform ${activeDropdown === link.name ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     )}
-                  </div>
+                  </button>
                 )}
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu Panel */}
                 {link.dropdown && activeDropdown === link.name && (
-                  <div className="absolute top-full left-0 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
-                    <div className="pt-2"> {/* Tiny buffer space */}
-                      {link.dropdown.map((subItem: any) => (
-                        subItem.onClick ? (
-                          <button
-                            key={subItem.name}
-                            onClick={() => {
-                              subItem.onClick?.();
-                              setActiveDropdown(null);
-                            }}
-                            className="w-full text-left px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors flex items-center uppercase tracking-tight"
-                          >
-                            {subItem.name}
-                          </button>
-                        ) : (
-                          <a
-                            key={subItem.name}
-                            href={subItem.href}
-                            target={subItem.href?.startsWith('http') ? '_blank' : undefined}
-                            onClick={(e) => handleAnchorClick(e, subItem.href!)}
-                            className="block px-5 py-2.5 text-sm font-bold text-gray-700 hover:text-school-green-600 hover:bg-school-green-50 transition-colors uppercase tracking-tight"
-                          >
-                            {subItem.name}
-                          </a>
-                        )
-                      ))}
-                    </div>
+                  <div className="absolute top-full left-0 w-64 bg-white rounded-md shadow-lg border border-gray-200 py-1.5 mt-1 z-50 animate-in fade-in duration-150">
+                    {link.dropdown.map((subItem: any) => (
+                      subItem.onClick ? (
+                        <button
+                          key={subItem.name}
+                          onClick={() => {
+                            subItem.onClick?.();
+                            setActiveDropdown(null);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:text-school-green-900 hover:bg-school-green-50 rounded-sm mx-0 transition-colors flex items-center justify-between"
+                        >
+                          <span>{subItem.name}</span>
+                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <a
+                          key={subItem.name}
+                          href={subItem.href}
+                          target={subItem.href?.startsWith('http') ? '_blank' : undefined}
+                          rel={subItem.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          onClick={(e) => {
+                            handleAnchorClick(e, subItem.href!);
+                            setActiveDropdown(null);
+                          }}
+                          className="block px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-700 hover:text-school-green-900 hover:bg-school-green-50 rounded-sm mx-0 transition-colors"
+                        >
+                          {subItem.name}
+                        </a>
+                      )
+                    ))}
                   </div>
                 )}
               </div>
             ))}
+
+            {/* Voting CTA */}
             {onVoteClick && (
               <button
                 onClick={onVoteClick}
-                className="px-6 py-2 rounded-full font-bold text-sm bg-yellow-500 text-black hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-md flex items-center space-x-2 animate-pulse"
+                className="px-3.5 py-2 rounded-sm font-bold text-xs uppercase tracking-wider bg-yellow-400 text-yellow-950 hover:bg-yellow-300 border border-yellow-500/50 shadow-sm flex items-center space-x-2 transition-colors min-h-[40px]"
               >
-                <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                <span>VOTE NOW</span>
+                <span className="w-2 h-2 bg-red-600 rounded-sm"></span>
+                <span>Vote Online</span>
               </button>
             )}
+
+            {/* Portal Login Button */}
             <button
               onClick={onLoginClick}
-              className={`px-6 py-2 rounded-full font-bold text-sm transition-all transform hover:scale-105 ${isScrolled
-                  ? 'bg-school-green-600 text-white hover:bg-school-green-700 shadow-md'
-                  : 'bg-white text-school-green-700 hover:bg-school-cream-50'
-                }`}
+              className={`px-4 py-2 rounded-sm font-bold text-xs uppercase tracking-wider border transition-colors min-h-[40px] flex items-center justify-center ${
+                isScrolled
+                  ? 'bg-school-green-700 text-white hover:bg-school-green-800 border-school-green-800 shadow-sm'
+                  : 'bg-white text-school-green-900 hover:bg-gray-100 border-white/40 shadow-sm'
+              }`}
             >
-              PORTAL LOGIN
+              Portal Login
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle Button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2 rounded-md ${isScrolled ? 'text-gray-800' : 'text-white'}`}
+              className={`p-2 rounded-sm border transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
+                isScrolled 
+                  ? 'text-gray-800 border-gray-200 hover:bg-gray-50' 
+                  : 'text-white border-white/20 hover:bg-white/10'
+              }`}
+              aria-label="Toggle navigation menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMobileMenuOpen ? (
@@ -231,105 +262,108 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-xl absolute w-full">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navLinks.map((link) => (
-              <div key={link.name}>
-                {link.dropdown ? (
-                  <>
-                    <button
-                      onClick={() => setActiveDropdown(activeDropdown === link.name ? null : link.name)}
-                      className="w-full flex justify-between items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-school-green-600 hover:bg-gray-50"
-                    >
-                      <span>{link.name}</span>
-                      <svg className={`w-5 h-5 transition-transform ${activeDropdown === link.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {activeDropdown === link.name && (
-                      <div className="pl-4 py-1 space-y-1 bg-gray-50/50 rounded-lg mb-2">
-                        {link.dropdown.map((subItem: any) => (
-                          subItem.onClick ? (
-                            <button
-                              key={subItem.name}
-                              onClick={() => {
-                                subItem.onClick?.();
-                                setIsMobileMenuOpen(false);
-                                setActiveDropdown(null);
-                              }}
-                              className="w-full text-left block px-3 py-2 rounded-md text-sm font-black text-gray-600 hover:text-school-green-600 uppercase tracking-tighter"
-                            >
-                              {subItem.name}
-                            </button>
-                          ) : (
-                            <a
-                              key={subItem.name}
-                              href={subItem.href}
-                              target={subItem.href?.startsWith('http') ? '_blank' : undefined}
-                              onClick={(e) => {
-                                handleAnchorClick(e, subItem.href!);
-                                setIsMobileMenuOpen(false);
-                              }}
-                              className="block px-3 py-2 rounded-md text-sm font-black text-gray-600 hover:text-school-green-600 uppercase tracking-tighter"
-                            >
-                              {subItem.name}
-                            </a>
-                          )
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : link.onClick ? (
+        <div className="md:hidden bg-white border-b border-gray-200 shadow-xl absolute w-full left-0 top-full px-4 py-4 space-y-1">
+          {navLinks.map((link) => (
+            <div key={link.name} className="border-b border-gray-100 last:border-0 pb-1">
+              {link.dropdown ? (
+                <div>
                   <button
-                    onClick={() => {
-                      link.onClick?.();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-school-green-600 hover:bg-gray-50"
+                    onClick={() => setActiveDropdown(activeDropdown === link.name ? null : link.name)}
+                    className="w-full flex justify-between items-center px-3 py-2.5 rounded-sm text-sm font-bold uppercase tracking-wider text-gray-800 hover:bg-gray-50 min-h-[44px]"
                   >
-                    {link.name}
+                    <span>{link.name}</span>
+                    <svg 
+                      className={`w-4 h-4 text-gray-500 transition-transform ${activeDropdown === link.name ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
-                ) : (
-                  <a
-                    href={link.href}
-                    onClick={(e) => {
-                      handleAnchorClick(e, link.href!);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-school-green-600 hover:bg-gray-50"
-                  >
-                    {link.name}
-                  </a>
-                )}
-              </div>
-            ))}
-            {onVoteClick && (
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onVoteClick();
-                }}
-                className="w-full text-left block px-3 py-3 rounded-md text-base font-bold text-black bg-yellow-500 hover:bg-yellow-400 mt-2 flex items-center justify-between"
-              >
-                <span>Student Voting 2025</span>
-                <div className="flex items-center space-x-2">
-                   <div className="w-2 h-2 bg-red-600 rounded-full animate-ping"></div>
-                   <span className="text-[10px] uppercase font-black">Live</span>
+                  {activeDropdown === link.name && (
+                    <div className="pl-4 py-1.5 space-y-1 bg-gray-50 rounded-sm mb-2 border-l-2 border-school-green-600">
+                      {link.dropdown.map((subItem: any) => (
+                        subItem.onClick ? (
+                          <button
+                            key={subItem.name}
+                            onClick={() => {
+                              subItem.onClick?.();
+                              setIsMobileMenuOpen(false);
+                              setActiveDropdown(null);
+                            }}
+                            className="w-full text-left block px-3 py-2 text-xs font-semibold text-gray-700 hover:text-school-green-800 uppercase tracking-wide min-h-[44px] flex items-center"
+                          >
+                            {subItem.name}
+                          </button>
+                        ) : (
+                          <a
+                            key={subItem.name}
+                            href={subItem.href}
+                            target={subItem.href?.startsWith('http') ? '_blank' : undefined}
+                            rel={subItem.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                            onClick={(e) => {
+                              handleAnchorClick(e, subItem.href!);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="block px-3 py-2 text-xs font-semibold text-gray-700 hover:text-school-green-800 uppercase tracking-wide min-h-[44px] flex items-center"
+                          >
+                            {subItem.name}
+                          </a>
+                        )
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </button>
-            )}
+              ) : link.onClick ? (
+                <button
+                  onClick={() => {
+                    link.onClick?.();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-2.5 rounded-sm text-sm font-bold uppercase tracking-wider text-gray-800 hover:bg-gray-50 min-h-[44px] flex items-center"
+                >
+                  {link.name}
+                </button>
+              ) : (
+                <a
+                  href={link.href}
+                  onClick={(e) => {
+                    handleAnchorClick(e, link.href!);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block px-3 py-2.5 rounded-sm text-sm font-bold uppercase tracking-wider text-gray-800 hover:bg-gray-50 min-h-[44px] flex items-center"
+                >
+                  {link.name}
+                </a>
+              )}
+            </div>
+          ))}
+
+          {onVoteClick && (
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                onLoginClick();
+                onVoteClick();
               }}
-              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-school-green-600 bg-school-green-50 hover:bg-school-green-100 mt-2"
+              className="w-full px-4 py-3 rounded-sm font-bold text-xs uppercase tracking-wider text-yellow-950 bg-yellow-400 hover:bg-yellow-300 border border-yellow-500/50 mt-2 flex items-center justify-between min-h-[44px]"
             >
-              Portal Login
+              <span>Student Voting 2025</span>
+              <span className="px-2 py-0.5 bg-yellow-950 text-yellow-300 rounded-sm text-[10px] font-bold uppercase">Live</span>
             </button>
-          </div>
+          )}
+
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onLoginClick();
+            }}
+            className="w-full px-4 py-3 rounded-sm font-bold text-xs uppercase tracking-wider text-white bg-school-green-700 hover:bg-school-green-800 border border-school-green-800 mt-2 min-h-[44px] flex items-center justify-center"
+          >
+            Portal Login
+          </button>
         </div>
       )}
     </nav>

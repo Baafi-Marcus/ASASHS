@@ -1,6 +1,7 @@
 import React from 'react';
 
 interface PortalInputProps {
+  id?: string;
   label?: string;
   type?: string;
   placeholder?: string;
@@ -17,9 +18,11 @@ interface PortalInputProps {
   min?: string | number;
   max?: string | number;
   defaultValue?: string | number;
+  autoComplete?: string;
 }
 
 export const PortalInput: React.FC<PortalInputProps> = ({ 
+  id,
   label, 
   type = 'text', 
   placeholder, 
@@ -35,10 +38,12 @@ export const PortalInput: React.FC<PortalInputProps> = ({
   name,
   min,
   max,
-  defaultValue
+  defaultValue,
+  autoComplete
 }) => {
-  const baseClasses = "block w-full rounded-xl border-gray-300 shadow-sm focus:border-school-green-500 focus:ring-school-green-500 focus:ring-2 sm:text-sm transition-all duration-200";
-  const errorClasses = error ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "";
+  const inputId = id || name || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+  const baseClasses = "block w-full rounded-sm border border-gray-300 bg-white text-gray-900 text-sm transition-colors duration-fast ease-standard focus:outline-none focus:border-school-green-700 focus:ring-1 focus:ring-school-green-700 disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed";
+  const errorClasses = error ? "border-red-500 focus:border-red-600 focus:ring-red-600" : "";
   const classes = `${baseClasses} ${errorClasses} ${className}`;
   
   const renderInput = () => {
@@ -46,6 +51,7 @@ export const PortalInput: React.FC<PortalInputProps> = ({
       case 'textarea':
         return (
           <textarea
+            id={inputId}
             name={name}
             rows={rows}
             placeholder={placeholder}
@@ -54,19 +60,20 @@ export const PortalInput: React.FC<PortalInputProps> = ({
             onChange={onChange}
             required={required}
             disabled={disabled}
-            className={`${classes} py-3 px-4`}
+            className={`${classes} p-3`}
           />
         );
       case 'select':
         return (
           <select
+            id={inputId}
             name={name}
             value={value}
             defaultValue={defaultValue}
             onChange={onChange}
             required={required}
             disabled={disabled}
-            className={`${classes} py-3 px-4 text-gray-900`}
+            className={`${classes} px-3 py-2.5 min-h-[44px]`}
           >
             {children}
           </select>
@@ -74,6 +81,7 @@ export const PortalInput: React.FC<PortalInputProps> = ({
       default:
         return (
           <input
+            id={inputId}
             name={name}
             type={type}
             placeholder={placeholder}
@@ -84,21 +92,22 @@ export const PortalInput: React.FC<PortalInputProps> = ({
             disabled={disabled}
             min={min}
             max={max}
-            className={`${classes} py-3 px-4`}
+            autoComplete={autoComplete}
+            className={`${classes} px-3 py-2.5 min-h-[44px]`}
           />
         );
     }
   };
 
   return (
-    <div>
+    <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={inputId} className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+          {label} {required && <span className="text-red-500 font-normal">*</span>}
         </label>
       )}
       {renderInput()}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>}
     </div>
   );
 };

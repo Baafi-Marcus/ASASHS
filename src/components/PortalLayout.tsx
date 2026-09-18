@@ -33,7 +33,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-school-cream-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {isTest && (
         <div className="bg-amber-500 text-white text-center text-sm font-bold py-1.5 px-4">
           TEST ACCOUNT — Actions are visible and may be reset. Do not enter real personal data.

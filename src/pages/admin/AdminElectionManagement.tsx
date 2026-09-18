@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import db from '../../../lib/neon';
 import { toast } from 'react-hot-toast';
+import {
+  CalendarDaysIcon,
+  PlusIcon,
+  TrashIcon,
+  ArrowLeftIcon,
+  PlayIcon,
+  PauseIcon,
+  StopIcon,
+  ArrowPathIcon,
+  UserPlusIcon,
+  PhotoIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  ClockIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
+import { PortalButton } from '../../components/PortalButton';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface Election {
   id: number;
@@ -108,7 +127,7 @@ export const AdminElectionManagement: React.FC = () => {
     if (!selectedElection) return;
     try {
       await db.updateElectionStatus(selectedElection.id, status);
-      toast.success(`Election ${status === 'open' ? 'started' : status === 'paused' ? 'paused' : status === 'closed' ? 'ended' : 'moved to draft'}`);
+      toast.success(`Election ${status === 'open' ? 'commenced' : status === 'paused' ? 'paused' : status === 'closed' ? 'concluded' : 'moved to draft'}`);
       const updated = { ...selectedElection, status };
       setSelectedElection(updated);
       fetchElections();
@@ -119,8 +138,9 @@ export const AdminElectionManagement: React.FC = () => {
 
   const fetchElections = async () => {
     try {
+      setLoading(true);
       const data = await db.getElections();
-      setElections(data);
+      setElections(data || []);
     } catch (error) {
       toast.error('Failed to load elections');
     } finally {
@@ -130,9 +150,8 @@ export const AdminElectionManagement: React.FC = () => {
 
   const fetchAllStudents = async () => {
     try {
-      // Use the existing getStudents method with a high limit to get all students for the dropdown
       const data = await db.getStudents({ limit: 1000 }); 
-      setAllStudents(data);
+      setAllStudents(data || []);
     } catch (error) {
       console.error('Failed to load students for candidate selection');
     }
@@ -141,10 +160,10 @@ export const AdminElectionManagement: React.FC = () => {
   const fetchElectionDetails = async (id: number) => {
     try {
       const posData = await db.getPositions(id);
-      setPositions(posData);
+      setPositions(posData || []);
       
       const candData: Record<number, Candidate[]> = {};
-      for (const pos of posData) {
+      for (const pos of (posData || [])) {
         candData[pos.id] = await db.getCandidates(pos.id);
       }
       setCandidates(candData);
@@ -153,7 +172,7 @@ export const AdminElectionManagement: React.FC = () => {
       setStats(statsData);
 
       const resultsData = await db.getElectionResults(id);
-      setResults(resultsData);
+      setResults(resultsData || []);
     } catch (error) {
       console.error('Error fetching election details:', error);
     }
@@ -165,6 +184,7 @@ export const AdminElectionManagement: React.FC = () => {
       await db.createElection(newElection);
       toast.success('Election created successfully');
       setIsCreating(false);
+      setNewElection({ name: '', description: '', start_time: '', end_time: '' });
       fetchElections();
     } catch (error) {
       toast.error('Failed to create election');
@@ -240,19 +260,24 @@ export const AdminElectionManagement: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-green-100 text-green-800 border-green-200';
-      case 'paused': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'closed': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'open':
+        return <span className="px-2 py-0.5 rounded-sm text-[11px] font-semibold bg-green-50 text-green-800 border border-green-200">Active / Polls Open</span>;
+      case 'paused':
+        return <span className="px-2 py-0.5 rounded-sm text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">Paused</span>;
+      case 'closed':
+        return <span className="px-2 py-0.5 rounded-sm text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">Concluded</span>;
+      default:
+        return <span className="px-2 py-0.5 rounded-sm text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">Draft Setup</span>;
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-school-green-600"></div>
+      <div className="space-y-6">
+        <LoadingSkeleton variant="stats" />
+        <LoadingSkeleton variant="card" rows={3} />
       </div>
     );
   }
@@ -260,501 +285,502 @@ export const AdminElectionManagement: React.FC = () => {
   // --- DETAIL VIEW ---
   if (selectedElection) {
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="space-y-6">
         <button 
           onClick={() => setSelectedElection(null)}
-          className="flex items-center text-gray-500 hover:text-school-green-600 transition-colors font-medium"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors shadow-2xs"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Elections
+          <ArrowLeftIcon className="w-3.5 h-3.5" />
+          <span>Return to Elections Directory</span>
         </button>
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+          {/* Executive Header */}
+          <div className="p-5 sm:p-6 border-b border-gray-200 bg-gray-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <h3 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{selectedElection.name}</h3>
-                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${getStatusColor(selectedElection.status)}`}>
-                  {selectedElection.status}
-                </span>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base font-bold text-gray-900">{selectedElection.name}</h3>
+                {getStatusBadge(selectedElection.status)}
               </div>
-              <p className="text-gray-500 font-medium">{selectedElection.description || 'Managing school leadership elections.'}</p>
+              <p className="text-xs text-gray-500 mt-1">{selectedElection.description || 'Institutional leadership and prefect electoral process.'}</p>
             </div>
+            
             <div className="flex flex-wrap gap-2">
               <button 
                 onClick={() => setIsEditingSchedule(!isEditingSchedule)}
-                className="px-6 py-2 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all border border-gray-200 flex items-center space-x-2 shadow-sm"
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-2xs flex items-center gap-1.5"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>{isEditingSchedule ? 'Cancel Editing' : 'Edit Schedule'}</span>
+                <ClockIcon className="w-4 h-4 text-gray-500" />
+                <span>{isEditingSchedule ? 'Cancel Schedule Edit' : 'Edit Polling Hours'}</span>
               </button>
 
               {selectedElection.status === 'draft' && (
                 <button 
                   onClick={() => handleUpdateStatus('open')}
-                  className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-md shadow-green-200 flex items-center space-x-2"
+                  className="px-3.5 py-1.5 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs flex items-center gap-1.5"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  </svg>
-                  <span>Start Election</span>
+                  <PlayIcon className="w-4 h-4" />
+                  <span>Commence Polling</span>
                 </button>
               )}
               {selectedElection.status === 'open' && (
                 <>
                   <button 
                     onClick={() => handleUpdateStatus('paused')}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200 flex items-center space-x-2"
+                    className="px-3 py-1.5 bg-blue-700 text-white rounded-sm text-xs font-medium hover:bg-blue-800 transition-colors shadow-2xs flex items-center gap-1.5"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Pause</span>
+                    <PauseIcon className="w-4 h-4" />
+                    <span>Pause Voting</span>
                   </button>
                   <button 
                     onClick={() => handleUpdateStatus('closed')}
-                    className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all shadow-md shadow-red-200"
+                    className="px-3 py-1.5 bg-red-700 text-white rounded-sm text-xs font-medium hover:bg-red-800 transition-colors shadow-2xs flex items-center gap-1.5"
                   >
-                    End Election
+                    <StopIcon className="w-4 h-4" />
+                    <span>Conclude Election</span>
                   </button>
                 </>
               )}
               {selectedElection.status === 'paused' && (
                 <button 
                   onClick={() => handleUpdateStatus('open')}
-                  className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-md shadow-green-200 flex items-center space-x-2"
+                  className="px-3.5 py-1.5 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs flex items-center gap-1.5"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  </svg>
-                  <span>Resume Election</span>
+                  <PlayIcon className="w-4 h-4" />
+                  <span>Resume Polling</span>
                 </button>
               )}
               {selectedElection.status === 'closed' && (
                 <button 
                   onClick={() => handleUpdateStatus('draft')}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-xl font-bold hover:bg-gray-700 transition-all"
+                  className="px-3 py-1.5 bg-gray-700 text-white rounded-sm text-xs font-medium hover:bg-gray-800 transition-colors shadow-2xs"
                 >
-                  Re-open as Draft
+                  Reset to Draft
                 </button>
               )}
             </div>
           </div>
 
-          {isEditingSchedule && (
-            <div className="bg-school-cream-50 p-6 rounded-2xl border border-school-cream-100 mb-8 animate-in slide-in-from-top-2 duration-300">
-              <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Update Election Schedule</h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest">Start Time</label>
-                  <input 
-                    type="datetime-local"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-school-green-500"
-                    value={editSchedule.start_time}
-                    onChange={(e) => setEditSchedule({ ...editSchedule, start_time: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest">End Time</label>
-                  <input 
-                    type="datetime-local"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-school-green-500"
-                    value={editSchedule.end_time}
-                    onChange={(e) => setEditSchedule({ ...editSchedule, end_time: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2 flex justify-end">
-                  <button 
-                    onClick={handleUpdateSchedule}
-                    className="px-8 py-2.5 bg-school-green-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-school-green-700 shadow-lg shadow-school-green-100"
-                  >
-                    Save New Schedule
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Stats */}
-          {stats && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Turnout</p>
-                <p className="text-3xl font-black text-gray-900">{stats.percentage}%</p>
-                <div className="w-full bg-gray-200 h-1.5 rounded-full mt-2">
-                  <div className="bg-school-green-500 h-1.5 rounded-full" style={{ width: `${stats.percentage}%` }}></div>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Total Votes</p>
-                <p className="text-3xl font-black text-gray-900">{stats.voted}</p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Positions</p>
-                <p className="text-3xl font-black text-gray-900">{positions.length}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Tabs */}
-          <div className="flex border-b border-gray-100 mb-8 overflow-x-auto">
-            {(['positions', 'candidates', 'results'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-8 py-4 text-sm font-black uppercase tracking-widest transition-all relative ${
-                  activeTab === tab ? 'text-school-green-600' : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                {tab}
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-school-green-600 rounded-t-full"></div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {activeTab === 'positions' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xl font-bold text-gray-900">Election Positions</h4>
-                  <p className="text-sm text-gray-500">{positions.length} defined roles</p>
-                </div>
-                
-                <form onSubmit={handleAddPosition} className="bg-school-cream-50/50 p-6 rounded-2xl border border-school-cream-100 flex flex-wrap gap-4 items-end">
-                  <div className="flex-grow min-w-[200px] space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Position Title</label>
+          <div className="p-5 sm:p-6 space-y-6">
+            {isEditingSchedule && (
+              <div className="bg-gray-50/70 p-4 rounded-sm border border-gray-200">
+                <span className="text-xs font-bold text-gray-800 uppercase tracking-wider block mb-3">Adjust Polling Schedule</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end text-xs">
+                  <div>
+                    <label className="block text-gray-600 mb-1 font-medium">Polling Opens</label>
                     <input 
-                      required
-                      type="text"
-                      placeholder="e.g. School Prefect"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 outline-none"
-                      value={newPosition.title}
-                      onChange={(e) => setNewPosition({...newPosition, title: e.target.value})}
+                      type="datetime-local"
+                      className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white tabular-nums text-xs"
+                      value={editSchedule.start_time}
+                      onChange={(e) => setEditSchedule({ ...editSchedule, start_time: e.target.value })}
                     />
                   </div>
-                  <div className="w-32 space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Max Picks</label>
+                  <div>
+                    <label className="block text-gray-600 mb-1 font-medium">Polling Closes</label>
                     <input 
-                      required
-                      type="number"
-                      min="1"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 outline-none"
-                      value={newPosition.max_selections}
-                      onChange={(e) => setNewPosition({...newPosition, max_selections: parseInt(e.target.value)})}
+                      type="datetime-local"
+                      className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white tabular-nums text-xs"
+                      value={editSchedule.end_time}
+                      onChange={(e) => setEditSchedule({ ...editSchedule, end_time: e.target.value })}
                     />
                   </div>
-                  <button type="submit" className="bg-school-green-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-school-green-700 shadow-md">
-                    Add Role
-                  </button>
-                </form>
+                  <div className="md:col-span-2 flex justify-end">
+                    <button 
+                      onClick={handleUpdateSchedule}
+                      className="px-4 py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors"
+                    >
+                      Commit Schedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {positions.map((pos) => (
-                    <div key={pos.id} className="p-5 rounded-2xl border border-gray-100 bg-white hover:border-school-green-200 transition-colors flex justify-between items-center">
-                      <div>
-                        <p className="font-black text-gray-900 uppercase tracking-tight">{pos.title}</p>
-                        <p className="text-xs text-gray-500 font-bold">Max choices: {pos.max_selections}</p>
+            {/* Quick Metrics */}
+            {stats && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-sm border border-gray-200 shadow-xs">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Student Turnout</span>
+                  <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{stats.percentage}%</p>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-sm mt-2 overflow-hidden">
+                    <div className="bg-school-green-700 h-1.5 rounded-sm" style={{ width: `${stats.percentage}%` }} />
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-sm border border-gray-200 shadow-xs">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Total Ballots Cast</span>
+                  <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{stats.voted}</p>
+                  <span className="text-[11px] text-gray-400 mt-1 block tabular-nums">Out of {stats.total} registered voters</span>
+                </div>
+                <div className="bg-white p-4 rounded-sm border border-gray-200 shadow-xs">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Contested Offices</span>
+                  <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{positions.length}</p>
+                  <span className="text-[11px] text-gray-400 mt-1 block">Configured positions</span>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab Navigation */}
+            <div className="border-b border-gray-200 flex space-x-1">
+              {(['positions', 'candidates', 'results'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-school-green-700 text-school-green-800 bg-school-green-50/40'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab === 'positions' ? 'Offices & Roles' : tab === 'candidates' ? 'Candidate Slate' : 'Live Vote Tally'}
+                </button>
+              ))}
+            </div>
+
+            {/* Sub-tab Content */}
+            <div>
+              {activeTab === 'positions' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">Electoral Offices & Portfolios</h4>
+                      <p className="text-xs text-gray-500">Define student executive positions for this election</p>
+                    </div>
+                  </div>
+                  
+                  <form onSubmit={handleAddPosition} className="bg-gray-50/70 p-4 rounded-sm border border-gray-200 flex flex-wrap gap-3 items-end text-xs">
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block font-medium text-gray-700 mb-1">Portfolio Title</label>
+                      <input 
+                        required
+                        type="text"
+                        placeholder="e.g. Senior Boys Prefect"
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
+                        value={newPosition.title}
+                        onChange={(e) => setNewPosition({...newPosition, title: e.target.value})}
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="block font-medium text-gray-700 mb-1">Max Picks</label>
+                      <input 
+                        required
+                        type="number"
+                        min="1"
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white tabular-nums"
+                        value={newPosition.max_selections}
+                        onChange={(e) => setNewPosition({...newPosition, max_selections: parseInt(e.target.value) || 1})}
+                      />
+                    </div>
+                    <button type="submit" className="px-4 py-2 bg-school-green-700 text-white rounded-sm font-medium hover:bg-school-green-800 transition-colors">
+                      + Add Office
+                    </button>
+                  </form>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {positions.map((pos) => (
+                      <div key={pos.id} className="p-3.5 rounded-sm border border-gray-200 bg-white hover:border-gray-300 transition-colors flex justify-between items-center text-xs">
+                        <div>
+                          <p className="font-semibold text-gray-900">{pos.title}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5 tabular-nums">Allowed selections: {pos.max_selections}</p>
+                        </div>
+                        <span className="text-[11px] text-school-green-700 font-medium tabular-nums font-mono">
+                          {candidates[pos.id]?.length || 0} candidate(s)
+                        </span>
                       </div>
-                      <div className="flex space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                    ))}
+                    {positions.length === 0 && (
+                      <p className="text-xs text-gray-400 col-span-3 py-8 text-center border border-dashed border-gray-200 rounded-sm">
+                        No offices created. Add portfolios above to populate the ballot.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'candidates' && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900">Register Candidate Nominees</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">Assign enrolled students to specific contested portfolios</p>
+                  </div>
+
+                  <form onSubmit={handleAddCandidate} className="bg-gray-50/70 p-4 sm:p-5 rounded-sm border border-gray-200 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end text-xs">
+                    <div>
+                      <label className="block font-medium text-gray-700 mb-1">Contested Office *</label>
+                      <select 
+                        required
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
+                        value={newCandidate.position_id}
+                        onChange={(e) => setNewCandidate({...newCandidate, position_id: parseInt(e.target.value)})}
+                      >
+                        <option value="">Select Office...</option>
+                        {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-medium text-gray-700 mb-1">Student Register Lookup</label>
+                      <select 
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
+                        value={newCandidate.student_id}
+                        onChange={(e) => handleStudentSelect(e.target.value)}
+                      >
+                        <option value="">Search Student...</option>
+                        {allStudents.map(s => (
+                          <option key={s.id} value={s.id}>{s.surname} {s.other_names} ({s.class_name})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-medium text-gray-700 mb-1">Ballot Display Name *</label>
+                      <input 
+                        required
+                        type="text"
+                        placeholder="Full Nominee Name"
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
+                        value={newCandidate.display_name}
+                        onChange={(e) => setNewCandidate({...newCandidate, display_name: e.target.value})}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-medium text-gray-700 mb-1">Candidate Portrait</label>
+                      <div className="flex gap-1.5">
+                        <input 
+                          type="text"
+                          placeholder="Image URL..."
+                          className="flex-1 px-3 py-2 rounded-sm border border-gray-300 bg-white text-xs"
+                          value={newCandidate.image_url}
+                          onChange={(e) => setNewCandidate({...newCandidate, image_url: e.target.value})}
+                        />
+                        <input 
+                          type="file" 
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-2.5 py-2 border border-gray-300 bg-white hover:bg-gray-100 rounded-sm text-xs font-medium text-gray-700 flex items-center gap-1"
+                        >
+                          <PhotoIcon className="w-3.5 h-3.5" />
+                          <span>File</span>
                         </button>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <label className="block font-medium text-gray-700 mb-1">Manifesto Summary</label>
+                      <textarea 
+                        placeholder="Brief vision statement or manifesto commitments..."
+                        className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white text-xs"
+                        rows={2}
+                        value={newCandidate.manifesto}
+                        onChange={(e) => setNewCandidate({...newCandidate, manifesto: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <PortalButton
+                        type="submit" 
+                        className="w-full py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs"
+                      >
+                        Register Nominee
+                      </PortalButton>
+                    </div>
+                  </form>
+
+                  {positions.map((pos) => (
+                    <div key={pos.id} className="space-y-3">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-gray-200">
+                        <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{pos.title}</h5>
+                        <span className="text-[11px] text-gray-400 tabular-nums font-mono">
+                          {candidates[pos.id]?.length || 0} candidate(s)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {candidates[pos.id]?.map((cand) => (
+                          <div key={cand.id} className="bg-white border border-gray-200 rounded-sm p-3.5 flex items-center space-x-3 text-xs">
+                            <div className="w-12 h-12 rounded-sm bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                              {cand.image_url ? (
+                                <img src={cand.image_url} alt={cand.display_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <UserAvatar name={cand.display_name} size="md" className="rounded-sm" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">{cand.display_name}</p>
+                              <p className="text-[11px] text-school-green-700 font-medium">{cand.student_class || 'General'}</p>
+                              <p className="text-[11px] text-gray-500 truncate mt-0.5">{cand.manifesto || 'No manifesto provided.'}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {(!candidates[pos.id] || candidates[pos.id].length === 0) && (
+                          <p className="text-xs text-gray-400 col-span-full py-4 text-center border border-dashed border-gray-200 rounded-sm">
+                            No nominees registered for {pos.title}.
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'candidates' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xl font-bold text-gray-900">Manage Candidates</h4>
-                  <p className="text-sm text-gray-500">Assigning students to positions</p>
-                </div>
-
-                <form onSubmit={handleAddCandidate} className="bg-blue-50/30 p-8 rounded-[2.5rem] border border-blue-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Select Position</label>
-                    <select 
-                      required
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none bg-white"
-                      value={newCandidate.position_id}
-                      onChange={(e) => setNewCandidate({...newCandidate, position_id: parseInt(e.target.value)})}
-                    >
-                      <option value="">Choose Position...</option>
-                      {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Link Student (Search)</label>
-                    <select 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none bg-white font-medium"
-                      value={newCandidate.student_id}
-                      onChange={(e) => handleStudentSelect(e.target.value)}
-                    >
-                      <option value="">Manual Entry / Search...</option>
-                      {allStudents.map(s => (
-                        <option key={s.id} value={s.id}>{s.surname} {s.other_names} ({s.class_name})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Display Name</label>
-                    <input 
-                      required
-                      type="text"
-                      placeholder="Candidate's Name"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none"
-                      value={newCandidate.display_name}
-                      onChange={(e) => setNewCandidate({...newCandidate, display_name: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Image URL (or upload)</label>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text"
-                        placeholder="https://..."
-                        className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 outline-none"
-                        value={newCandidate.image_url}
-                        onChange={(e) => setNewCandidate({...newCandidate, image_url: e.target.value})}
-                      />
-                      <input 
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest border border-gray-200 shrink-0"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Device
-                      </button>
+              {activeTab === 'results' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">Live Ballot Tally & Official Returns</h4>
+                      <p className="text-xs text-gray-500">Real-time certified vote counts from student voting stations</p>
                     </div>
+                    <button
+                      onClick={() => fetchElectionDetails(selectedElection.id)}
+                      className="px-3 py-1.5 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-2xs"
+                    >
+                      <ArrowPathIcon className="w-3.5 h-3.5 text-gray-500" />
+                      <span>Refresh Tally</span>
+                    </button>
                   </div>
-                  <div className="md:col-span-2 lg:col-span-3 space-y-2">
-                    <label className="text-xs font-black text-gray-500 uppercase">Manifesto / Vision Statement</label>
-                    <textarea 
-                      placeholder="The candidate's vision..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 min-h-[100px] outline-none"
-                      value={newCandidate.manifesto}
-                      onChange={(e) => setNewCandidate({...newCandidate, manifesto: e.target.value})}
-                    />
-                  </div>
-                  <button type="submit" className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-black hover:bg-blue-700 shadow-lg shadow-blue-200 uppercase tracking-widest text-xs">
-                    Register Candidate
-                  </button>
-                </form>
 
-                {positions.map((pos) => (
-                  <div key={pos.id} className="space-y-4">
-                    <h5 className="font-black text-gray-900 uppercase tracking-widest text-sm bg-gray-50 px-4 py-2 rounded-lg border-l-4 border-school-green-600">{pos.title}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {candidates[pos.id]?.map((cand) => (
-                        <div key={cand.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center space-x-4 hover:shadow-sm transition-shadow">
-                          <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden ring-1 ring-gray-100">
-                            {cand.image_url ? (
-                              <img src={cand.image_url} alt={cand.display_name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-                                <svg className="w-8 h-8 opacity-20" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-grow">
-                            <p className="font-black text-gray-900 leading-tight">{cand.display_name}</p>
-                            <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mt-1">
-                              {cand.student_class || 'Class Unknown'}
-                            </p>
-                            <p className="text-xs text-gray-400 line-clamp-1 italic mt-1">{cand.manifesto || 'No manifesto recorded.'}</p>
-                          </div>
-                          <button className="text-gray-300 hover:text-red-600 p-2 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                  {positions.map((pos) => {
+                    const posResults = results.filter(r => r.position_title === pos.title);
+                    const totalPosVotes = posResults.reduce((sum, r) => sum + parseInt(r.vote_count || 0), 0);
+
+                    return (
+                      <div key={pos.id} className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center text-xs">
+                          <h5 className="font-bold text-gray-900 uppercase tracking-wider">{pos.title}</h5>
+                          <span className="text-gray-500 font-medium tabular-nums">{totalPosVotes} votes cast</span>
                         </div>
-                      ))}
-                      {(!candidates[pos.id] || candidates[pos.id].length === 0) && (
-                        <p className="text-xs text-gray-400 font-medium col-span-full py-4 text-center border-2 border-dashed border-gray-100 rounded-2xl">No candidates registered for this role yet.</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'results' && (
-              <div className="space-y-8">
-                 <div className="flex justify-between items-center">
-                  <h4 className="text-xl font-bold text-gray-900">Live Election Results</h4>
-                  <button onClick={() => fetchElectionDetails(selectedElection.id)} className="text-school-green-600 text-sm font-bold flex items-center hover:underline">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh Results
-                  </button>
-                </div>
-
-                {positions.map((pos) => {
-                  const posResults = results.filter(r => r.position_title === pos.title);
-                  const totalPosVotes = posResults.reduce((sum, r) => sum + parseInt(r.vote_count), 0);
-
-                  return (
-                    <div key={pos.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_10px_30px_rgba(0,0,0,0.02)] overflow-hidden">
-                      <div className="bg-gray-50 px-8 py-5 border-b border-gray-100 flex justify-between items-center">
-                        <h5 className="font-black text-gray-900 uppercase tracking-[0.2em] text-sm">{pos.title}</h5>
-                        <span className="text-xs font-black text-gray-400 uppercase">{totalPosVotes} Total Votes Cast</span>
-                      </div>
-                      <div className="p-8 space-y-6">
-                        {posResults.map((r, idx) => {
-                          const percentage = totalPosVotes > 0 ? (parseInt(r.vote_count) / totalPosVotes) * 100 : 0;
-                          return (
-                            <div key={idx} className="space-y-3">
-                              <div className="flex justify-between items-end">
-                                <div>
-                                  <p className="font-bold text-gray-900 flex items-center">
-                                    {r.candidate_name}
-                                    {idx === 0 && totalPosVotes > 0 && (
-                                      <span className="ml-3 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-black uppercase rounded-full border border-yellow-200">Leading</span>
+                        <div className="p-4 sm:p-5 space-y-4">
+                          {posResults.map((r, idx) => {
+                            const percentage = totalPosVotes > 0 ? (parseInt(r.vote_count) / totalPosVotes) * 100 : 0;
+                            const isLeading = idx === 0 && totalPosVotes > 0;
+                            return (
+                              <div key={idx} className="space-y-1.5 text-xs">
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-gray-900">{r.candidate_name}</span>
+                                    {isLeading && (
+                                      <span className="px-1.5 py-0.2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xs text-[10px] font-bold">
+                                        Leading
+                                      </span>
                                     )}
-                                  </p>
-                                  <p className="text-[10px] font-black text-school-green-600 uppercase tracking-widest mt-0.5">{r.candidate_class}</p>
+                                    <span className="text-gray-400 text-[11px]">{r.candidate_class}</span>
+                                  </div>
+                                  <span className="font-mono font-medium text-gray-700 tabular-nums">
+                                    {r.vote_count} votes ({percentage.toFixed(1)}%)
+                                  </span>
                                 </div>
-                                <p className="text-sm font-black text-gray-600">{r.vote_count} votes ({percentage.toFixed(1)}%)</p>
+                                <div className="w-full bg-gray-100 h-2 rounded-sm overflow-hidden">
+                                  <div 
+                                    className={`h-full rounded-sm transition-all duration-500 ${
+                                      isLeading ? 'bg-school-green-700' : 'bg-slate-400'
+                                    }`}
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </div>
                               </div>
-                              <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full rounded-full transition-all duration-1000 ${
-                                    idx === 0 ? 'bg-school-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'bg-blue-400'
-                                  }`}
-                                  style={{ width: `${percentage}%` }}
-                                ></div>
-                              </div>
+                            );
+                          })}
+                          {posResults.length === 0 && (
+                            <div className="py-8 text-center text-xs text-gray-400">
+                              No ballots recorded yet for this office.
                             </div>
-                          );
-                        })}
-                        {posResults.length === 0 && (
-                          <div className="py-12 text-center">
-                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                             </div>
-                             <p className="text-gray-400 font-bold">No results available yet for this position.</p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // --- DIRECTORY OVERVIEW ---
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-xl font-bold text-gray-900">Election Management</h3>
-          <p className="text-sm text-gray-600">Create and manage school-wide prefect elections</p>
+          <h3 className="text-base font-bold text-gray-900">Prefect & SRC Election Governance</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Administer institutional elections, verify nomination slates, and monitor live returns</p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="bg-school-green-600 text-white px-4 py-2 rounded-xl hover:bg-school-green-700 transition-all flex items-center space-x-2 shadow-sm"
+          className="px-4 py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs flex items-center gap-1.5"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>New Election</span>
+          <PlusIcon className="w-4 h-4" />
+          <span>New Election Cycle</span>
         </button>
       </div>
 
       {isCreating && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-school-cream-200 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-lg font-bold text-gray-900">Configure New Election</h4>
-            <button onClick={() => setIsCreating(false)} className="text-gray-400 hover:text-gray-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+        <div className="bg-white p-5 sm:p-6 rounded-md shadow-xs border border-gray-200 space-y-4">
+          <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+            <h4 className="text-sm font-bold text-gray-900">Configure New Election Cycle</h4>
+            <button onClick={() => setIsCreating(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-sm">
+              <XMarkIcon className="w-5 h-5" />
             </button>
           </div>
-          <form onSubmit={handleCreateElection} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Election Name</label>
+          <form onSubmit={handleCreateElection} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Election Title *</label>
               <input
                 required
                 type="text"
-                placeholder="e.g. SRC Prefect Elections 2026"
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 focus:border-transparent transition-all outline-none"
+                placeholder="e.g. 2026/2027 Prefect Council Elections"
+                className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
                 value={newElection.name}
                 onChange={(e) => setNewElection({...newElection, name: e.target.value})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Description (Optional)</label>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Description</label>
               <input
                 type="text"
-                placeholder="Brief purpose of the election"
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 focus:border-transparent transition-all outline-none"
+                placeholder="Scope and purpose of this election"
+                className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white"
                 value={newElection.description}
                 onChange={(e) => setNewElection({...newElection, description: e.target.value})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Start Date & Time</label>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Polling Starts *</label>
               <input
                 required
                 type="datetime-local"
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 focus:border-transparent transition-all outline-none"
+                className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white tabular-nums"
                 value={newElection.start_time}
                 onChange={(e) => setNewElection({...newElection, start_time: e.target.value})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">End Date & Time</label>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Polling Closes *</label>
               <input
                 required
                 type="datetime-local"
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green-500 focus:border-transparent transition-all outline-none"
+                className="w-full px-3 py-2 rounded-sm border border-gray-300 bg-white tabular-nums"
                 value={newElection.end_time}
                 onChange={(e) => setNewElection({...newElection, end_time: e.target.value})}
               />
             </div>
-            <div className="md:col-span-2 flex justify-end space-x-3 mt-4">
+            <div className="md:col-span-2 flex justify-end gap-2 pt-2 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-6 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all font-medium"
+                className="px-4 py-2 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-8 py-2 rounded-xl bg-school-green-600 text-white hover:bg-school-green-700 transition-all font-medium shadow-md"
+                className="px-5 py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs"
               >
                 Create Election
               </button>
@@ -763,60 +789,46 @@ export const AdminElectionManagement: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Elections Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {elections.map((election) => (
-          <div key={election.id} className="bg-white rounded-2xl shadow-sm border border-school-cream-200 overflow-hidden hover:shadow-md transition-all group">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusColor(election.status)}`}>
-                  {election.status}
-                </span>
+          <div key={election.id} className="bg-white rounded-md border border-gray-200 shadow-xs p-5 hover:border-gray-300 transition-all flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex justify-between items-start mb-3">
+                {getStatusBadge(election.status)}
                 <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteElection(election.id, election.name);
-                  }}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  onClick={() => handleDeleteElection(election.id, election.name)}
+                  className="p-1 text-gray-400 hover:text-red-600 rounded-xs transition-colors"
                   title="Delete Election"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <TrashIcon className="w-4 h-4" />
                 </button>
               </div>
-              <h4 className="text-lg font-bold text-gray-900 group-hover:text-school-green-700 transition-colors uppercase">{election.name}</h4>
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2 min-h-[2.5rem]">{election.description || 'No description provided.'}</p>
+              <h4 className="text-sm font-bold text-gray-900">{election.name}</h4>
+              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{election.description || 'No description provided.'}</p>
               
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center text-xs text-gray-500">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>{new Date(election.start_time).toLocaleString()}</span>
+              <div className="mt-4 pt-3 border-t border-gray-100 space-y-1 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5 tabular-nums">
+                  <CalendarDaysIcon className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Scheduled: {new Date(election.start_time).toLocaleString()}</span>
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
-              <span>Identity Architecture v4.2</span>
+
+            <div className="pt-3 border-t border-gray-100 flex justify-end">
               <button 
                 onClick={() => setSelectedElection(election)}
-                className="text-school-green-600 text-xs font-black underline hover:text-school-green-800"
+                className="text-xs font-semibold text-school-green-700 hover:text-school-green-800 hover:underline"
               >
-                Manage Details &rarr;
+                Manage Slates & Results &rarr;
               </button>
             </div>
           </div>
         ))}
 
         {elections.length === 0 && !isCreating && (
-          <div className="md:col-span-2 lg:col-span-3 py-12 text-center bg-white rounded-2xl border-2 border-dashed border-gray-200">
-            <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2" />
-              </svg>
-            </div>
-            <h5 className="font-bold text-gray-400 uppercase tracking-widest">No Elections Found</h5>
-            <p className="text-sm text-gray-400 mt-1">Start by creating an SRC election.</p>
+          <div className="md:col-span-2 lg:col-span-3 py-12 text-center bg-white rounded-md border border-dashed border-gray-200">
+            <p className="text-xs text-gray-400">No active or past elections configured. Click "New Election Cycle" to create one.</p>
           </div>
         )}
       </div>

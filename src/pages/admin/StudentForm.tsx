@@ -51,8 +51,8 @@ interface StudentFormProps {
   onSuccess?: (studentData: { admissionNumber: string; password: string }) => void;
   programmes: Programme[];
   classes: ClassItem[];
-  student?: Student; // Optional student prop for editing
-  onEditSuccess?: () => void; // Callback for edit success
+  student?: Student;
+  onEditSuccess?: () => void;
 }
 
 export function StudentForm({ onSuccess, programmes, classes, student, onEditSuccess }: StudentFormProps) {
@@ -63,15 +63,14 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
     admission_number: '',
     surname: '',
     other_names: '',
-    date_of_birth: '2005-01-01', // Default dummy DOB if not provided
-    gender: 'Male', // Default to avoid constraint errors
+    date_of_birth: '2005-01-01',
+    gender: 'Male',
     programme_id: '',
     current_class_id: '',
     form: ''
   });
 
   useEffect(() => {
-    // If student prop is provided, populate the form with existing data perfectly
     if (student) {
       const formatDateForInput = (dateStr: string | null | undefined) => {
         if (!dateStr) return '2005-01-01';
@@ -92,7 +91,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         surname: student.surname || '',
         other_names: student.other_names || '',
         date_of_birth: formatDateForInput(student.date_of_birth),
-        gender: student.gender === 'Female' ? 'Female' : 'Male', // Strict enforcement
+        gender: student.gender === 'Female' ? 'Female' : 'Male',
         programme_id: student.course_id?.toString() || '',
         current_class_id: student.current_class_id?.toString() || '',
         form: '' 
@@ -104,7 +103,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Default values for the main SMS system fields we no longer collect
+    // Standard institutional fallback values for uncollected demographic records
     const defaultBloatData = {
       nationality: 'Ghanaian',
       hometown: 'N/A',
@@ -136,7 +135,6 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           other_names: formData.other_names,
           date_of_birth: formData.date_of_birth,
           gender: formData.gender,
-          // Merge with defaults to satisfy DB NOT NULLs without overriding everything if it exists
           nationality: student.nationality || defaultBloatData.nationality,
           hometown: student.hometown || defaultBloatData.hometown,
           district_of_origin: student.district_of_origin || defaultBloatData.district_of_origin,
@@ -157,7 +155,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         };
         
         await db.updateStudent(student.id, studentData);
-        toast.success('Student updated successfully!');
+        toast.success('Student updated successfully');
         onEditSuccess?.();
       } else {
         // Create new student
@@ -172,7 +170,6 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           ...defaultBloatData
         };
         
-        // Save to database
         const result = await db.createStudent(studentData);
         
         const credentials = {
@@ -180,7 +177,7 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           password: result.password
         };
         
-        toast.success('Student registered successfully!');
+        toast.success('Student registered successfully');
         onSuccess?.(credentials);
       }
     } catch (error: any) {
@@ -197,41 +194,50 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-blue-50 p-4 rounded-xl mb-6">
-        <h3 className="text-blue-800 font-bold mb-1">Lite Registration Mode</h3>
-        <p className="text-blue-600 text-sm">Since detailed medical and guardian information is already tracked in the main School Management System, this portal only requires essential credentials.</p>
+      <div className="bg-blue-50/60 border border-blue-200 rounded-sm p-4 flex items-start gap-3">
+        <div className="text-blue-600 mt-0.5">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-blue-900 uppercase tracking-wider">Fast Registration Workflow</h3>
+          <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
+            Essential academic and login details are captured here. Comprehensive medical and ancestral records are automatically synchronized from the primary school registry.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <PortalInput
           label="Admission Number / Student ID"
           type="text"
           value={formData.admission_number}
           onChange={(e) => handleInputChange('admission_number', e.target.value)}
-          placeholder="Leave empty to auto-generate"
+          placeholder="Leave blank to auto-generate"
           disabled={!!student}
         />
         
         <PortalInput
-          label="Surname"
+          label="Surname *"
           type="text"
           value={formData.surname}
           onChange={(e) => handleInputChange('surname', e.target.value)}
           required
-          placeholder="Enter surname"
+          placeholder="e.g. Asare"
         />
         
         <PortalInput
-          label="Other Names"
+          label="Other Names *"
           type="text"
           value={formData.other_names}
           onChange={(e) => handleInputChange('other_names', e.target.value)}
           required
-          placeholder="Enter other names"
+          placeholder="e.g. Kwame Mensah"
         />
 
         <PortalInput
-          label="Date of Birth"
+          label="Date of Birth *"
           type="date"
           value={formData.date_of_birth}
           onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
@@ -239,11 +245,11 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         />
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Gender *</label>
           <select
             value={formData.gender}
             onChange={(e) => handleInputChange('gender', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             required
           >
             <option value="Male">Male</option>
@@ -252,14 +258,14 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Form</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Academic Form *</label>
           <select
             value={formData.form}
             onChange={(e) => {
               handleInputChange('form', e.target.value);
               handleInputChange('current_class_id', '');
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             required
           >
             <option value="">Select Form</option>
@@ -270,14 +276,14 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Programme</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Programme *</label>
           <select
             value={formData.programme_id}
             onChange={(e) => {
               handleInputChange('programme_id', e.target.value);
               handleInputChange('current_class_id', '');
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             required
           >
             <option value="">Select Programme</option>
@@ -290,11 +296,11 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current Class</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Assigned Class *</label>
           <select
             value={formData.current_class_id}
             onChange={(e) => handleInputChange('current_class_id', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+            className="w-full h-11 px-3 bg-white border border-gray-300 rounded-sm text-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             required
           >
             <option value="">Select Class</option>
@@ -310,19 +316,18 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
               ))}
           </select>
           {(!formData.form || !formData.programme_id) && (
-            <p className="text-xs text-gray-500 mt-1">Select Form and Programme first</p>
+            <p className="text-[11px] text-gray-400 mt-1">Select Form and Programme above to filter classes</p>
           )}
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-100">
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
         <PortalButton
           type="button"
           variant="secondary"
           onClick={() => {
-             // Let the parent handle cancel if provided, else just ignore
-             if (onEditSuccess) onEditSuccess(); 
-             else window.history.back();
+            if (onEditSuccess) onEditSuccess(); 
+            else window.history.back();
           }}
           disabled={isSubmitting}
         >
@@ -334,12 +339,12 @@ export function StudentForm({ onSuccess, programmes, classes, student, onEditSuc
           variant="primary"
         >
           {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+            <span className="flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               {student ? 'Updating...' : 'Registering...'}
-            </>
+            </span>
           ) : (
-            student ? 'Update Student' : 'Register Student'
+            student ? 'Update Student Record' : 'Register Student'
           )}
         </PortalButton>
       </div>

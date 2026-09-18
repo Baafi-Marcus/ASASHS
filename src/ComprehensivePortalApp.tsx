@@ -137,6 +137,30 @@ function ComprehensivePortalApp() {
     }
   };
 
+  const openNews = () => {
+    setShowNewsPage(true);
+    setShowLandingPage(false);
+    setShowStaffPage(false);
+    setShowCalendarPage(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openStaff = () => {
+    setShowStaffPage(true);
+    setShowLandingPage(false);
+    setShowNewsPage(false);
+    setShowCalendarPage(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openCalendar = () => {
+    setShowCalendarPage(true);
+    setShowLandingPage(false);
+    setShowNewsPage(false);
+    setShowStaffPage(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // --- Standalone Quiz Mode (opened in new tab) ---
   const urlParams = new URLSearchParams(window.location.search);
   const takeQuiz = urlParams.get('takeQuiz');
@@ -389,22 +413,44 @@ function ComprehensivePortalApp() {
         <LandingNavbar 
           onLoginClick={goToLogin} 
           onVoteClick={hasActiveElection ? goToLogin : undefined} 
-          onNewsClick={() => { setShowNewsPage(true); setShowLandingPage(false); }}
-          onStaffClick={() => { setShowStaffPage(true); setShowLandingPage(false); }}
-          onCalendarClick={() => { setShowCalendarPage(true); setShowLandingPage(false); }}
+          onNewsClick={openNews}
+          onStaffClick={openStaff}
+          onCalendarClick={openCalendar}
           onHomeClick={handleBackToLanding}
         />
       )}
       
       <div className="relative flex-grow">
         {showNewsPage ? (
-          <NewsEventsPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onCalendarClick={() => {}} />
+          <NewsEventsPage 
+            onHomeClick={handleBackToLanding} 
+            onLoginClick={goToLogin} 
+            onStaffClick={openStaff} 
+            onCalendarClick={openCalendar} 
+          />
         ) : showStaffPage ? (
-          <StaffDirectoryPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onCalendarClick={() => {}} onNewsClick={() => {}} />
+          <StaffDirectoryPage 
+            onHomeClick={handleBackToLanding} 
+            onLoginClick={goToLogin} 
+            onCalendarClick={openCalendar} 
+            onNewsClick={openNews} 
+          />
         ) : showCalendarPage ? (
-          <AcademicCalendarPage onHomeClick={handleBackToLanding} onLoginClick={goToLogin} onStaffClick={() => {}} onNewsClick={() => {}} />
+          <AcademicCalendarPage 
+            onHomeClick={handleBackToLanding} 
+            onLoginClick={goToLogin} 
+            onStaffClick={openStaff} 
+            onNewsClick={openNews} 
+          />
         ) : showLandingPage ? (
-          <SchoolLandingPage onLoginClick={goToLogin} onVoteClick={hasActiveElection ? goToLogin : undefined} onNewsClick={() => {}} onStaffClick={() => {}} onCalendarClick={() => {}} onHomeClick={handleBackToLanding} />
+          <SchoolLandingPage 
+            onLoginClick={goToLogin} 
+            onVoteClick={hasActiveElection ? goToLogin : undefined} 
+            onNewsClick={openNews} 
+            onStaffClick={openStaff} 
+            onCalendarClick={openCalendar} 
+            onHomeClick={handleBackToLanding} 
+          />
         ) : showIntroSplash ? (
           <PortalSplash onComplete={() => setShowIntroSplash(false)} />
         ) : (

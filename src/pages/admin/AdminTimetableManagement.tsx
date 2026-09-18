@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import {
+  CalendarDaysIcon,
+  ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
+  ClockIcon,
+  AcademicCapIcon,
+  BuildingLibraryIcon,
+} from '@heroicons/react/24/outline';
+import { PortalButton } from '../../components/PortalButton';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 
 interface Class {
   id: number;
@@ -53,7 +63,7 @@ export function AdminTimetableManagement() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [academicYear]);
 
   const fetchData = async () => {
     try {
@@ -68,12 +78,11 @@ export function AdminTimetableManagement() {
       setSubjects(subjectsData as Subject[]);
       setTeachers(teachersData as Teacher[]);
       
-      // Fetch existing timetable entries
       const entries: any = await db.getTimetableEntries({ academic_year: academicYear });
-      setTimetableEntries(entries as TimetableEntry[]);
+      setTimetableEntries((entries as TimetableEntry[]) || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load data');
+      toast.error('Failed to load schedule and timetable data');
     } finally {
       setLoading(false);
     }
@@ -87,30 +96,26 @@ export function AdminTimetableManagement() {
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error('Please select a file to upload');
+      toast.error('Please select an Excel or CSV file to upload');
       return;
     }
 
     setIsUploading(true);
     
     try {
-      // Read the Excel file
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       
-      // Clear existing timetable entries for this academic year
       await db.deleteTimetableEntries(academicYear);
       
-      // Process each row and create timetable entries
       let successCount = 0;
       let errorCount = 0;
       
       for (const row of jsonData as Record<string, any>[]) {
         try {
-          // Extract data from row
           const day = row['Day'] || row['day'];
           const timeSlot = row['Time Slot'] || row['Time_Slot'] || row['time_slot'];
           const className = row['Class'] || row['class'];
@@ -118,35 +123,29 @@ export function AdminTimetableManagement() {
           const teacherName = row['Teacher'] || row['teacher'];
           
           if (!day || !timeSlot || !className || !subjectName || !teacherName) {
-            console.warn('Skipping row with missing data:', row);
             errorCount++;
             continue;
           }
           
-          // Find matching class
           const classMatch = classes.find(c => 
             c.class_name.toLowerCase().includes(className.toString().toLowerCase())
           );
           
           if (!classMatch) {
-            console.warn('Class not found:', className);
             errorCount++;
             continue;
           }
           
-          // Find matching subject
           const subjectMatch = subjects.find(s => 
             s.name.toLowerCase() === subjectName.toString().toLowerCase() ||
             s.code.toLowerCase() === subjectName.toString().toLowerCase()
           );
           
           if (!subjectMatch) {
-            console.warn('Subject not found:', subjectName);
             errorCount++;
             continue;
           }
           
-          // Find matching teacher
           const teacherMatch = teachers.find(t => {
             const fullName = `${t.surname} ${t.other_names}`.toLowerCase();
             return fullName.includes(teacherName.toString().toLowerCase()) ||
@@ -154,12 +153,10 @@ export function AdminTimetableManagement() {
           });
           
           if (!teacherMatch) {
-            console.warn('Teacher not found:', teacherName);
             errorCount++;
             continue;
           }
           
-          // Create timetable entry
           await db.createTimetableEntry({
             day: day.toString(),
             time_slot: timeSlot.toString(),
@@ -171,13 +168,13 @@ export function AdminTimetableManagement() {
           
           successCount++;
         } catch (error) {
-          console.error('Error processing row:', error);
+          console.error('Error processing timetable row:', error);
           errorCount++;
         }
       }
       
-      toast.success(`Timetable uploaded successfully! ${successCount} entries added, ${errorCount} errors.`);
-      fetchData(); // Refresh the timetable entries
+      toast.success(`Timetable updated! ${successCount} slots scheduled, ${errorCount} rejected.`);
+      fetchData();
     } catch (error) {
       console.error('Failed to upload timetable:', error);
       toast.error('Failed to upload timetable: ' + (error as Error).message);
@@ -188,19 +185,18 @@ export function AdminTimetableManagement() {
   };
 
   const handleDownloadTemplate = () => {
-    // Create a template Excel file
     const templateData = [
       {
         'Day': 'Mon',
-        'Time Slot': '8-9 AM',
-        'Class': 'General Science 1A S1',
-        'Subject': 'Mathematics (Core)',
+        'Time Slot': '08:00 - 09:00',
+        'Class': 'General Science 1A',
+        'Subject': 'Core Mathematics',
         'Teacher': 'TEA2025001'
       },
       {
         'Day': 'Tue',
-        'Time Slot': '9-10 AM',
-        'Class': 'General Art 1B S1',
+        'Time Slot': '09:00 - 10:00',
+        'Class': 'General Arts 1B',
         'Subject': 'English Language',
         'Teacher': 'TEA2025002'
       }
@@ -209,41 +205,55 @@ export function AdminTimetableManagement() {
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Timetable_Template');
-    
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, 'timetable_template.xlsx');
-    toast.success('Template downloaded successfully!');
+    XLSX.writeFile(workbook, 'asashs_timetable_template.xlsx');
+    toast.success('Template workbook downloaded');
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+      <div className="space-y-6">
+        <LoadingSkeleton variant="card" rows={2} />
+        <LoadingSkeleton variant="table" rows={6} columns={5} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Timetable Management</h2>
-          <p className="text-gray-600">Upload and manage school timetables</p>
+          <h2 className="text-base font-bold text-gray-900">Curriculum Timetable & Schedule Operations</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Maintain master weekly schedule allocations for all classes and faculty members</p>
+        </div>
+        <div className="text-right">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Academic Session</span>
+          <span className="text-xs font-semibold text-gray-800 tabular-nums">{academicYear}</span>
         </div>
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Upload Timetable</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Upload & Configuration Section */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 space-y-4">
+        <div className="pb-3 border-b border-gray-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
+            <h3 className="text-sm font-bold text-gray-900">Upload Master Schedule File</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Import structured Excel or CSV timetable files with day, time slot, class arm, and instructor columns</p>
+          </div>
+          <button
+            onClick={handleDownloadTemplate}
+            className="px-3 py-1.5 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-2xs self-start"
+          >
+            <ArrowDownTrayIcon className="w-3.5 h-3.5 text-gray-500" />
+            <span>Download CSV/Excel Template</span>
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label className="block font-medium text-gray-700 mb-1">Target Academic Year</label>
             <select
               value={academicYear}
               onChange={(e) => setAcademicYear(e.target.value)}
-              className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white tabular-nums"
             >
               <option value="2024/2025">2024/2025</option>
               <option value="2025/2026">2025/2026</option>
@@ -252,82 +262,73 @@ export function AdminTimetableManagement() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Timetable File (Excel/CSV)</label>
-            <div className="flex space-x-3">
+            <label className="block font-medium text-gray-700 mb-1">Spreadsheet File (.xlsx, .xls, .csv)</label>
+            <div className="flex gap-2">
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 onChange={handleFileChange}
-                className="flex-1 px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-sm bg-white text-xs file:mr-3 file:py-1 file:px-2.5 file:rounded-xs file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
               />
-              <button
+              <PortalButton
                 onClick={handleUpload}
                 disabled={isUploading || !file}
-                className={`px-6 py-3 rounded-lg font-medium ${
-                  isUploading || !file
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-school-green-600 text-white hover:bg-school-green-700'
-                }`}
+                className="px-5 py-2 bg-school-green-700 text-white rounded-sm font-medium hover:bg-school-green-800 disabled:opacity-40 transition-colors shadow-2xs"
               >
-                {isUploading ? 'Uploading...' : 'Upload'}
-              </button>
+                {isUploading ? 'Importing...' : 'Upload File'}
+              </PortalButton>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Excel files should have columns: Day, Time Slot, Class, Subject, Teacher
+            <p className="text-[11px] text-gray-400 mt-1">
+              Required headers: <code className="font-mono text-gray-600">Day</code>, <code className="font-mono text-gray-600">Time Slot</code>, <code className="font-mono text-gray-600">Class</code>, <code className="font-mono text-gray-600">Subject</code>, <code className="font-mono text-gray-600">Teacher</code>
             </p>
           </div>
         </div>
-        
-        <div className="mt-6">
-          <button
-            onClick={handleDownloadTemplate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <span>⬇️</span>
-            <span>Download Template</span>
-          </button>
-        </div>
       </div>
 
-      {/* Timetable Entries */}
-      <div className="bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 overflow-hidden">
-        <div className="bg-school-green-600 text-white p-6">
-          <h3 className="text-xl font-bold">Timetable Entries ({timetableEntries.length})</h3>
-          <p className="text-school-green-100">Academic Year: {academicYear}</p>
+      {/* Master Timetable Entries Grid */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">Scheduled Instructional Periods</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Active weekly roster entries for session {academicYear}</p>
+          </div>
+          <span className="text-xs text-gray-500 tabular-nums font-mono">
+            {timetableEntries.length} periods active
+          </span>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-school-cream-100">
+          <table className="w-full text-left text-xs divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Day</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Time Slot</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Subject</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Teacher</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Day</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Time Slot</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Class Arm</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Curriculum Subject</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Assigned Instructor</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-school-cream-200">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {timetableEntries.length > 0 ? (
                 timetableEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-school-cream-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{entry.day}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{entry.time_slot}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{entry.class_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{entry.subject_name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                  <tr key={entry.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-sm text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                        {entry.day}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-gray-700 tabular-nums font-medium">{entry.time_slot}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">{entry.class_name}</td>
+                    <td className="px-4 py-3 text-gray-700">{entry.subject_name}</td>
+                    <td className="px-4 py-3 text-gray-600">
                       {entry.teacher_surname} {entry.teacher_other_names}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-4">📅</div>
-                      <p className="text-lg font-medium">No timetable entries found</p>
-                      <p className="text-sm">Upload a timetable file to get started</p>
-                    </div>
+                  <td colSpan={5} className="px-4 py-12 text-center text-xs text-gray-400">
+                    No scheduled timetable entries recorded for {academicYear}. Upload a master schedule above.
                   </td>
                 </tr>
               )}

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { LandingNavbar } from '../components/LandingNavbar';
 import { LandingFooter } from '../components/LandingFooter';
 
 interface NewsEventsPageProps {
@@ -24,79 +23,79 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
             category: "Award",
             date: "December 20, 2025",
             image: "/award_ceremony.jpg",
-            excerpt: "Akim Asafo Senior High School has been honored as the Best Performing Senior High School at the Akosua Agyeiwaa Memorial Municipal Teachers' Awards ceremony.",
+            excerpt: "Akim Asafo Senior High School has been recognized as the Best Performing Senior High School at the municipal education awards, honoring academic achievement and instructional excellence.",
             externalLink: null,
-            color: "from-yellow-400 to-yellow-600"
+            badgeClass: "bg-yellow-50 text-yellow-900 border-yellow-300"
         },
         {
             id: 2,
             title: "National Debate & Quiz Competition Success",
             category: "Academic",
-            date: "2025",
+            date: "November 14, 2025",
             image: "/nsmq_2025.jpg",
-            excerpt: "ASASHS students secured impressive 2nd place in Debate and 3rd place in Quiz at the 29th National Inter-SHS Competition.",
+            excerpt: "ASASHS students secured 2nd place in Debate and 3rd place in Quiz at the 29th National Inter-SHS Competition, continuing a tradition of critical inquiry.",
             externalLink: null,
-            color: "from-blue-400 to-blue-600"
+            badgeClass: "bg-blue-50 text-blue-900 border-blue-200"
         },
         {
             id: 3,
-            title: "NSMQ 2025 Regional Qualifiers",
+            title: "NSMQ 2025 Regional Qualifiers Advance",
             category: "Academic",
-            date: "2025",
+            date: "October 08, 2025",
             image: "/nsmq_2024.jpg",
-            excerpt: "ASASHS team qualifies for the National Science and Maths Quiz, showcasing excellence in STEM education.",
+            excerpt: "The school STEM team qualifies for the National Science and Maths Quiz preliminary stages, demonstrating problem-solving aptitude in physics and biology.",
             externalLink: null,
-            color: "from-purple-400 to-purple-600"
+            badgeClass: "bg-blue-50 text-blue-900 border-blue-200"
         },
         {
             id: 4,
             title: "Zonal Handball Champions 2025",
             category: "Sports",
-            date: "2025",
+            date: "September 24, 2025",
             image: "/sports_team_field.jpg",
-            excerpt: "ASASHS dominates the Kukurantumi Zone and qualifies for Super Zonals 2025.",
+            excerpt: "ASASHS athletes take the championship trophy in the Kukurantumi Zone, securing qualification for the Super Zonals tournament.",
             externalLink: null,
-            color: "from-green-400 to-green-600"
+            badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200"
         },
         {
             id: 5,
-            title: "25th Anniversary Celebration",
+            title: "34th Anniversary Celebrations Announced",
             category: "Milestone",
             date: "April 12, 2025",
             image: "/administration.jpg",
-            excerpt: "ASASHS celebrates 25 years of academic excellence and community impact.",
+            excerpt: "School management and the alumni association announce activities commemorating over three decades of community empowerment and education.",
             externalLink: null,
-            color: "from-pink-400 to-pink-600"
+            badgeClass: "bg-purple-50 text-purple-900 border-purple-200"
         },
         {
             id: 6,
-            title: "EPI Alumni Continue to Support Rural Akim Asafo SHS",
+            title: "EPI Alumni Educational Pathways Support Initiative",
             category: "Community",
             date: "May 12, 2024",
             image: "/student_group_1.jpg",
-            excerpt: "Educational Pathways International alumni donated seven laptops and comprehensive collection of textbooks, continuing their tradition of giving back.",
+            excerpt: "Alumni network donates laptops and modern textbooks to the institutional ICT laboratory and library to support digital literacy.",
             externalLink: "https://www.educationalpathwaysinternational.org/2024/05/12/epi-alumni-continue-to-support-rural-akim-asafo-senior-high-school/",
-            color: "from-indigo-400 to-indigo-600"
+            badgeClass: "bg-amber-50 text-amber-900 border-amber-200"
         },
         {
             id: 7,
-            title: "Tourism Club Rejuvenation Initiative",
+            title: "Tourism & Heritage Club Rejuvenation",
             category: "Extracurricular",
             date: "August 22, 2024",
             image: "/student_group_2.jpg",
-            excerpt: "Tourism Society of Ghana partners with ASASHS to revitalize the school's Tourism Club.",
+            excerpt: "The Tourism Society of Ghana partners with the school administration to expand student field expeditions and ecological studies.",
             externalLink: null,
-            color: "from-teal-400 to-teal-600"
+            badgeClass: "bg-teal-50 text-teal-900 border-teal-200"
         },
         {
             id: 8,
-            title: "Admissions Open for 2025/2026 Academic Year",
+            title: "Admissions Open for 2025/2026 Academic Session",
             category: "Admissions",
-            date: "2025/2026",
+            date: "January 15, 2025",
             image: "/hero_school_building.jpg",
-            excerpt: "Applications now being accepted for the new academic year. Join the Best Performing SHS in the municipality!",
+            excerpt: "Placement verification and online enrollment are open for BECE candidates placed in ASASHS across all academic tracks.",
             externalLink: "https://www.myshsadmission.net/site/schools/ASASHS/",
-            color: "from-orange-400 to-orange-600"
+            badgeClass: "bg-indigo-50 text-indigo-900 border-indigo-200"
         }
     ];
 
@@ -107,42 +106,35 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
         : newsArticles.filter(article => article.category === selectedCategory);
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            {/* Hero Section with Background Image */}
-            <section className="relative h-[500px] flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0">
-                    <img
-                        src="/news_hero.jpg"
-                        alt="ASASHS Students"
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-school-green-900/70 via-school-green-800/60 to-black/50"></div>
-                </div>
-                <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
-                    <span className="inline-block py-2 px-4 rounded-full bg-white/20 text-white text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-sm border border-white/30 animate-fade-in">
-                        Latest Updates & Achievements
-                    </span>
-                    <h1 className="text-4xl md:text-7xl font-extrabold text-white mb-6 leading-tight animate-slide-up">
-                        News & Events
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+            {/* Page Header */}
+            <section className="bg-gray-950 text-white pt-28 pb-16 border-b border-gray-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-950 border border-school-green-800 text-[10px] uppercase font-bold text-school-green-300 mb-3">
+                        <span>Official Dispatches</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">
+                        News & Communiqués
                     </h1>
-                    <p className="text-lg md:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed animate-slide-up [animation-delay:200ms]">
-                        Celebrating excellence, achievements, and milestones from the ASASHS community
+                    <p className="text-xs sm:text-sm text-gray-300 max-w-2xl">
+                        Official announcements, competition dispatches, student achievements, and administrative updates from Akim Asafo Senior High School.
                     </p>
                 </div>
             </section>
 
-            {/* Category Filter */}
-            <section className="py-8 bg-white border-b border-gray-200 sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex flex-wrap gap-3 justify-center">
+            {/* Category Filter Bar */}
+            <section className="bg-white border-b border-gray-200 sticky top-12 z-30 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                    <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
                         {categories.map((category) => (
                             <button
                                 key={category}
                                 onClick={() => setSelectedCategory(category)}
-                                className={`px-6 py-2 rounded-full font-bold text-sm transition-all ${selectedCategory === category
-                                    ? 'bg-school-green-600 text-white shadow-lg scale-105'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                className={`px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors min-h-[36px] ${
+                                    selectedCategory === category
+                                        ? 'bg-school-green-700 text-white shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                }`}
                             >
                                 {category}
                             </button>
@@ -151,46 +143,50 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
                 </div>
             </section>
 
-            {/* News Grid - Redesigned Layout */}
-            <section className="py-16 px-4">
+            {/* News Editorial Grid */}
+            <main className="flex-grow py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
-                    {/* Featured Article (First Article - Larger) */}
+                    {/* Featured Article */}
                     {filteredArticles.length > 0 && (
-                        <div className="mb-12">
-                            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden hover:shadow-3xl transition-all duration-300 group">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-                                    <div className="relative h-96 lg:h-auto overflow-hidden">
-                                        <img
-                                            src={filteredArticles[0].image}
-                                            alt={filteredArticles[0].title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className={`absolute top-4 left-4 bg-gradient-to-r ${filteredArticles[0].color} text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg`}>
+                        <div className="mb-10">
+                            <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12">
+                                <div className="lg:col-span-7 h-64 lg:h-96 relative">
+                                    <img
+                                        src={filteredArticles[0].image}
+                                        alt={filteredArticles[0].title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute top-3 left-3">
+                                        <span className={`px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-wider border shadow-sm ${filteredArticles[0].badgeClass}`}>
                                             {filteredArticles[0].category}
-                                        </div>
+                                        </span>
                                     </div>
-                                    <div className="p-8 lg:p-12 flex flex-col justify-center">
-                                        <span className="text-gray-500 text-sm font-medium mb-3">{filteredArticles[0].date}</span>
-                                        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 group-hover:text-school-green-600 transition-colors">
+                                </div>
+                                <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between">
+                                    <div>
+                                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block mb-2 tabular-nums">
+                                            {filteredArticles[0].date}
+                                        </span>
+                                        <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-3 tracking-tight leading-snug">
                                             {filteredArticles[0].title}
                                         </h2>
-                                        <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-6">
                                             {filteredArticles[0].excerpt}
                                         </p>
+                                    </div>
+                                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                                         {filteredArticles[0].externalLink ? (
                                             <a
                                                 href={filteredArticles[0].externalLink}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center text-school-green-600 font-bold text-lg hover:text-school-green-800 group/link"
+                                                className="inline-flex items-center text-xs font-bold text-school-green-700 hover:text-school-green-900 uppercase tracking-wider"
                                             >
-                                                Read Full Article
-                                                <svg className="w-5 h-5 ml-2 group-hover/link:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                                </svg>
+                                                <span>Read Full Source Report</span>
+                                                <span className="ml-1 text-sm">→</span>
                                             </a>
                                         ) : (
-                                            <span className="text-gray-400 text-sm italic">Full article coming soon</span>
+                                            <span className="text-[11px] text-gray-400 uppercase font-semibold">Institutional Dispatch</span>
                                         )}
                                     </div>
                                 </div>
@@ -198,79 +194,93 @@ export const NewsEventsPage: React.FC<NewsEventsPageProps> = ({
                         </div>
                     )}
 
-                    {/* Remaining Articles - Grid Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Secondary Articles Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredArticles.slice(1).map((article) => (
-                            <div key={article.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group flex flex-col">
-                                <div className="relative h-56 overflow-hidden">
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    />
-                                    <div className={`absolute top-3 left-3 bg-gradient-to-r ${article.color} text-white px-3 py-1 rounded-full font-bold text-xs shadow-lg`}>
-                                        {article.category}
+                            <div 
+                                key={article.id} 
+                                className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex flex-col justify-between hover:border-school-green-600 transition-colors"
+                            >
+                                <div>
+                                    <div className="relative h-48 overflow-hidden border-b border-gray-100">
+                                        <img
+                                            src={article.image}
+                                            alt={article.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute top-2.5 left-2.5">
+                                            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border shadow-sm ${article.badgeClass}`}>
+                                                {article.category}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-5">
+                                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5 tabular-nums">
+                                            {article.date}
+                                        </span>
+                                        <h3 className="text-sm font-bold text-gray-900 mb-2 leading-snug">
+                                            {article.title}
+                                        </h3>
+                                        <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+                                            {article.excerpt}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="p-5 md:p-6 flex flex-col flex-grow">
-                                    <span className="text-gray-500 text-[10px] md:text-xs font-medium mb-2">{article.date}</span>
-                                    <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 group-hover:text-school-green-600 transition-colors line-clamp-2">
-                                        {article.title}
-                                    </h3>
-                                    <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
-                                        {article.excerpt}
-                                    </p>
-                                    {article.externalLink ? (
-                                        <a
-                                            href={article.externalLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center text-school-green-600 font-bold text-xs md:text-sm hover:text-school-green-800 group/link mt-auto"
-                                        >
-                                            Read More
-                                            <svg className="w-4 h-4 ml-1 group-hover/link:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    ) : (
-                                        <span className="text-gray-400 text-[10px] italic mt-auto">Coming soon</span>
-                                    )}
+                                <div className="p-5 pt-0">
+                                    <div className="pt-3 border-t border-gray-100">
+                                        {article.externalLink ? (
+                                            <a
+                                                href={article.externalLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center text-xs font-bold text-school-green-700 hover:text-school-green-900 uppercase tracking-wider"
+                                            >
+                                                <span>Read Article</span>
+                                                <span className="ml-1 text-sm">→</span>
+                                            </a>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400 uppercase font-semibold">ASASHS Press Office</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </section>
+            </main>
 
-            {/* Call to Action */}
-            <section className="py-16 bg-gradient-to-r from-school-green-800 to-school-green-900 text-white">
-                <div className="max-w-4xl mx-auto text-center px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Join Our Community of Excellence</h2>
-                    <p className="text-xl text-gray-200 mb-8">
-                        Be part of the Best Performing SHS in the East Akim Municipality
+            {/* Admissions Banner */}
+            <section className="py-14 bg-gray-950 text-white border-t border-gray-800">
+                <div className="max-w-4xl mx-auto text-center px-4 sm:px-6">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-3 tracking-tight">
+                        Enroll at Akim Asafo Senior High School
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-400 mb-6 max-w-xl mx-auto leading-relaxed">
+                        Join the municipality's premier secondary school. Applications and placement confirmations are processed through the official admission portal.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3">
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
-                            className="px-8 py-4 bg-white text-school-green-800 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
+                            className="px-5 py-2.5 bg-school-green-700 hover:bg-school-green-800 text-white rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-school-green-600 shadow-sm min-h-[44px]"
                         >
-                            Apply for Admission
+                            Open Admission Portal
                         </button>
                         <button
                             onClick={onLoginClick}
-                            className="px-8 py-4 border-2 border-white/30 backdrop-blur-sm text-white rounded-full font-bold text-lg hover:bg-white/10 transition-colors"
+                            className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-gray-700 min-h-[44px]"
                         >
-                            Student Portal
+                            Access Student Portal
                         </button>
                     </div>
                 </div>
             </section>
 
+            {/* Institutional Footer */}
             <LandingFooter 
                 onLoginClick={onLoginClick} 
-                onNewsClick={() => {}} // Already on news page
-                onStaffClick={onStaffClick}
-                onCalendarClick={onCalendarClick}
+                onNewsClick={() => {}} 
+                onStaffClick={onStaffClick} 
+                onCalendarClick={onCalendarClick} 
             />
         </div>
     );

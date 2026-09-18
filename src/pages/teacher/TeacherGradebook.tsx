@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface StudentResult {
   id: number;
@@ -15,18 +18,8 @@ interface StudentResult {
   remarks: string;
   academic_year: string;
   semester: number;
-  // Add teacher information
   teacher_name?: string;
   teacher_id?: string;
-}
-
-interface StudentResultInput {
-  id: number | null;
-  student_id: string;
-  surname: string;
-  other_names: string;
-  class_score: number;
-  exam_score: number;
 }
 
 interface TeacherSubject {
@@ -44,7 +37,6 @@ interface TeacherGradebookProps {
 }
 
 export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId }) => {
-  console.log('TeacherGradebook mounted with teacherId:', teacherId);
   const [classResults, setClassResults] = useState<StudentResult[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<TeacherSubject[]>([]);
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
@@ -52,12 +44,10 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
   const [academicYear, setAcademicYear] = useState('2025/2026');
   const [semester, setSemester] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [editingResult, setEditingResult] = useState<StudentResult | null>(null);
-  const [teacherName, setTeacherName] = useState('');
+  const [savingAll, setSavingAll] = useState(false);
   const [gradingWeights, setGradingWeights] = useState({ classScore: 30, examScore: 70 });
 
   useEffect(() => {
-    console.log('useEffect triggered in TeacherGradebook');
     fetchTeacherSubjects();
     fetchGradingWeights();
   }, []);
@@ -81,24 +71,12 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
     setLoading(true);
     try {
       const subjects = await db.getTeacherSubjects(teacherId);
-      console.log('Teacher subjects loaded:', subjects);
       setTeacherSubjects(subjects as TeacherSubject[]);
       
-      // Auto-select the first class and subject if available
       if (subjects.length > 0) {
-        console.log('Auto-selecting first class and subject:', subjects[0]);
-        // Use setTimeout to ensure state updates are processed
-        setTimeout(() => {
-          setSelectedClass(subjects[0].class_id);
-          setSelectedSubject(subjects[0].subject_id);
-          
-          // Automatically load results for the first class/subject
-          setTimeout(() => {
-            fetchClassResults();
-          }, 100);
-        }, 0);
+        setSelectedClass(subjects[0].class_id);
+        setSelectedSubject(subjects[0].subject_id);
       } else {
-        console.log('No subjects found for teacher:', teacherId);
         toast.error('No classes or subjects assigned to this teacher');
       }
     } catch (error) {
@@ -112,11 +90,9 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
   const fetchClassResults = async () => {
     if (!selectedClass || !selectedSubject) return;
     
-    console.log('Fetching class results for:', { selectedClass, selectedSubject, academicYear, semester });
     setLoading(true);
     try {
       const results = await db.getClassResults(selectedClass, selectedSubject, academicYear, semester);
-      console.log('Class results loaded:', results);
       setClassResults(results as StudentResult[]);
     } catch (error) {
       console.error('Failed to fetch class results:', error);
@@ -129,8 +105,7 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
   const handleSaveResult = async (resultData: any) => {
     try {
       await db.saveStudentResult(resultData);
-      toast.success('Result saved successfully!');
-      setEditingResult(null);
+      toast.success('Result saved successfully');
       fetchClassResults();
     } catch (error) {
       console.error('Failed to save result:', error);
@@ -138,8 +113,27 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
     }
   };
 
-  const handleEditResult = (result: StudentResult) => {
-    setEditingResult(result);
+  const handleSaveAll = async () => {
+    if (!selectedClass || !selectedSubject) return;
+    setSavingAll(true);
+    try {
+      for (const result of classResults) {
+        await db.saveStudentResult({
+          ...result,
+          class_id: selectedClass,
+          subject_id: selectedSubject,
+          academic_year: academicYear,
+          semester: semester
+        });
+      }
+      toast.success('All student grades saved successfully');
+      fetchClassResults();
+    } catch (error) {
+      console.error('Failed to save all results:', error);
+      toast.error('Failed to save some results');
+    } finally {
+      setSavingAll(false);
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -148,130 +142,92 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
       return;
     }
     
-    // Create template data with student information pre-filled
     let templateData = [];
-    
     if (classResults.length > 0) {
-      // Use existing student data if available
       templateData = classResults.map(result => ({
         'Student ID': result.student_id,
         'Surname': result.surname,
         'Other Names': result.other_names,
         [`Class Score (${gradingWeights.classScore}%)`]: '',
-        [`Exam Score (${gradingWeights.examScore}%)`]: ''
+        [`Exam Score (${gradingWeights.examScore}%)`]: '',
+        'Remarks': ''
       }));
     } else {
-      // Create empty template if no student data
       templateData = [
         {
-          'Student ID': '',
-          'Surname': '',
-          'Other Names': '',
-          [`Class Score (${gradingWeights.classScore}%)`]: '',
-          [`Exam Score (${gradingWeights.examScore}%)`]: ''
+          'Student ID': 'STU2026001',
+          'Surname': 'Mensah',
+          'Other Names': 'Kwame',
+          [`Class Score (${gradingWeights.classScore}%)`]: 24.5,
+          [`Exam Score (${gradingWeights.examScore}%)`]: 58.0,
+          'Remarks': 'Excellent work'
         }
       ];
     }
     
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Gradebook_Template');
-    
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, `gradebook_template_${academicYear}_semester${semester}.xlsx`);
-    toast.success('Template downloaded successfully!');
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Grade Template');
+    const selectedSub = teacherSubjects.find(s => s.subject_id === selectedSubject);
+    const filename = `${selectedSub?.class_name || 'Class'}_${selectedSub?.subject_name || 'Subject'}_Template.xlsx`;
+    XLSX.writeFile(wb, filename);
+    toast.success('Template downloaded');
   };
 
   const handleDownloadExcel = () => {
-    if (!selectedSubject) {
-      toast.error('Please select a subject first');
+    if (classResults.length === 0) {
+      toast.error('No results to export');
       return;
     }
-    
-    // Convert results to worksheet format
-    const worksheetData = classResults.map(result => ({
-      'Student ID': result.student_id,
-      'Student Name': `${result.surname}, ${result.other_names}`,
-      [`Class Score (${gradingWeights.classScore}%)`]: result.class_score,
-      [`Exam Score (${gradingWeights.examScore}%)`]: result.exam_score,
-      'Total Score (100%)': result.total_score,
-      'Grade': result.grade,
-      'Remarks': result.remarks,
-      'Academic Year': academicYear,
-      'Semester': semester
+    const exportData = classResults.map(r => ({
+      'Student ID': r.student_id,
+      'Surname': r.surname,
+      'Other Names': r.other_names,
+      [`Class Score (${gradingWeights.classScore}%)`]: r.class_score || 0,
+      [`Exam Score (${gradingWeights.examScore}%)`]: r.exam_score || 0,
+      'Total Score': r.total_score || 0,
+      'Grade': r.grade || '-',
+      'Remarks': r.remarks || ''
     }));
-    
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Results_${academicYear}_S${semester}`);
-    
-    // Generate Excel file and trigger download
-    XLSX.writeFile(workbook, `class_results_${academicYear}_semester${semester}.xlsx`);
-    toast.success('Results exported successfully!');
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Results');
+    const selectedSub = teacherSubjects.find(s => s.subject_id === selectedSubject);
+    const filename = `${selectedSub?.class_name || 'Class'}_${selectedSub?.subject_name || 'Subject'}_Grades.xlsx`;
+    XLSX.writeFile(wb, filename);
+    toast.success('Results exported');
   };
 
-  const handleImportExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedSubject) {
-      toast.error('Please select a subject first');
-      return;
-    }
-    
-    const file = event.target.files?.[0];
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = async (event) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
         
         if (jsonData.length === 0) {
-          toast.error('No data found in the Excel file');
+          toast.error('Import file contains no data');
           return;
         }
-        
-        // Validate required columns
-        const firstRow = jsonData[0];
-        const classScoreCol = `Class Score (${gradingWeights.classScore}%)`;
-        const examScoreCol = `Exam Score (${gradingWeights.examScore}%)`;
-        const requiredColumns = ['Student ID', 'Surname', 'Other Names', classScoreCol, examScoreCol];
-        const missingColumns = requiredColumns.filter(col => !(col in firstRow));
-        
-        if (missingColumns.length > 0) {
-          toast.error(`Missing required columns: ${missingColumns.join(', ')}`);
-          return;
-        }
-        
-        // Process imported data
-        const processedResults: any[] = [];
-        
+
+        const classScoreCol = Object.keys(jsonData[0]).find(k => k.includes('Class Score')) || 'Class Score';
+        const examScoreCol = Object.keys(jsonData[0]).find(k => k.includes('Exam Score')) || 'Exam Score';
+
+        let count = 0;
         for (const row of jsonData) {
           const classScore = parseFloat(row[classScoreCol]) || 0;
           const examScore = parseFloat(row[examScoreCol]) || 0;
-          
-          // Validate scores
-          if (classScore < 0 || classScore > gradingWeights.classScore) {
-            toast.error(`Invalid class score for student ${row['Student ID']}. Must be between 0 and ${gradingWeights.classScore}.`);
-            continue;
-          }
-          
-          if (examScore < 0 || examScore > gradingWeights.examScore) {
-            toast.error(`Invalid exam score for student ${row['Student ID']}. Must be between 0 and ${gradingWeights.examScore}.`);
-            continue;
-          }
-          
-          // Calculate total score (class score + exam score)
           const totalScore = parseFloat((classScore + examScore).toFixed(1));
           const grade = calculateGrade(totalScore);
           const remarks = getRemark(grade);
-          
-          // Find existing result for this student if it exists
           const existingResult = classResults.find(r => r.student_id === row['Student ID']);
-          
-          processedResults.push({
+
+          await db.saveStudentResult({
             id: existingResult?.id || null,
             student_id: row['Student ID'],
             surname: row['Surname'],
@@ -286,24 +242,13 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
             class_id: selectedClass,
             subject_id: selectedSubject
           });
+          count++;
         }
-        
-        // Save all processed results
-        for (const result of processedResults) {
-          try {
-            await db.saveStudentResult(result);
-          } catch (error) {
-            console.error('Failed to save result:', error);
-            toast.error(`Failed to save result for student ${result.student_id}`);
-          }
-        }
-        
-        toast.success(`Successfully imported and saved ${processedResults.length} records`);
-        fetchClassResults(); // Refresh the results
-        
+        toast.success(`Imported and saved ${count} records`);
+        fetchClassResults();
       } catch (error) {
-        console.error('Error importing Excel file:', error);
-        toast.error('Failed to import Excel file: ' + (error as Error).message);
+        console.error('Import error:', error);
+        toast.error('Failed to import file');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -326,8 +271,8 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
       case 'A1': return 'Excellent';
       case 'B2': return 'Very Good';
       case 'B3': return 'Good';
-      case 'C4': return 'Credit';
-      case 'C5': return 'Credit';
+      case 'C4':
+      case 'C5':
       case 'C6': return 'Credit';
       case 'D7': return 'Pass';
       case 'E8': return 'Weak Pass';
@@ -343,58 +288,45 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
   };
 
   const getPassCount = (): number => {
-    return classResults.filter(result => 
-      result.grade && !['F9'].includes(result.grade)
-    ).length;
+    return classResults.filter(result => result.grade && result.grade !== 'F9').length;
   };
 
   const getFailCount = (): number => {
-    return classResults.filter(result => 
-      result.grade && ['F9'].includes(result.grade)
-    ).length;
+    return classResults.filter(result => result.grade === 'F9').length;
   };
-
-  const getTopPerformers = (): StudentResult[] => {
-    return [...classResults]
-      .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
-      .slice(0, 3);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Gradebook</h2>
-          <p className="text-gray-600">Record and manage student results (Class: {gradingWeights.classScore}%, Exam: {gradingWeights.examScore}%)</p>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Academic Gradebook</h2>
+          <p className="text-xs text-gray-500 tabular-nums">
+            Continuous Assessment ({gradingWeights.classScore}%) + Terminal Examination ({gradingWeights.examScore}%)
+          </p>
         </div>
-        <div className="flex space-x-2">
-          <button
+        <div className="flex flex-wrap items-center gap-2">
+          <PortalButton
+            variant="secondary"
             onClick={handleDownloadTemplate}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${selectedSubject ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
             disabled={!selectedSubject}
+            className="text-xs !min-h-[36px] !py-1"
           >
-            <span>📋</span>
-            <span>Download Template</span>
-          </button>
-          <button
+            Template (.xlsx)
+          </PortalButton>
+          <PortalButton
+            variant="secondary"
             onClick={handleDownloadExcel}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${selectedSubject ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
-            disabled={!selectedSubject}
+            disabled={!selectedSubject || classResults.length === 0}
+            className="text-xs !min-h-[36px] !py-1"
           >
-            <span>⬇️</span>
-            <span>Export Results</span>
-          </button>
-          <label className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 cursor-pointer ${selectedSubject ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}>
-            <span>⬆️</span>
-            <span>Import Results</span>
+            Export Sheet
+          </PortalButton>
+          <label className={`min-h-[36px] px-3 py-1 rounded-sm text-xs font-semibold border inline-flex items-center cursor-pointer transition ${
+            selectedSubject
+              ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+          }`}>
+            <span>Import Grades</span>
             <input 
               type="file" 
               accept=".xlsx,.xls" 
@@ -406,15 +338,15 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {/* Filters Bar */}
+      <PortalCard className="p-4 sm:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Class</label>
             <select
               value={selectedClass || ''}
               onChange={(e) => setSelectedClass(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full min-h-[44px] px-3 py-2 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-900 focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             >
               <option value="">Select Class</option>
               {Array.from(new Set(teacherSubjects.map(s => s.class_id))).map(classId => {
@@ -426,17 +358,14 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                 );
               })}
             </select>
-            {teacherSubjects.length === 0 && (
-              <p className="text-sm text-red-500 mt-1">No classes assigned. Please contact administrator.</p>
-            )}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Subject</label>
             <select
               value={selectedSubject || ''}
               onChange={(e) => setSelectedSubject(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full min-h-[44px] px-3 py-2 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-900 focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
               disabled={!selectedClass}
             >
               <option value="">Select Subject</option>
@@ -448,17 +377,14 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
                   </option>
                 ))}
             </select>
-            {selectedClass && teacherSubjects.filter(s => s.class_id === selectedClass).length === 0 && (
-              <p className="text-sm text-red-500 mt-1">No subjects assigned for this class.</p>
-            )}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Academic Year</label>
             <select
               value={academicYear}
               onChange={(e) => setAcademicYear(e.target.value)}
-              className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full min-h-[44px] px-3 py-2 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-900 focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 tabular-nums"
             >
               <option value="2024/2025">2024/2025</option>
               <option value="2025/2026">2025/2026</option>
@@ -467,11 +393,11 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Semester</label>
             <select
               value={semester}
               onChange={(e) => setSemester(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full min-h-[44px] px-3 py-2 bg-white border border-gray-300 rounded-sm text-xs font-medium text-gray-900 focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
             >
               <option value="1">Semester 1</option>
               <option value="2">Semester 2</option>
@@ -479,288 +405,200 @@ export const TeacherGradebook: React.FC<TeacherGradebookProps> = ({ teacherId })
           </div>
           
           <div className="flex items-end">
-            <button
+            <PortalButton
+              variant="primary"
               onClick={fetchClassResults}
-              className="w-full bg-school-green-600 text-white px-4 py-3 rounded-lg hover:bg-school-green-700 transition-colors"
+              loading={loading}
+              loadingText="Loading..."
+              className="w-full !min-h-[44px]"
             >
-              Load Results
-            </button>
+              Load Roster
+            </PortalButton>
           </div>
         </div>
-      </div>
+      </PortalCard>
 
-      {/* Analytics */}
+      {/* Analytics Row */}
       {classResults.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-            <div className="text-3xl font-bold text-gray-900">
-              {getClassAverage()}
-            </div>
-            <div className="text-gray-600 mt-1">Class Average</div>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-            <div className="text-3xl font-bold text-green-600">
-              {getPassCount()}
-            </div>
-            <div className="text-gray-600 mt-1">Passes</div>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-            <div className="text-3xl font-bold text-red-600">
-              {getFailCount()}
-            </div>
-            <div className="text-gray-600 mt-1">Fails</div>
-          </div>
-          
-          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-            <div className="text-3xl font-bold text-blue-600">
-              {classResults.length}
-            </div>
-            <div className="text-gray-600 mt-1">Total Students</div>
-          </div>
-        </div>
-      )}
-
-      {/* Top Performers */}
-      {classResults.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Top 3 Performers</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {getTopPerformers().map((student, index) => (
-              <div key={student.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="text-2xl font-bold text-gray-900 mr-3">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">
-                      {student.surname}, {student.other_names}
-                    </div>
-                    <div className="text-sm text-gray-600">{student.student_id}</div>
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900">
-                    {student.total_score?.toFixed(1)}
-                  </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    student.grade === 'A1' ? 'bg-green-100 text-green-800' :
-                    student.grade === 'B2' ? 'bg-blue-100 text-blue-800' :
-                    student.grade === 'B3' ? 'bg-blue-100 text-blue-800' :
-                    student.grade === 'C4' ? 'bg-yellow-100 text-yellow-800' :
-                    student.grade === 'C5' ? 'bg-yellow-100 text-yellow-800' :
-                    student.grade === 'C6' ? 'bg-yellow-100 text-yellow-800' :
-                    student.grade === 'D7' ? 'bg-orange-100 text-orange-800' :
-                    student.grade === 'E8' ? 'bg-red-100 text-red-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {student.grade}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <PortalCard className="p-4">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Class Average</span>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{getClassAverage()}%</div>
+          </PortalCard>
+          <PortalCard className="p-4">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Passing Students</span>
+            <div className="text-2xl font-bold text-school-green-700 tabular-nums">{getPassCount()}</div>
+          </PortalCard>
+          <PortalCard className="p-4">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Needs Improvement</span>
+            <div className="text-2xl font-bold text-red-600 tabular-nums">{getFailCount()}</div>
+          </PortalCard>
+          <PortalCard className="p-4">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Total Enrolled</span>
+            <div className="text-2xl font-bold text-gray-900 tabular-nums">{classResults.length}</div>
+          </PortalCard>
         </div>
       )}
 
       {/* Results Table */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-        <div className="bg-school-green-600 text-white p-6">
-          <h3 className="text-xl font-bold">Class Results</h3>
-          <p className="text-school-green-100">
-            {classResults.length} students | Classwork: {gradingWeights.classScore}% | Exams: {gradingWeights.examScore}%
-          </p>
+      <PortalCard className="overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gray-50">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Student Assessment Matrix</h3>
+            <p className="text-xs text-gray-500 tabular-nums">
+              Classwork ({gradingWeights.classScore}%) • Exam ({gradingWeights.examScore}%) • Total (100%)
+            </p>
+          </div>
+          <PortalButton
+            variant="primary"
+            onClick={handleSaveAll}
+            loading={savingAll}
+            loadingText="Saving all grades..."
+            disabled={!selectedSubject || classResults.length === 0}
+            className="text-xs !min-h-[36px] !py-1"
+          >
+            Save All Grades
+          </PortalButton>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-school-cream-100">
+          <table className="w-full text-left">
+            <thead className="bg-white border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class Score ({gradingWeights.classScore}%)</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Exam Score ({gradingWeights.examScore}%)</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Total Score</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Grade</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Remarks</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Actions</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Student</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Student ID</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Class Score ({gradingWeights.classScore}%)</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Exam Score ({gradingWeights.examScore}%)</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Total</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Grade</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Remarks</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-school-cream-200">
+            <tbody className="divide-y divide-gray-200">
               {classResults.length > 0 ? (
-                classResults.map((result) => (
-                  <tr key={result.id} className="hover:bg-school-cream-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {result.surname}, {result.other_names}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {result.student_id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <input
-                        type="number"
-                        value={result.class_score || ''}
-                        onChange={(e) => {
-                          const newClassScore = parseFloat(e.target.value) || 0;
-                          // Validate class score range
-                          if (newClassScore < 0 || newClassScore > gradingWeights.classScore) {
-                            toast.error(`Class score must be between 0 and ${gradingWeights.classScore}`);
-                            return;
-                          }
-                          
-                          const newExamScore = result.exam_score || 0;
-                          const newTotalScore = parseFloat((newClassScore + newExamScore).toFixed(1));
-                          const newGrade = calculateGrade(newTotalScore);
-                          const newRemark = getRemark(newGrade);
-                          
-                          setClassResults(classResults.map(r => 
-                            r.id === result.id 
-                              ? {
-                                  ...r, 
-                                  class_score: newClassScore, 
-                                  total_score: newTotalScore, 
-                                  grade: newGrade, 
-                                  remarks: newRemark
-                                } 
-                              : r
-                          ));
-                        }}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
-                        min="0"
-                        max={gradingWeights.classScore}
-                        step="0.1"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <input
-                        type="number"
-                        value={result.exam_score || ''}
-                        onChange={(e) => {
-                          const newExamScore = parseFloat(e.target.value) || 0;
-                          // Validate exam score range
-                          if (newExamScore < 0 || newExamScore > gradingWeights.examScore) {
-                            toast.error(`Exam score must be between 0 and ${gradingWeights.examScore}`);
-                            return;
-                          }
-                          
-                          const newClassScore = result.class_score || 0;
-                          const newTotalScore = parseFloat((newClassScore + newExamScore).toFixed(1));
-                          const newGrade = calculateGrade(newTotalScore);
-                          const newRemark = getRemark(newGrade);
-                          
-                          setClassResults(classResults.map(r => 
-                            r.id === result.id 
-                              ? {
-                                  ...r, 
-                                  exam_score: newExamScore, 
-                                  total_score: newTotalScore, 
-                                  grade: newGrade, 
-                                  remarks: newRemark
-                                } 
-                              : r
-                          ));
-                        }}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
-                        min="0"
-                        max={gradingWeights.examScore}
-                        step="0.1"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {result.total_score?.toFixed(1) || '0.0'}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        result.grade === 'A1' ? 'bg-green-100 text-green-800' :
-                        result.grade === 'B2' ? 'bg-blue-100 text-blue-800' :
-                        result.grade === 'B3' ? 'bg-blue-100 text-blue-800' :
-                        result.grade === 'C4' ? 'bg-yellow-100 text-yellow-800' :
-                        result.grade === 'C5' ? 'bg-yellow-100 text-yellow-800' :
-                        result.grade === 'C6' ? 'bg-yellow-100 text-yellow-800' :
-                        result.grade === 'D7' ? 'bg-orange-100 text-orange-800' :
-                        result.grade === 'E8' ? 'bg-red-100 text-red-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {result.grade || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <input
-                        type="text"
-                        value={result.remarks || ''}
-                        onChange={(e) => {
-                          setClassResults(classResults.map(r => 
-                            r.id === result.id 
-                              ? {...r, remarks: e.target.value} 
-                              : r
-                          ));
-                        }}
-                        className="w-32 px-2 py-1 border border-gray-300 rounded"
-                        placeholder="Remarks"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <button
-                        onClick={() => handleSaveResult({
-                          ...result,
-                          class_id: selectedClass,
-                          subject_id: selectedSubject,
-                          academic_year: academicYear,
-                          semester: semester
-                        })}
-                        className="text-school-green-600 hover:text-school-green-800 mr-3"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => handleEditResult(result)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                classResults.map((result) => {
+                  const fullName = `${result.surname}, ${result.other_names}`;
+                  return (
+                    <tr key={result.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <UserAvatar name={fullName} size="sm" />
+                          <span className="text-xs font-semibold text-gray-900">{fullName}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-xs font-mono font-medium text-gray-600 tabular-nums">
+                        {result.student_id}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <input
+                          type="number"
+                          value={result.class_score || ''}
+                          onChange={(e) => {
+                            const newClassScore = parseFloat(e.target.value) || 0;
+                            if (newClassScore < 0 || newClassScore > gradingWeights.classScore) {
+                              toast.error(`Class score must be between 0 and ${gradingWeights.classScore}`);
+                              return;
+                            }
+                            const newExamScore = result.exam_score || 0;
+                            const newTotalScore = parseFloat((newClassScore + newExamScore).toFixed(1));
+                            const newGrade = calculateGrade(newTotalScore);
+                            const newRemark = getRemark(newGrade);
+                            setClassResults(classResults.map(r => 
+                              r.id === result.id 
+                                ? { ...r, class_score: newClassScore, total_score: newTotalScore, grade: newGrade, remarks: newRemark } 
+                                : r
+                            ));
+                          }}
+                          className="w-16 px-2 py-1 bg-white border border-gray-300 rounded-sm text-xs text-right font-mono tabular-nums font-semibold focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 outline-none"
+                          min="0"
+                          max={gradingWeights.classScore}
+                          step="0.1"
+                        />
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <input
+                          type="number"
+                          value={result.exam_score || ''}
+                          onChange={(e) => {
+                            const newExamScore = parseFloat(e.target.value) || 0;
+                            if (newExamScore < 0 || newExamScore > gradingWeights.examScore) {
+                              toast.error(`Exam score must be between 0 and ${gradingWeights.examScore}`);
+                              return;
+                            }
+                            const newClassScore = result.class_score || 0;
+                            const newTotalScore = parseFloat((newClassScore + newExamScore).toFixed(1));
+                            const newGrade = calculateGrade(newTotalScore);
+                            const newRemark = getRemark(newGrade);
+                            setClassResults(classResults.map(r => 
+                              r.id === result.id 
+                                ? { ...r, exam_score: newExamScore, total_score: newTotalScore, grade: newGrade, remarks: newRemark } 
+                                : r
+                            ));
+                          }}
+                          className="w-16 px-2 py-1 bg-white border border-gray-300 rounded-sm text-xs text-right font-mono tabular-nums font-semibold focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 outline-none"
+                          min="0"
+                          max={gradingWeights.examScore}
+                          step="0.1"
+                        />
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono font-bold text-xs text-gray-900 tabular-nums">
+                        {result.total_score ? result.total_score.toFixed(1) : '-'}
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-sm text-[11px] font-bold border tabular-nums ${
+                          result.grade === 'A1' ? 'bg-school-green-50 text-school-green-800 border-school-green-200' :
+                          result.grade?.startsWith('B') ? 'bg-blue-50 text-blue-800 border-blue-200' :
+                          result.grade?.startsWith('C') ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                          result.grade === 'D7' ? 'bg-orange-50 text-orange-800 border-orange-200' :
+                          result.grade === 'E8' ? 'bg-orange-50 text-orange-800 border-orange-200' :
+                          result.grade === 'F9' ? 'bg-red-50 text-red-800 border-red-200' :
+                          'bg-gray-50 text-gray-500 border-gray-200'
+                        }`}>
+                          {result.grade || '-'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <input
+                          type="text"
+                          value={result.remarks || ''}
+                          onChange={(e) => {
+                            setClassResults(classResults.map(r => 
+                              r.id === result.id ? { ...r, remarks: e.target.value } : r
+                            ));
+                          }}
+                          className="w-28 px-2 py-1 bg-white border border-gray-300 rounded-sm text-xs focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 outline-none"
+                          placeholder="Remarks"
+                        />
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => handleSaveResult({
+                            ...result,
+                            class_id: selectedClass,
+                            subject_id: selectedSubject,
+                            academic_year: academicYear,
+                            semester: semester
+                          })}
+                          className="min-h-[32px] px-2.5 py-1 rounded-sm text-xs font-semibold text-school-green-700 hover:bg-school-green-50 border border-school-green-200 transition"
+                        >
+                          Save
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-4">📊</div>
-                      <p className="text-lg font-medium">No results found</p>
-                      <p className="text-sm">Select a class and subject to view results</p>
-                    </div>
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500 text-xs">
+                    No results recorded for this subject and term. Select a class and subject above to view or enter scores.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-          <button
-            onClick={() => {
-              // Save all results
-              classResults.forEach(result => {
-                handleSaveResult({
-                  ...result,
-                  class_id: selectedClass,
-                  subject_id: selectedSubject,
-                  academic_year: academicYear,
-                  semester: semester
-                });
-              });
-              toast.success('All results saved successfully!');
-            }}
-            className={`px-6 py-2 rounded-lg transition-colors ${selectedSubject ? 'bg-school-green-600 text-white hover:bg-school-green-700' : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
-            disabled={!selectedSubject}
-          >
-            Save All Results
-          </button>
-        </div>
-      </div>
+      </PortalCard>
     </div>
   );
 };

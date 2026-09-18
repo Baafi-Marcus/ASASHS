@@ -4,6 +4,9 @@ import { db } from '../../../lib/neon';
 import { StudentDetailsModal } from './StudentDetailsModal';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { AuthContext } from '../../../AuthContext';
+import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface Student {
   id: number;
@@ -97,9 +100,8 @@ export function StudentList() {
     }
   };
 
-  // Add explicit search function
   const handleSearch = () => {
-    setPage(1); // Reset to first page when searching
+    setPage(1);
     fetchStudents();
   };
 
@@ -120,7 +122,7 @@ export function StudentList() {
       try {
         await db.deactivateStudent(studentId);
         toast.success('Student deactivated successfully');
-        fetchStudents(); // Refresh the list
+        fetchStudents();
       } catch (error) {
         console.error('Failed to deactivate student:', error);
         toast.error('Failed to deactivate student: ' + (error as Error).message);
@@ -133,7 +135,7 @@ export function StudentList() {
       try {
         await db.reactivateStudent(studentId);
         toast.success('Student reactivated successfully');
-        fetchStudents(); // Refresh the list
+        fetchStudents();
       } catch (error) {
         console.error('Failed to reactivate student:', error);
         toast.error('Failed to reactivate student: ' + (error as Error).message);
@@ -142,7 +144,7 @@ export function StudentList() {
   };
 
   const handleDeleteStudent = async (studentId: number) => {
-    if (window.confirm('Are you sure you want to delete this student?')) {
+    if (window.confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
       try {
         const student = students.find(s => s.id === studentId);
         await db.deleteStudent(studentId);
@@ -170,11 +172,11 @@ export function StudentList() {
   };
 
   const handleStudentUpdated = () => {
-    fetchStudents(); // Refresh the student list
+    fetchStudents();
   };
 
   const getProgrammeName = (courseId: number) => {
-    const programmes: Record<number, string> = {
+    const progs: Record<number, string> = {
       1: "General Science",
       2: "Business",
       3: "Visual Art",
@@ -182,113 +184,158 @@ export function StudentList() {
       5: "General Agricultural",
       6: "Home Economics"
     };
-    return programmes[courseId] || "Unknown";
+    return progs[courseId] || "Unknown";
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-xl border-2 border-school-cream-200 overflow-hidden">
-      <div className="p-6 border-b border-school-cream-200">
-        <h2 className="text-2xl font-bold text-gray-800">Student List</h2>
-      </div>
-      <div className="p-6">
-        {/* Search & Filters */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Search by name or index..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-64 p-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
+    <div className="space-y-4">
+      <PortalCard>
+        {/* Filters and Search Bar */}
+        <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="flex flex-1 gap-2 items-center">
+            <div className="relative flex-1 max-w-sm">
+              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by name or index ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-sm focus:bg-white focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600 transition-colors"
+              />
+            </div>
+            
             <button
               onClick={handleSearch}
-              className="bg-school-green-600 text-white px-4 py-2 rounded-r-lg hover:bg-school-green-700 transition-colors"
+              className="px-3 py-2 bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-sm transition-colors"
             >
-              Search
+              Filter
             </button>
           </div>
 
-          <select
-            value={programme || ''}
-            onChange={(e) => setProgramme(e.target.value || null)}
-            className="w-48 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-          >
-            <option value="">Filter by Programme</option>
-            <option value="1">General Science</option>
-            <option value="2">Business</option>
-            <option value="3">Visual Art</option>
-            <option value="4">General Art</option>
-            <option value="5">General Agricultural</option>
-            <option value="6">Home Economics</option>
-          </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={programme || ''}
+              onChange={(e) => setProgramme(e.target.value || null)}
+              aria-label="Filter students by programme"
+              className="px-3 py-2 text-xs bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
+            >
+              <option value="">All Programmes</option>
+              <option value="1">General Science</option>
+              <option value="2">Business</option>
+              <option value="3">Visual Art</option>
+              <option value="4">General Art</option>
+              <option value="5">General Agricultural</option>
+              <option value="6">Home Economics</option>
+            </select>
 
-          <select
-            value={gender || ''}
-            onChange={(e) => setGender(e.target.value || null)}
-            className="w-40 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
-          >
-            <option value="">Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-
-
+            <select
+              value={gender || ''}
+              onChange={(e) => setGender(e.target.value || null)}
+              aria-label="Filter students by gender"
+              className="px-3 py-2 text-xs bg-white border border-gray-300 rounded-sm focus:outline-none focus:border-school-green-600 focus:ring-1 focus:ring-school-green-600"
+            >
+              <option value="">All Genders</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
         </div>
 
-        {/* Table */}
+        {/* Student Roster Table */}
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-200 rounded-lg">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-school-cream-100 text-left">
-                <th className="p-3 border-b">Student ID</th>
-                <th className="p-3 border-b">Name</th>
-                <th className="p-3 border-b">Gender</th>
-                <th className="p-3 border-b">Programme</th>
-                <th className="p-3 border-b">Class</th>
-                <th className="p-3 border-b">Status</th>
-                <th className="p-3 border-b">Actions</th>
+              <tr className="bg-gray-50 border-b border-gray-200 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="py-3 px-4">Student ID</th>
+                <th className="py-3 px-4">Student</th>
+                <th className="py-3 px-4">Gender</th>
+                <th className="py-3 px-4">Programme</th>
+                <th className="py-3 px-4">Class</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-4"><LoadingSkeleton variant="table-row" columns={7} /></td>
+                  <td colSpan={7} className="p-4">
+                    <LoadingSkeleton variant="table-row" columns={7} />
+                  </td>
                 </tr>
               ) : students.length > 0 ? (
                 students.map((s) => (
-                  <tr key={s.id} className="border-t hover:bg-school-cream-50">
-                    <td className="p-3">{s.student_id || s.admission_number}</td>
-                    <td className="p-3">{s.surname} {s.other_names}</td>
-                    <td className="p-3">{s.gender}</td>
-                    <td className="p-3">{s.course_name || getProgrammeName(s.course_id)}</td>
-                    <td className="p-3">{s.class_name || 'Not assigned'}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  <tr key={s.id} className="hover:bg-gray-50/70 transition-colors group">
+                    <td className="py-3 px-4 font-mono text-xs font-semibold text-gray-800 tabular-nums">
+                      {s.student_id || s.admission_number}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          name={`${s.surname} ${s.other_names}`}
+                          size="sm"
+                          status={s.is_active ? 'online' : 'offline'}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 leading-tight">
+                            {s.surname} {s.other_names}
+                          </div>
+                          {s.admission_number && s.admission_number !== s.student_id && (
+                            <div className="text-[11px] text-gray-400 font-mono tabular-nums">
+                              Adm: {s.admission_number}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-600">
+                      {s.gender || '—'}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-gray-700">
+                      {s.course_name || getProgrammeName(s.course_id)}
+                    </td>
+                    <td className="py-3 px-4 text-xs font-medium text-gray-800">
+                      {s.class_name || <span className="text-gray-400">Unassigned</span>}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium border ${
                         s.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                          : 'bg-rose-50 text-rose-700 border-rose-200'
                       }`}>
                         {s.is_active ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="p-3">
-                      <div className="flex space-x-2">
+                    <td className="py-3 px-4 text-right">
+                      <div className="inline-flex items-center gap-1">
+                        {/* View Details */}
                         <button
                           onClick={() => handleViewDetails(s.id)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-sm transition-colors"
                           title="View Details"
+                          aria-label="View Details"
                         >
-                          👁️
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
                         </button>
+                        
+                        {/* Edit Student */}
                         <button
                           onClick={() => handleEditStudent(s.id)}
-                          className="text-green-600 hover:text-green-800"
+                          className="p-1.5 text-gray-500 hover:text-school-green-700 hover:bg-gray-100 rounded-sm transition-colors"
                           title="Edit Student"
+                          aria-label="Edit Student"
                         >
-                          ✏️
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
+
+                        {/* Reset Password */}
                         <button
                           onClick={async () => {
                             const creds = prompt('Enter new password (leave empty to generate):');
@@ -302,34 +349,51 @@ export function StudentList() {
                               toast.error('Failed to reset password');
                             }
                           }}
-                          className="text-purple-600 hover:text-purple-800"
-                          title="View/Reset Password"
+                          className="p-1.5 text-gray-500 hover:text-amber-700 hover:bg-gray-100 rounded-sm transition-colors"
+                          title="Reset Password"
+                          aria-label="Reset Password"
                         >
-                          🔑
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
                         </button>
+
+                        {/* Toggle Active Status */}
                         {s.is_active ? (
                           <button
                             onClick={() => handleDeactivateStudent(s.id)}
-                            className="text-yellow-600 hover:text-yellow-800"
+                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-gray-100 rounded-sm transition-colors"
                             title="Deactivate Student"
+                            aria-label="Deactivate Student"
                           >
-                            ⏸️
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </button>
                         ) : (
                           <button
                             onClick={() => handleReactivateStudent(s.id)}
-                            className="text-green-600 hover:text-green-800"
+                            className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-sm transition-colors"
                             title="Reactivate Student"
+                            aria-label="Reactivate Student"
                           >
-                            ▶️
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </button>
                         )}
+
+                        {/* Delete Student */}
                         <button
                           onClick={() => handleDeleteStudent(s.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="p-1.5 text-gray-500 hover:text-rose-600 hover:bg-rose-50 rounded-sm transition-colors"
                           title="Delete Student"
+                          aria-label="Delete Student"
                         >
-                          🗑️
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </td>
@@ -337,8 +401,16 @@ export function StudentList() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-4 text-center text-gray-500">
-                    No students found.
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                      </div>
+                      <p className="font-medium text-gray-700">No students found</p>
+                      <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or search terms</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -346,24 +418,27 @@ export function StudentList() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-between items-center mt-4">
-          <button 
-            onClick={() => setPage((p) => Math.max(1, p - 1))} 
+        {/* Clean Footer Pagination */}
+        <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="bg-school-green-600 text-white px-4 py-2 rounded-lg disabled:bg-gray-300 hover:bg-school-green-700"
+            className="px-3 py-1.5 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Previous
+            ← Previous
           </button>
-          <span className="text-sm text-gray-600">Page {page}</span>
-          <button 
+          <span className="text-xs text-gray-500 font-medium tabular-nums">
+            Page {page}
+          </span>
+          <button
             onClick={() => setPage((p) => p + 1)}
-            className="bg-school-green-600 text-white px-4 py-2 rounded-lg hover:bg-school-green-700"
+            disabled={students.length < pageSize}
+            className="px-3 py-1.5 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Next
+            Next →
           </button>
         </div>
-      </div>
+      </PortalCard>
 
       {/* Student Details Modal */}
       {selectedStudentId && (

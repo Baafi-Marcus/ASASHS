@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import { PortalCard } from '../../components/PortalCard';
+import { PortalButton } from '../../components/PortalButton';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface TeacherSubject {
   id: number;
@@ -44,19 +47,12 @@ export const TeacherClasses: React.FC<TeacherClassesProps> = ({ teacherId }) => 
   const fetchTeacherSubjects = async () => {
     try {
       setLoading(true);
-      console.log('Fetching teacher subjects for teacherId:', teacherId);
-      
-      // Fetch real teacher subjects from database
       const subjects = await db.getTeacherSubjects(teacherId);
-      console.log('Fetched teacher subjects:', subjects);
       setTeacherSubjects(subjects as TeacherSubject[]);
       
-      // Auto-select the first class if available
       if (subjects.length > 0) {
-        console.log('Auto-selecting first class:', subjects[0].class_id);
         setSelectedClass(subjects[0].class_id);
       } else {
-        console.log('No subjects found for teacher');
         toast.error('No classes or subjects assigned to this teacher');
       }
     } catch (error) {
@@ -70,10 +66,7 @@ export const TeacherClasses: React.FC<TeacherClassesProps> = ({ teacherId }) => 
   const fetchClassStudents = async (classId: number) => {
     try {
       setLoading(true);
-      console.log('Fetching class students for classId:', classId);
-      // Fetch real class students from database
       const students = await db.getClassStudents(classId);
-      console.log('Fetched class students:', students);
       setClassStudents(students as ClassStudent[]);
     } catch (error) {
       console.error('Failed to fetch class students:', error);
@@ -98,142 +91,157 @@ export const TeacherClasses: React.FC<TeacherClassesProps> = ({ teacherId }) => 
     acc[classKey].subjects.push(subject);
     return acc;
   }, {} as Record<string, { classId: number; className: string; form: number; stream: string; subjects: TeacherSubject[] }>);
-  
-  // Debug logging
-  console.log('Teacher subjects:', teacherSubjects);
-  console.log('Grouped subjects:', groupedSubjects);
-  console.log('Number of classes:', Object.keys(groupedSubjects).length);
 
-  if (loading) {
+  if (loading && teacherSubjects.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-school-green-200 border-t-school-green-600"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">My Classes</h2>
-          <p className="text-gray-600">View and manage your assigned classes and students</p>
-        </div>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight">Assigned Classes</h2>
+        <p className="text-xs text-gray-500">View and manage assigned classes, curricula, and student rosters</p>
       </div>
 
       {/* Classes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.entries(groupedSubjects).map(([classKey, classData]) => (
-          <div 
-            key={classKey}
-            className={`bg-white rounded-2xl shadow-lg border-2 p-6 cursor-pointer transition-all hover:shadow-xl ${
-              selectedClass === classData.classId 
-                ? 'border-school-green-500 ring-2 ring-school-green-200' 
-                : 'border-gray-200'
-            }`}
-            onClick={() => setSelectedClass(classData.classId)}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">{classData.className}</h3>
-                <p className="text-gray-600">Form {classData.form}{classData.stream ? ` ${classData.stream}` : ''}</p>
-              </div>
-              <span className="bg-school-green-100 text-school-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                {classData.subjects.length} subjects
-              </span>
-            </div>
-            
-            <div className="mt-4 space-y-2">
-              {classData.subjects.map((subject) => (
-                <div key={subject.id} className="flex items-center text-sm text-gray-700">
-                  <span className="w-2 h-2 bg-school-green-500 rounded-full mr-2"></span>
-                  {subject.subject_name}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Object.entries(groupedSubjects).map(([classKey, classData]) => {
+          const isSelected = selectedClass === classData.classId;
+          return (
+            <PortalCard 
+              key={classKey}
+              onClick={() => setSelectedClass(classData.classId)}
+              className={`p-5 cursor-pointer transition-all ${
+                isSelected 
+                  ? 'border-school-green-700 bg-school-green-50/20 ring-1 ring-school-green-700' 
+                  : 'hover:border-gray-300'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">{classData.className}</h3>
+                  <p className="text-xs text-gray-500">
+                    Form {classData.form}{classData.stream ? ` • ${classData.stream}` : ''}
+                  </p>
                 </div>
-              ))}
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <button 
-                className="w-full bg-school-green-600 text-white py-2 px-4 rounded-lg hover:bg-school-green-700 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedClass(classData.classId);
-                }}
-              >
-                View Students
-              </button>
-            </div>
-          </div>
-        ))}
+                <span className="bg-school-green-50 text-school-green-800 border border-school-green-200 text-[10px] font-bold px-2 py-0.5 rounded-sm tabular-nums uppercase tracking-wider">
+                  {classData.subjects.length} {classData.subjects.length === 1 ? 'Subject' : 'Subjects'}
+                </span>
+              </div>
+              
+              <div className="mt-3 space-y-1.5 pt-3 border-t border-gray-100">
+                {classData.subjects.map((subject) => (
+                  <div key={subject.id} className="flex items-center text-xs text-gray-700">
+                    <span className="w-1.5 h-1.5 bg-school-green-700 rounded-full mr-2"></span>
+                    <span className="truncate">{subject.subject_name}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <PortalButton 
+                  variant={isSelected ? 'primary' : 'secondary'}
+                  className="w-full text-xs !min-h-[36px] !py-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedClass(classData.classId);
+                  }}
+                >
+                  {isSelected ? 'Currently Viewing' : 'View Student Roster'}
+                </PortalButton>
+              </div>
+            </PortalCard>
+          );
+        })}
       </div>
 
       {/* Students List */}
       {selectedClass && classStudents.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-          <div className="bg-school-green-600 text-white p-6">
-            <h3 className="text-xl font-bold">Class Students</h3>
-            <p className="text-school-green-100">
-              {classStudents.length} students enrolled
-            </p>
+        <PortalCard className="overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Class Student Roster</h3>
+              <p className="text-xs text-gray-500 tabular-nums">
+                {classStudents.length} student{classStudents.length === 1 ? '' : 's'} enrolled in this section
+              </p>
+            </div>
+            <PortalButton
+              variant="secondary"
+              className="text-xs !min-h-[36px] !py-1"
+              onClick={() => fetchClassStudents(selectedClass)}
+            >
+              Refresh
+            </PortalButton>
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-school-cream-100">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Actions</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Student</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Student ID</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Class</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-school-cream-200">
-                {classStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-school-cream-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.student_id}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.surname}, {student.other_names}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        student.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {student.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <button className="text-school-green-600 hover:text-school-green-800 mr-3">
-                        View Profile
-                      </button>
-                      <button className="text-blue-600 hover:text-blue-800">
-                        Send Message
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-gray-200">
+                {classStudents.map((student) => {
+                  const fullName = `${student.surname}, ${student.other_names}`;
+                  return (
+                    <tr key={student.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar name={fullName} size="sm" />
+                          <span className="text-sm font-semibold text-gray-900">{fullName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5 text-xs font-mono font-medium text-gray-700 tabular-nums">
+                        {student.student_id}
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
+                          student.is_active 
+                            ? 'bg-school-green-50 text-school-green-800 border-school-green-200' 
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}>
+                          {student.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-xs text-gray-500 text-right tabular-nums">
+                        {student.class_name || 'Assigned'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
+        </PortalCard>
       )}
 
       {/* Empty State for Students */}
       {selectedClass && classStudents.length === 0 && (
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 text-center">
-          <div className="text-4xl mb-4">👥</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Students Found</h3>
-          <p className="text-gray-600 mb-4">There are no students enrolled in this class yet.</p>
-          <button 
-            className="px-4 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700"
+        <PortalCard className="p-8 text-center space-y-4">
+          <div className="w-12 h-12 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center mx-auto text-gray-400">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-gray-900">No Students Found</h3>
+            <p className="text-xs text-gray-500">There are no students enrolled in this class yet.</p>
+          </div>
+          <PortalButton 
+            variant="secondary"
             onClick={() => fetchClassStudents(selectedClass)}
           >
-            Refresh
-          </button>
-        </div>
+            Refresh Roster
+          </PortalButton>
+        </PortalCard>
       )}
     </div>
   );

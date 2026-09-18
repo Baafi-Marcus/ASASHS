@@ -4,6 +4,19 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, LineChart, Line, AreaChart, Area
 } from 'recharts';
+import {
+  ChartBarIcon,
+  UsersIcon,
+  AcademicCapIcon,
+  ArrowTrendingUpIcon,
+  ArrowDownTrayIcon,
+  DocumentChartBarIcon,
+  PrinterIcon,
+  EnvelopeIcon,
+  BuildingLibraryIcon,
+} from '@heroicons/react/24/outline';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { PortalButton } from '../../components/PortalButton';
 
 interface ReportStats {
   totalStudents: number;
@@ -36,17 +49,15 @@ export function AdminReports() {
     try {
       setLoading(true);
       
-      // Fetch data, including inactive users for comprehensive reporting
       const [allStudents, allTeachers, allCoursesData, allSubjects, allClasses, timetableEntries] = await Promise.all([
-        db.getStudents({ limit: 10000, includeInactive: true }), // Get all students including inactive
-        db.getTeachers({ limit: 10000, includeInactive: true }), // Get all teachers including inactive
-        db.getCourses(), // Get active courses only
-        db.getSubjects(), // Get all subjects
-        db.getClasses(), // Get all classes
-        db.getTimetableEntries(), // Get all timetable entries
+        db.getStudents({ limit: 10000, includeInactive: true }),
+        db.getTeachers({ limit: 10000, includeInactive: true }),
+        db.getCourses(),
+        db.getSubjects(),
+        db.getClasses(),
+        db.getTimetableEntries(),
       ]);
       
-      // Get total counts
       const totalStudents = allStudents.length;
       const totalActiveStudents = allStudents.filter((s: any) => s.is_active).length;
       const totalInactiveStudents = totalStudents - totalActiveStudents;
@@ -58,7 +69,6 @@ export function AdminReports() {
       const totalCourses = allCoursesData.length;
       const activeCourses = allCoursesData.filter((c: any) => c.is_active).length;
 
-      // Process student data by programme
       const studentsByProgramme = allCoursesData.map((course: any) => {
         const courseStudents = allStudents.filter((student: any) => student.course_id === course.id);
         const activeCourseStudents = courseStudents.filter((s: any) => s.is_active);
@@ -69,13 +79,11 @@ export function AdminReports() {
         };
       });
 
-      // Process student data by gender
       const studentsByGender = [
         { gender: 'Male', count: allStudents.filter((student: any) => student.gender === 'Male').length },
         { gender: 'Female', count: allStudents.filter((student: any) => student.gender === 'Female').length },
       ];
 
-      // Process teacher data by department
       const departments: string[] = Array.from(new Set(allTeachers.map((teacher: any) => String(teacher.department || ''))));
       const teachersByDepartment = departments.map((dept: string) => {
         const deptTeachers = allTeachers.filter((teacher: any) => String(teacher.department || '') === dept);
@@ -87,7 +95,6 @@ export function AdminReports() {
         };
       });
 
-      // Process recent registrations (last 30 days)
       const last30Days = Array.from({ length: 30 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -97,7 +104,6 @@ export function AdminReports() {
       const recentRegistrations = last30Days.map((date) => ({
         date,
         count: allStudents.filter((student: any) => {
-          // Convert date to string if it's a Date object
           const createdAtStr = student.created_at instanceof Date 
             ? student.created_at.toISOString().split('T')[0]
             : typeof student.created_at === 'string'
@@ -107,7 +113,6 @@ export function AdminReports() {
         }).length,
       }));
 
-      // Process students by class
       const studentsByClass = allClasses.map((cls: any) => {
         const classStudents = allStudents.filter((student: any) => 
           student.current_class_id === cls.id && student.is_active
@@ -116,14 +121,10 @@ export function AdminReports() {
           className: cls.class_name,
           count: classStudents.length
         };
-      }).filter((cls: any) => cls.count > 0); // Only show classes with students
+      }).filter((cls: any) => cls.count > 0);
 
-      // Process teachers by subject
       const teachersBySubject = allSubjects.map((subject: any) => {
-        // Get teacher-subject relationships
-        // This would require a specific query, but for now we'll simulate
         const subjectTeachers = allTeachers.filter((teacher: any) => {
-          // This is a simplified approach - in reality, we'd need to check teacher_subjects table
           return teacher.department && subject.name.includes(teacher.department.split(' ')[0]);
         });
         return {
@@ -132,7 +133,6 @@ export function AdminReports() {
         };
       }).filter((subj: any) => subj.count > 0);
 
-      // Process timetable updates (last 30 days)
       const timetableUpdates = last30Days.map((date) => ({
         date,
         count: timetableEntries.filter((entry: any) => {
@@ -164,7 +164,6 @@ export function AdminReports() {
       });
     } catch (error) {
       console.error('Failed to fetch report data:', error);
-      // Set fallback data
       setStats({
         totalStudents: 0,
         totalActiveStudents: 0,
@@ -192,133 +191,137 @@ export function AdminReports() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+      <div className="space-y-6">
+        <LoadingSkeleton variant="stats" />
+        <LoadingSkeleton variant="table" rows={6} />
       </div>
     );
   }
 
   if (!stats) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Failed to load report data</p>
+      <div className="bg-white rounded-md border border-gray-200 p-12 text-center">
+        <p className="text-xs text-gray-500">Failed to aggregate institutional reports and metrics.</p>
       </div>
     );
   }
 
   const reportTabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'students', label: 'Students', icon: '👥' },
-    { id: 'teachers', label: 'Teachers', icon: '👨‍🏫' },
-    { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'overview', label: 'Institutional Overview', icon: ChartBarIcon },
+    { id: 'students', label: 'Student Demographics', icon: UsersIcon },
+    { id: 'teachers', label: 'Faculty Roster', icon: AcademicCapIcon },
+    { id: 'analytics', label: 'Academic Operations', icon: ArrowTrendingUpIcon },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#8dd1e1'];
+  const CHART_COLORS = ['#15803d', '#2563eb', '#d97706', '#9333ea', '#0284c7', '#0d9488', '#ea580c', '#475569'];
 
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-school-green-50 border-2 border-school-green-200 rounded-xl p-6">
+      {/* Summary Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-md border border-gray-200 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-school-green-600 text-sm font-medium">Total Students</p>
-              <p className="text-3xl font-bold text-school-green-800">{stats.totalStudents}</p>
-              <p className="text-xs text-gray-600">
-                Active: {stats.totalActiveStudents} | Inactive: {stats.totalInactiveStudents}
-              </p>
-            </div>
-            <div className="text-3xl">👥</div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Enrolled Students</span>
+            <UsersIcon className="w-4 h-4 text-gray-400" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{stats.totalStudents}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 tabular-nums">
+            <span>Active: <strong className="text-school-green-700">{stats.totalActiveStudents}</strong></span>
+            <span>Inactive: <strong className="text-gray-600">{stats.totalInactiveStudents}</strong></span>
           </div>
         </div>
         
-        <div className="bg-school-cream-50 border-2 border-school-cream-200 rounded-xl p-6">
+        <div className="bg-white rounded-md border border-gray-200 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-school-cream-700 text-sm font-medium">Total Teachers</p>
-              <p className="text-3xl font-bold text-school-cream-800">{stats.totalTeachers}</p>
-              <p className="text-xs text-gray-600">
-                Active: {stats.totalActiveTeachers} | Inactive: {stats.totalInactiveTeachers}
-              </p>
-            </div>
-            <div className="text-3xl">👨‍🏫</div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Teaching Faculty</span>
+            <AcademicCapIcon className="w-4 h-4 text-gray-400" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{stats.totalTeachers}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 tabular-nums">
+            <span>Active: <strong className="text-school-green-700">{stats.totalActiveTeachers}</strong></span>
+            <span>Inactive: <strong className="text-gray-600">{stats.totalInactiveTeachers}</strong></span>
           </div>
         </div>
         
-        <div className="bg-school-green-50 border-2 border-school-green-200 rounded-xl p-6">
+        <div className="bg-white rounded-md border border-gray-200 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-school-green-600 text-sm font-medium">Active Programmes</p>
-              <p className="text-3xl font-bold text-school-green-800">{stats.activeCourses}</p>
-              <p className="text-xs text-gray-600">Total: {stats.totalCourses}</p>
-            </div>
-            <div className="text-3xl">📚</div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Active Programmes</span>
+            <BuildingLibraryIcon className="w-4 h-4 text-gray-400" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{stats.activeCourses}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 tabular-nums">
+            <span>Total Curricula: <strong className="text-gray-700">{stats.totalCourses}</strong></span>
           </div>
         </div>
         
-        <div className="bg-school-cream-50 border-2 border-school-cream-200 rounded-xl p-6">
+        <div className="bg-white rounded-md border border-gray-200 p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-school-cream-700 text-sm font-medium">Student-Teacher Ratio</p>
-              <p className="text-3xl font-bold text-school-cream-800">
-                {stats.totalTeachers > 0 ? Math.round(stats.totalStudents / stats.totalTeachers) : 0}:1
-              </p>
-            </div>
-            <div className="text-3xl">📊</div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Student-Teacher Ratio</span>
+            <ChartBarIcon className="w-4 h-4 text-gray-400" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">
+            {stats.totalTeachers > 0 ? Math.round(stats.totalStudents / stats.totalTeachers) : 0}:1
+          </p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+            <span>Statutory capacity ratio</span>
           </div>
         </div>
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Students by Programme - Pie Chart */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Students by Programme</h3>
-          <div className="h-80">
+        {/* Students by Programme */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+            <div>
+              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Enrollment by Academic Programme</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Distribution across registered SHS departments</p>
+            </div>
+          </div>
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={stats.studentsByProgramme}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  labelLine={false}
+                  outerRadius={85}
+                  fill="#15803d"
                   dataKey="count"
                   nameKey="programme"
-                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name.substring(0, 10)}: ${(percent * 100).toFixed(0)}%`}
                 >
                   {stats.studentsByProgramme.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [value, 'Students']} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Gender Distribution - Bar Chart */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Gender Distribution</h3>
-          <div className="h-80">
+        {/* Gender Distribution */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+            <div>
+              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Gender Demographics</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Cohort balance across institutional registers</p>
+            </div>
+          </div>
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={stats.studentsByGender}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
+                margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="gender" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="gender" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Legend />
-                <Bar dataKey="count" name="Student Count" fill="#8884d8" />
+                <Bar dataKey="count" name="Enrolled Count" fill="#15803d" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -327,54 +330,58 @@ export function AdminReports() {
 
       {/* Additional Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Students by Class - Bar Chart */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Students by Class</h3>
-          <div className="h-80">
+        {/* Students by Class */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+            <div>
+              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Students Enrolled by Class Arm</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Active registration numbers per classroom</p>
+            </div>
+          </div>
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={stats.studentsByClass}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 40,
-                }}
+                margin={{ top: 10, right: 20, left: 10, bottom: 40 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="className" angle={-45} textAnchor="end" height={60} />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="className" angle={-45} textAnchor="end" height={60} tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Legend />
-                <Bar dataKey="count" name="Student Count" fill="#82ca9d" />
+                <Bar dataKey="count" name="Class Count" fill="#2563eb" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Teachers by Department - Pie Chart */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Teachers by Department</h3>
-          <div className="h-80">
+        {/* Teachers by Department */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+            <div>
+              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Faculty Distribution by Department</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Instructional staff allocation across departments</p>
+            </div>
+          </div>
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={stats.teachersByDepartment}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  labelLine={false}
+                  outerRadius={85}
+                  fill="#2563eb"
                   dataKey="count"
                   nameKey="department"
-                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name.substring(0, 8)}: ${(percent * 100).toFixed(0)}%`}
                 >
                   {stats.teachersByDepartment.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [value, 'Teachers']} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -385,40 +392,42 @@ export function AdminReports() {
 
   const renderStudentReport = () => (
     <div className="space-y-6">
-      {/* Student Registration Trends - Line Chart */}
-      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Student Registration Trends (Last 30 Days)</h3>
-        <div className="h-80">
+      {/* Registration Trends */}
+      <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+          <div>
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Student Registration Inflow (Last 30 Days)</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Daily record of student admissions and onboardings</p>
+          </div>
+        </div>
+        <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={stats.recentRegistrations}
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 20,
-              }}
+              margin={{ top: 10, right: 30, left: 10, bottom: 25 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis 
                 dataKey="date" 
                 angle={-45} 
                 textAnchor="end" 
-                height={60}
-                tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                height={50}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
               />
-              <YAxis />
+              <YAxis tick={{ fontSize: 11 }} />
               <Tooltip 
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
                 formatter={(value) => [value, 'Registrations']}
               />
-              <Legend />
               <Line 
                 type="monotone" 
                 dataKey="count" 
                 name="Daily Registrations" 
-                stroke="#8884d8" 
-                activeDot={{ r: 8 }} 
+                stroke="#15803d" 
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 6 }} 
               />
             </LineChart>
           </ResponsiveContainer>
@@ -426,71 +435,75 @@ export function AdminReports() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Student Status Distribution */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Student Status Distribution</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-school-green-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-school-green-800">{stats.totalStudents}</p>
-              <p className="text-sm text-gray-600">Total Students</p>
+        {/* Status Distribution */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs space-y-4">
+          <div className="pb-3 border-b border-gray-100">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Enrollment Status Summary</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Ratio of active attending students vs archived records</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-gray-50 p-3 rounded-sm border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Total Roster</span>
+              <p className="text-xl font-bold text-gray-900 mt-1 tabular-nums">{stats.totalStudents}</p>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-blue-800">{stats.totalActiveStudents}</p>
-              <p className="text-sm text-gray-600">Active Students</p>
+            <div className="bg-green-50/60 p-3 rounded-sm border border-green-200">
+              <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider block">Active</span>
+              <p className="text-xl font-bold text-green-900 mt-1 tabular-nums">{stats.totalActiveStudents}</p>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-red-800">{stats.totalInactiveStudents}</p>
-              <p className="text-sm text-gray-600">Inactive Students</p>
+            <div className="bg-red-50/60 p-3 rounded-sm border border-red-200">
+              <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider block">Inactive</span>
+              <p className="text-xl font-bold text-red-900 mt-1 tabular-nums">{stats.totalInactiveStudents}</p>
             </div>
           </div>
           
-          {/* Gender Distribution Pie Chart */}
-          <div className="h-64 mt-4">
+          <div className="h-48 pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={stats.studentsByGender}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
                   outerRadius={60}
-                  fill="#8884d8"
+                  fill="#15803d"
                   dataKey="count"
                   nameKey="gender"
                   label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 >
                   {stats.studentsByGender.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [value, 'Students']} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Students by Programme - Detailed View */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Students by Programme</h3>
-          <div className="space-y-3 max-h-80 overflow-y-auto">
+        {/* Programme Breakdown List */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="pb-3 border-b border-gray-100 mb-3">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Programme Enrollment Quotas</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Enrolled breakdown across all authorized courses</p>
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {stats.studentsByProgramme.map((item, index) => {
               const percentage = stats.totalStudents > 0 ? (item.count / stats.totalStudents) * 100 : 0;
               const activePercentage = stats.totalStudents > 0 ? (item.activeCount / stats.totalStudents) * 100 : 0;
               return (
-                <div key={index}>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700">{item.programme}</span>
-                    <span className="text-gray-600">{item.count} ({percentage.toFixed(1)}%)</span>
+                <div key={index} className="p-2.5 bg-gray-50/70 rounded-sm border border-gray-200 text-xs">
+                  <div className="flex justify-between items-center font-medium">
+                    <span className="text-gray-900">{item.programme}</span>
+                    <span className="text-gray-600 tabular-nums">{item.count} students ({percentage.toFixed(1)}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                  <div className="w-full bg-gray-200 rounded-sm h-1.5 mt-2 overflow-hidden">
                     <div
-                      className="bg-school-cream-600 h-3 rounded-full"
+                      className="bg-school-green-700 h-1.5 rounded-sm"
                       style={{ width: `${percentage}%` }}
-                    ></div>
+                    />
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Active: {item.activeCount} ({activePercentage.toFixed(1)}%)
+                  <div className="flex justify-between items-center text-[11px] text-gray-400 mt-1 tabular-nums">
+                    <span>Active: {item.activeCount} ({activePercentage.toFixed(1)}%)</span>
                   </div>
                 </div>
               );
@@ -504,28 +517,31 @@ export function AdminReports() {
   const renderTeacherReport = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Teachers by Department - Detailed View */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Teachers by Department</h3>
-          <div className="space-y-3 max-h-80 overflow-y-auto">
+        {/* Department Detailed View */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="pb-3 border-b border-gray-100 mb-3">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Departmental Faculty Strength</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Teaching personnel allocations per department</p>
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
             {stats.teachersByDepartment.map((item, index) => {
               const percentage = stats.totalTeachers > 0 ? (item.count / stats.totalTeachers) * 100 : 0;
               const activeCount = item.activeCount || 0;
               const activePercentage = stats.totalTeachers > 0 ? (activeCount / stats.totalTeachers) * 100 : 0;
               return (
-                <div key={index}>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700">{item.department}</span>
-                    <span className="text-gray-600">{item.count} ({percentage.toFixed(1)}%)</span>
+                <div key={index} className="p-2.5 bg-gray-50/70 rounded-sm border border-gray-200 text-xs">
+                  <div className="flex justify-between items-center font-medium">
+                    <span className="text-gray-900">{item.department}</span>
+                    <span className="text-gray-600 tabular-nums">{item.count} teachers ({percentage.toFixed(1)}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mt-1">
+                  <div className="w-full bg-gray-200 rounded-sm h-1.5 mt-2 overflow-hidden">
                     <div
-                      className="bg-school-cream-600 h-3 rounded-full"
+                      className="bg-blue-700 h-1.5 rounded-sm"
                       style={{ width: `${percentage}%` }}
-                    ></div>
+                    />
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Active: {activeCount} ({activePercentage.toFixed(1)}%)
+                  <div className="flex justify-between items-center text-[11px] text-gray-400 mt-1 tabular-nums">
+                    <span>Active: {activeCount} ({activePercentage.toFixed(1)}%)</span>
                   </div>
                 </div>
               );
@@ -534,44 +550,45 @@ export function AdminReports() {
         </div>
         
         {/* Teacher Status Distribution */}
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Teacher Status Distribution</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-school-cream-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-school-cream-800">{stats.totalTeachers}</p>
-              <p className="text-sm text-gray-600">Total Teachers</p>
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs space-y-4">
+          <div className="pb-3 border-b border-gray-100">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Faculty Employment Roster</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Active classroom teachers vs inactive records</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-gray-50 p-3 rounded-sm border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Total Faculty</span>
+              <p className="text-xl font-bold text-gray-900 mt-1 tabular-nums">{stats.totalTeachers}</p>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-blue-800">{stats.totalActiveTeachers}</p>
-              <p className="text-sm text-gray-600">Active Teachers</p>
+            <div className="bg-green-50/60 p-3 rounded-sm border border-green-200">
+              <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider block">Active</span>
+              <p className="text-xl font-bold text-green-900 mt-1 tabular-nums">{stats.totalActiveTeachers}</p>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg text-center">
-              <p className="text-2xl font-bold text-red-800">{stats.totalInactiveTeachers}</p>
-              <p className="text-sm text-gray-600">Inactive Teachers</p>
+            <div className="bg-red-50/60 p-3 rounded-sm border border-red-200">
+              <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider block">Inactive</span>
+              <p className="text-xl font-bold text-red-900 mt-1 tabular-nums">{stats.totalInactiveTeachers}</p>
             </div>
           </div>
           
-          {/* Department Distribution Pie Chart */}
-          <div className="h-64 mt-4">
+          <div className="h-48 pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={stats.teachersByDepartment}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
                   outerRadius={60}
-                  fill="#8884d8"
+                  fill="#2563eb"
                   dataKey="count"
                   nameKey="department"
-                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }: any) => `${name.substring(0, 8)}: ${(percent * 100).toFixed(0)}%`}
                 >
                   {stats.teachersByDepartment.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [value, 'Teachers']} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -582,35 +599,34 @@ export function AdminReports() {
 
   const renderAnalytics = () => (
     <div className="space-y-6">
-      {/* Timetable Updates - Area Chart */}
-      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Timetable Updates (Last 30 Days)</h3>
-        <div className="h-80">
+      {/* Timetable Activity Chart */}
+      <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+        <div className="pb-3 border-b border-gray-100 mb-4">
+          <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Timetable & Schedule Maintenance (Last 30 Days)</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Frequency of class schedule alterations and entries</p>
+        </div>
+        <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={stats.timetableUpdates}
-              margin={{
-                top: 10,
-                right: 30,
-                left: 0,
-                bottom: 40,
-              }}
+              margin={{ top: 10, right: 30, left: 0, bottom: 25 }}
             >
               <defs>
                 <linearGradient id="colorTimetable" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#15803d" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#15803d" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis 
                 dataKey="date" 
                 angle={-45} 
                 textAnchor="end" 
-                height={60}
-                tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                height={50}
+                tick={{ fontSize: 10 }}
+                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
               />
-              <YAxis />
-              <CartesianGrid strokeDasharray="3 3" />
+              <YAxis tick={{ fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <Tooltip 
                 labelFormatter={(value) => new Date(value).toLocaleDateString()}
                 formatter={(value) => [value, 'Updates']}
@@ -618,8 +634,8 @@ export function AdminReports() {
               <Area 
                 type="monotone" 
                 dataKey="count" 
-                name="Timetable Updates" 
-                stroke="#8884d8" 
+                name="Timetable Entries" 
+                stroke="#15803d" 
                 fillOpacity={1} 
                 fill="url(#colorTimetable)" 
               />
@@ -629,40 +645,44 @@ export function AdminReports() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Key Metrics</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Average Students per Programme</span>
-              <span className="font-bold text-school-green-600">
+        {/* Operational Key Metrics */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="pb-3 border-b border-gray-100 mb-4">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Operational Summary Metrics</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Calculated institutional ratios and retention indicators</p>
+          </div>
+          <div className="space-y-3 divide-y divide-gray-100 text-xs">
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-gray-600">Mean Students per Programme</span>
+              <span className="font-bold text-gray-900 tabular-nums">
                 {stats.studentsByProgramme.length > 0 
                   ? Math.round(stats.totalStudents / stats.studentsByProgramme.length)
                   : 0}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Student-Teacher Ratio</span>
-              <span className="font-bold text-school-green-600">
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-gray-600">Institutional Faculty Ratio</span>
+              <span className="font-bold text-gray-900 tabular-nums">
                 {stats.totalTeachers > 0 ? Math.round(stats.totalStudents / stats.totalTeachers) : 0}:1
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Total Registrations (Last 30 Days)</span>
-              <span className="font-bold text-school-green-600">
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-gray-600">New Registrations (Past 30 Days)</span>
+              <span className="font-bold text-gray-900 tabular-nums">
                 {stats.recentRegistrations.reduce((sum, item) => sum + item.count, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Student Rate</span>
-              <span className="font-bold text-school-green-600">
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-gray-600">Active Student Retention</span>
+              <span className="font-bold text-school-green-700 tabular-nums">
                 {stats.totalStudents > 0 
                   ? ((stats.totalActiveStudents / stats.totalStudents) * 100).toFixed(1) 
                   : 0}%
               </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Teacher Rate</span>
-              <span className="font-bold text-school-green-600">
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-gray-600">Active Teacher Retention</span>
+              <span className="font-bold text-school-green-700 tabular-nums">
                 {stats.totalTeachers > 0 
                   ? ((stats.totalActiveTeachers / stats.totalTeachers) * 100).toFixed(1) 
                   : 0}%
@@ -671,20 +691,40 @@ export function AdminReports() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border-2 border-school-cream-200 p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full bg-school-green-600 text-white p-3 rounded-lg hover:bg-school-green-700 transition-colors flex items-center justify-center">
-              <span className="mr-2">📄</span> Export Student List
+        {/* Quick Report Actions */}
+        <div className="bg-white rounded-md border border-gray-200 p-5 shadow-xs">
+          <div className="pb-3 border-b border-gray-100 mb-4">
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Report Generation & Export</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Produce printable and downloadable institutional documents</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => window.print()}
+              className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 flex items-center justify-center gap-2 transition-colors"
+            >
+              <PrinterIcon className="w-4 h-4 text-gray-500" />
+              <span>Print Overview</span>
             </button>
-            <button className="w-full bg-school-cream-600 text-white p-3 rounded-lg hover:bg-school-cream-700 transition-colors flex items-center justify-center">
-              <span className="mr-2">📊</span> Generate Full Report
+            <button 
+              onClick={() => window.print()}
+              className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 flex items-center justify-center gap-2 transition-colors"
+            >
+              <DocumentChartBarIcon className="w-4 h-4 text-gray-500" />
+              <span>Export Dossier</span>
             </button>
-            <button className="w-full bg-gray-600 text-white p-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
-              <span className="mr-2">📧</span> Email Report
+            <button 
+              onClick={() => window.print()}
+              className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 flex items-center justify-center gap-2 transition-colors"
+            >
+              <ArrowDownTrayIcon className="w-4 h-4 text-gray-500" />
+              <span>Download CSV</span>
             </button>
-            <button className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-              <span className="mr-2">🖨️</span> Print Report
+            <button 
+              onClick={() => window.print()}
+              className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 flex items-center justify-center gap-2 transition-colors"
+            >
+              <EnvelopeIcon className="w-4 h-4 text-gray-500" />
+              <span>Email Briefing</span>
             </button>
           </div>
         </div>
@@ -707,35 +747,41 @@ export function AdminReports() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+      {/* Top Header Card */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">System Reports & Analytics</h2>
-          <p className="text-gray-600">View detailed statistics and performance metrics</p>
+          <h2 className="text-base font-bold text-gray-900">Institutional Reports & Analytics</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Comprehensive enrollment statistics, staffing levels, and operational metrics</p>
+        </div>
+        <div className="text-right">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Generated Snapshot</span>
+          <span className="text-xs font-semibold text-gray-700 tabular-nums font-mono">{new Date().toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
         </div>
       </div>
 
-      {/* Report Tabs */}
-      <div className="bg-white rounded-xl border-2 border-school-cream-200 p-2">
-        <div className="flex space-x-2">
-          {reportTabs.map((tab) => (
+      {/* Tabs Navigation */}
+      <div className="border-b border-gray-200 flex space-x-1">
+        {reportTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = selectedReport === tab.id;
+          return (
             <button
               key={tab.id}
               onClick={() => setSelectedReport(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all ${
-                selectedReport === tab.id
-                  ? 'bg-school-green-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-school-cream-100'
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+                isActive
+                  ? 'border-school-green-700 text-school-green-800 bg-school-green-50/50'
+                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <span>{tab.icon}</span>
-              <span className="font-medium">{tab.label}</span>
+              <Icon className={`w-4 h-4 ${isActive ? 'text-school-green-700' : 'text-gray-400'}`} />
+              <span>{tab.label}</span>
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      {/* Report Content */}
+      {/* Tab Content */}
       {renderContent()}
     </div>
   );

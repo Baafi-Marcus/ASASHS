@@ -1,7 +1,7 @@
 import React from 'react';
 import db from '../../lib/neon';
-import { LandingNavbar } from '../components/LandingNavbar';
 import { LandingFooter } from '../components/LandingFooter';
+import { CrestScrollytelling3D } from '../components/CrestScrollytelling3D';
 
 interface SchoolLandingPageProps {
     onLoginClick: () => void;
@@ -20,7 +20,6 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
     onStaffClick,
     onCalendarClick,
     onHomeClick,
-    onTesterSignup
 }) => {
     const [hasActiveElection, setHasActiveElection] = React.useState(false);
 
@@ -38,376 +37,460 @@ export const SchoolLandingPage: React.FC<SchoolLandingPageProps> = ({
     }, []);
 
     return (
-        <div className="min-h-screen bg-white font-sans">
+        <div className="min-h-screen bg-white font-sans text-gray-900">
             {/* Hero Section */}
-            <section className="relative h-screen min-h-[600px] flex items-center justify-center bg-gray-900 overflow-hidden">
-                {/* Background Overlay with Slideshow Effect */}
+            <section className="relative min-h-[640px] md:min-h-[700px] flex items-center justify-center bg-gray-950 overflow-hidden pt-20">
+                {/* Background Image with Structural Contrast Filter */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30 z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-950/90 via-gray-950/75 to-gray-950/60 z-10" />
                     <img
                         src="/hero_school_building.jpg"
-                        alt="Akim Asafo Senior High School"
-                        className="w-full h-full object-cover scale-105 animate-slow-zoom"
+                        alt="Akim Asafo Senior High School Campus"
+                        className="w-full h-full object-cover"
                     />
                 </div>
 
                 {/* Hero Content */}
-                <div className="relative z-20 text-center text-white px-4 max-w-5xl mx-auto pt-20 md:pt-0 md:mt-[-50px]">
-                    <span className="inline-block py-1 px-3 rounded-full bg-school-green-500/80 text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 backdrop-blur-sm border border-white/20 animate-fade-in">
-                        Est. 1991 • Center of Excellence
-                    </span>
-                    <h1 className="text-3xl md:text-7xl font-extrabold mb-6 leading-tight animate-slide-up">
-                        Welcome to <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-school-green-400 to-yellow-400">
-                            Akim Asafo Senior High
-                        </span>
+                <div className="relative z-20 text-left md:text-center text-white px-4 sm:px-6 max-w-5xl mx-auto py-16">
+                    <div className="inline-flex items-center space-x-2 py-1 px-3 rounded-sm bg-black/60 text-[11px] font-semibold tracking-wider uppercase mb-6 border border-white/20 backdrop-blur-sm">
+                        <span className="w-2 h-2 bg-school-green-400 rounded-sm"></span>
+                        <span className="tabular-nums">Est. 1991</span>
+                        <span>•</span>
+                        <span>Center of Academic Excellence</span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+                        Akim Asafo <br />
+                        <span className="text-yellow-400">Senior High School</span>
                     </h1>
-                    <p className="text-base md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto font-light animate-slide-up [animation-delay:200ms]">
-                        Providing holistic quality education, inculcating Godliness and moral uprightness for over three decades.
+
+                    <p className="text-sm sm:text-lg md:text-xl text-gray-200 mb-10 max-w-2xl md:mx-auto font-normal leading-relaxed">
+                        Providing holistic quality education, fostering Godliness, moral uprightness, and disciplined leadership for over three decades.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up [animation-delay:400ms]">
+
+                    <div className="flex flex-col sm:flex-row justify-start md:justify-center gap-3">
                         {onVoteClick && hasActiveElection && (
                             <button
                                 onClick={onVoteClick}
-                                className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black rounded-full font-black text-lg transition-all transform hover:-translate-y-1 shadow-xl hover:shadow-yellow-500/40 flex items-center justify-center space-x-3 animate-pulse border-2 border-white/20"
+                                className="px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-yellow-950 rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-yellow-500/50 shadow-sm flex items-center justify-center space-x-2 min-h-[44px]"
                             >
-                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5z" />
-                                </svg>
-                                <span>VOTE IN 2025 ELECTIONS</span>
+                                <span className="w-2 h-2 bg-red-600 rounded-sm"></span>
+                                <span>Cast Vote in 2025 Elections</span>
                             </button>
                         )}
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
-                            className="px-6 py-3 md:px-8 md:py-4 bg-school-green-600 hover:bg-school-green-700 text-white rounded-full font-bold text-base md:text-lg transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-school-green-500/50"
+                            className="px-6 py-3 bg-school-green-700 hover:bg-school-green-800 text-white rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-school-green-600 shadow-sm min-h-[44px] flex items-center justify-center"
                         >
                             Explore Admissions
+                        </button>
+                        <button
+                            onClick={onLoginClick}
+                            className="px-6 py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-gray-200 shadow-sm min-h-[44px] flex items-center justify-center"
+                        >
+                            Portal Access
                         </button>
                     </div>
                 </div>
 
-                {/* Scroll Indicator */}
-                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 animate-bounce">
-                    <svg className="w-6 h-6 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                </div>
+                {/* Bottom Border Anchor */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-school-green-600 z-20"></div>
             </section>
 
-            {/* Quick Action Cards (Floating overlap) */}
-            <section className="relative z-30 mt-[-60px] md:mt-[-80px] px-4 mb-12 md:mb-20">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {/* Quick Action Cards */}
+            <section className="relative z-30 -mt-10 px-4 sm:px-6 mb-16">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-5">
                     {[
                         {
                             title: "Online Admission",
-                            desc: "Check your placement and start registration for the new academic year.",
-                            icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
-                            color: "bg-blue-600",
+                            desc: "Check placement verification and start registration for the upcoming academic year.",
+                            cta: "Access Admission Portal",
+                            icon: (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            ),
                             action: () => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')
                         },
                         {
-                            title: "Student Portal",
-                            desc: "Access your grades, timetable and resources. Login required.",
-                            icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-                            color: "bg-school-green-600",
+                            title: "Student & Staff Portal",
+                            desc: "Access individual grades, continuous assessment, exam schedules, and learning materials.",
+                            cta: "Log In to Portal",
+                            icon: (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            ),
                             action: onLoginClick
                         },
                         {
-                            title: "Latest News",
-                            desc: "Best Performing SHS Award (2025) & National Debate Winners.",
-                            icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z",
-                            color: "bg-yellow-500",
+                            title: "Latest News & Bulletin",
+                            desc: "Best Performing SHS Award (2025) and National Debate Competition updates.",
+                            cta: "Read School News",
+                            icon: (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                </svg>
+                            ),
                             action: onNewsClick
                         }
                     ].map((card, idx) => (
                         <div
                             key={idx}
                             onClick={card.action}
-                            className={`${card.color} rounded-xl p-4 md:p-8 text-white shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden group`}
+                            className="bg-white rounded-md border border-gray-200 p-6 shadow-sm hover:border-school-green-600 transition-colors cursor-pointer flex flex-col justify-between"
                         >
-                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-16 h-16 md:w-24 md:h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                            <div className="flex items-start space-x-4 md:block">
-                                <svg className="w-8 h-8 md:w-10 md:h-10 mb-0 md:mb-4 text-white/90 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={card.icon} />
-                                </svg>
-                                <div>
-                                    <h3 className="text-base md:text-xl font-bold mb-1 md:mb-2 leading-tight">{card.title}</h3>
-                                    <p className="text-white/85 text-[11px] md:text-sm leading-snug line-clamp-2 md:line-clamp-none">{card.desc}</p>
+                            <div>
+                                <div className="w-10 h-10 rounded-sm bg-school-green-50 border border-school-green-200 text-school-green-800 flex items-center justify-center mb-4">
+                                    {card.icon}
                                 </div>
+                                <h3 className="text-base font-bold text-gray-900 mb-2">{card.title}</h3>
+                                <p className="text-gray-600 text-xs leading-relaxed mb-6">{card.desc}</p>
                             </div>
-                            <div className="mt-4 md:mt-6 flex items-center text-[10px] md:text-sm font-bold uppercase tracking-wide">
-                                <span>Access Now</span>
-                                <svg className="w-3 h-3 md:w-4 md:h-4 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
+                            <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-school-green-700">
+                                <span>{card.cta}</span>
+                                <span className="text-sm">→</span>
                             </div>
                         </div>
                     ))}
                 </div>
             </section>
 
-            {/* History & Mission Section */}
-            <section className="py-16 px-4 bg-white" id="about">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-school-green-100 rounded-3xl transform rotate-3 scale-95 group-hover:rotate-1 transition-transform"></div>
-                        {/* Using a professional placeholder for Headmistress/Principal as specific one wasn't public */}
-                        <img
-                            src="/headmistress.jpg"
-                            alt="Headmistress"
-                            className="relative z-10 rounded-3xl shadow-2xl w-full h-72 md:h-[500px] object-cover hover:grayscale-0 transition-all duration-500"
-                        />
-                        <div className="absolute -bottom-6 -right-6 z-20 bg-white p-6 rounded-xl shadow-xl max-w-xs border-l-4 border-school-green-600">
-                            <p className="text-gray-900 font-serif italic text-lg leading-relaxed">
-                                "Education is the formation of character and values, not just intellect."
+            {/* Interactive 3D School Crest & Motto Scrollytelling Experience */}
+            <CrestScrollytelling3D onLoginClick={onLoginClick} />
+
+            {/* Heritage & Leadership Section */}
+            <section className="py-16 px-4 sm:px-6 bg-white border-b border-gray-200" id="about">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    {/* Visual & Quote */}
+                    <div className="relative">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm">
+                            <img
+                                src="/headmistress.jpg"
+                                alt="Mrs. Ama Thompson - Headmistress"
+                                className="w-full h-80 sm:h-[440px] object-cover"
+                            />
+                        </div>
+                        <div className="mt-4 p-5 rounded-md border border-gray-200 bg-gray-50 border-l-4 border-l-school-green-700 shadow-sm">
+                            <p className="text-gray-800 italic text-sm leading-relaxed">
+                                "Education is the formation of character, discipline, and core values, not merely intellectual instruction."
                             </p>
-                            <div className="mt-4 flex items-center">
-                                <div>
-                                    <p className="font-bold text-gray-900">Mrs. Ama Thompson</p>
-                                    <p className="text-xs text-school-green-600 uppercase font-bold">Headmistress</p>
-                                </div>
+                            <div className="mt-3">
+                                <p className="font-bold text-xs text-gray-900 uppercase">Mrs. Ama Thompson</p>
+                                <p className="text-[10px] text-school-green-700 uppercase font-semibold">Headmistress, ASASHS</p>
                             </div>
                         </div>
                     </div>
 
+                    {/* Historical Narrative */}
                     <div>
-                        <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Our Heritage</span>
-                        <h2 className="text-4xl font-bold text-gray-900 mb-6 font-serif">History of ASASHS</h2>
-                        <div className="prose prose-lg text-gray-600 mb-8">
-                            <p className="mb-4">
-                                Akim Asafo Senior High School was established as a community school on <strong className="text-gray-900">18th February 1991</strong>, under its first Headmaster Mr. Kyere Alexander Kofi. The school started at the present Methodist JHS premises with seven (7) students but was later moved to its present site in 1994. The first student enrolled in the school was Master Karim Ibrahim.
-                            </p>
-                            <p className="mb-4">
-                                In 1996, American Baptist Missionaries visited and adopted the school, renaming it to <em className="text-gray-800">Akim Asafo St. Paul’s Community Secondary School</em>. Following the government's decision to rename all secondary schools, it eventually metamorphosed into its current name, Akim Asafo Senior High School.
+                        <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-50 border border-school-green-200 text-[10px] uppercase font-bold text-school-green-800 mb-3">
+                            <span>Our Heritage</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-5 tracking-tight">
+                            History & Legacy of ASASHS
+                        </h2>
+                        <div className="text-xs sm:text-sm text-gray-600 space-y-3 leading-relaxed mb-8">
+                            <p>
+                                Akim Asafo Senior High School was established as a community school on <strong className="text-gray-900 tabular-nums">18th February 1991</strong>, under its first Headmaster Mr. Kyere Alexander Kofi. Starting at the Methodist JHS premises with seven students, the institution moved to its present permanent campus in 1994.
                             </p>
                             <p>
-                                Situated in the East Akim Municipality of the Eastern Region on the major Accra - Kumasi road, the school is named after the historical town 'Akyem Asafo'.
+                                In 1996, American Baptist Missionaries adopted the school, providing foundational infrastructure and academic resources. In line with the Ministry of Education standard naming conventions, the school transitioned into its current official name: <strong className="text-gray-900">Akim Asafo Senior High School</strong>.
+                            </p>
+                            <p>
+                                Located in the East Akim Municipality of the Eastern Region along the Accra – Kumasi highway, ASASHS stands as a premier public high school recognized for discipline and academic rigour.
                             </p>
                         </div>
 
-                        <div className="relative rounded-2xl overflow-hidden shadow-lg group">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm relative">
                             <img
                                 src="/administration.jpg"
-                                alt="School Administration"
-                                className="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                alt="ASASHS Administration Block"
+                                className="w-full h-48 object-cover"
                             />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                                <h3 className="text-white font-bold text-xl">School Administration</h3>
-                                <p className="text-gray-200 text-sm">Dedicated leadership driving excellence.</p>
+                            <div className="p-4 bg-gray-50 border-t border-gray-200">
+                                <h3 className="font-bold text-xs uppercase tracking-wide text-gray-900">Administration & Governance</h3>
+                                <p className="text-[11px] text-gray-500 mt-0.5">Committed leadership overseeing academic delivery and student welfare.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Mission Section */}
-                <div className="max-w-7xl mx-auto mt-20 bg-school-cream-50 p-6 md:p-10 rounded-3xl border border-school-cream-200">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
+                {/* Mission Banner */}
+                <div className="max-w-7xl mx-auto mt-14 bg-gray-50 p-6 sm:p-8 rounded-md border border-gray-200">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                         <div className="lg:col-span-2">
-                            <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Our Purpose</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-serif">Mission Statement</h2>
-                            <blockquote className="text-xl text-gray-700 italic leading-relaxed mb-6 border-l-4 border-school-green-500 pl-4">
-                                "To ensure that every student who has passed through the walls of the school is given a holistic quality education. We seek to inculcate in students Godliness and moral uprightness as well as help bring out the potentials in them for a lifelong personal responsibility..."
+                            <div className="inline-flex items-center space-x-2 py-0.5 px-2 rounded-sm bg-school-green-100 text-[10px] uppercase font-bold text-school-green-800 mb-2">
+                                <span>Institutional Purpose</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">Mission Statement</h3>
+                            <blockquote className="text-sm text-gray-700 italic leading-relaxed border-l-2 border-school-green-600 pl-4">
+                                "To ensure that every student who has passed through the walls of the school is given a holistic quality education. We seek to inculcate in students Godliness and moral uprightness as well as help bring out the potentials in them for lifelong personal responsibility."
                             </blockquote>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="relative rounded-2xl overflow-hidden shadow-lg group">
-                                <img
-                                    src="/student_art.jpg"
-                                    alt="Student with Artwork"
-                                    className="w-full h-48 object-cover object-top transform group-hover:scale-105 transition-transform duration-700"
-                                />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-md border border-gray-200 overflow-hidden h-32">
+                                <img src="/student_art.jpg" alt="Student Artwork" className="w-full h-full object-cover" />
                             </div>
-                            <div className="relative rounded-2xl overflow-hidden shadow-lg group">
-                                <img
-                                    src="/students_campus.jpg"
-                                    alt="Students on Campus"
-                                    className="w-full h-48 object-cover object-top transform group-hover:scale-105 transition-transform duration-700"
-                                />
+                            <div className="rounded-md border border-gray-200 overflow-hidden h-32">
+                                <img src="/students_campus.jpg" alt="Students on Campus" className="w-full h-full object-cover" />
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* NSMQ & Sports Highlights Section (Visual Rich) */}
-            <section className="py-20 bg-gray-50">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Beyond The Classroom</span>
-                        <h2 className="text-4xl font-bold text-gray-900 font-serif">Excellence in Competitions</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* NSMQ Card */}
-                        <div className="relative group overflow-hidden rounded-3xl shadow-lg h-[400px]">
-                            <img
-                                src="/nsmq_2025.jpg"
-                                alt="NSMQ 2025 Regional Qualifiers"
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8">
-                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                    <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded mb-3 inline-block">NSMQ 2025</span>
-                                    <h3 className="text-2xl font-bold text-white mb-2">National Science & Maths Quiz</h3>
-                                    <p className="text-gray-300 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                                        Our brilliant team secured key victories, placing us on the national map for academic excellence in STEM.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Sports Card */}
-                        <div className="relative group overflow-hidden rounded-3xl shadow-lg h-[400px]">
-                            <img
-                                src="/sports_action.jpg"
-                                alt="School Sports Action"
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8">
-                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                    <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded mb-3 inline-block">Sports</span>
-                                    <h3 className="text-2xl font-bold text-white mb-2">Zonal Handball Champions</h3>
-                                    <p className="text-gray-300 mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                                        Dominating the Kukurantumi Zone and qualifying for Super Zonals 2025. Experience the spirit of our champions.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Departments Grid */}
-            <section className="py-20 px-4 bg-gray-50" id="academics">
+            {/* Competitions & Extracurricular Excellence */}
+            <section className="py-16 px-4 sm:px-6 bg-gray-50 border-b border-gray-200">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-16">
-                        <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Academics</span>
-                        <h2 className="text-4xl font-bold text-gray-900 font-serif">Academic Departments</h2>
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-100 text-[10px] uppercase font-bold text-school-green-800 mb-2">
+                            <span>Beyond The Classroom</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                            Excellence in Competition & Athletics
+                        </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* NSMQ Highlight */}
+                        <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                            <div className="h-64 overflow-hidden relative">
+                                <img
+                                    src="/nsmq_2025.jpg"
+                                    alt="National Science and Maths Quiz Qualifiers"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute top-3 left-3">
+                                    <span className="bg-yellow-400 text-yellow-950 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-yellow-500/50">
+                                        NSMQ 2025
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="p-6 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">National Science & Maths Quiz Qualifiers</h3>
+                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                        Our competitive science squad secured key regional qualifier victories, establishing ASASHS on the national STEM competition map.
+                                    </p>
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-500 font-semibold uppercase tracking-wider">
+                                    Department of Science & Mathematics
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sports Highlight */}
+                        <div className="bg-white rounded-md border border-gray-200 overflow-hidden shadow-sm flex flex-col">
+                            <div className="h-64 overflow-hidden relative">
+                                <img
+                                    src="/sports_action.jpg"
+                                    alt="School Handball and Sports"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute top-3 left-3">
+                                    <span className="bg-school-green-700 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-school-green-800">
+                                        Super Zonals 2025
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="p-6 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Zonal Handball Champions</h3>
+                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                        Dominating the Kukurantumi Zone to qualify for the Super Zonals 2025, demonstrating teamwork, tactical discipline, and physical excellence.
+                                    </p>
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-500 font-semibold uppercase tracking-wider">
+                                    Physical Education & Sports Directorate
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Academic Departments (Clean SVG Icons - No Raw Emojis) */}
+            <section className="py-16 px-4 sm:px-6 bg-white border-b border-gray-200" id="academics">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-50 border border-school-green-200 text-[10px] uppercase font-bold text-school-green-800 mb-2">
+                            <span>Curriculum</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                            Academic Programmes & Departments
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {[
-                            { title: "General Science", icon: "🔬", desc: "Physics, Chemistry, Biology, and Elective Mathematics." },
-                            { title: "General Arts", icon: "📚", desc: "Literature, History, Government, Economics, and more." },
-                            { title: "Business", icon: "📊", desc: "Accounting, Business Management, Costing, and Economics." },
-                            { title: "Visual Arts", icon: "🎨", desc: "GKH, Textiles, Leatherwork, Ceramics, and Sculpture." },
-                            { title: "Home Economics", icon: "🍳", desc: "Food & Nutrition, Management in Living, and Clothing & Textiles." },
-                            { title: "Agriculture", icon: "🌱", desc: "General Agriculture, Crop Husbandry, and Animal Husbandry." }
+                            { 
+                                title: "General Science", 
+                                desc: "Physics, Chemistry, Biology, and Elective Mathematics preparing students for medicine, engineering, and STEM careers.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                    </svg>
+                                )
+                            },
+                            { 
+                                title: "General Arts", 
+                                desc: "Literature-in-English, History, Government, Economics, Geography, and Ghanaian Language.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                )
+                            },
+                            { 
+                                title: "Business", 
+                                desc: "Financial Accounting, Business Management, Cost Accounting, Principles of Costing, and Economics.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                )
+                            },
+                            { 
+                                title: "Visual Arts", 
+                                desc: "General Knowledge in Art (GKA), Textiles, Leatherwork, Graphic Design, Ceramics, and Sculpture.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                )
+                            },
+                            { 
+                                title: "Home Economics", 
+                                desc: "Food & Nutrition, Management in Living, Clothing & Textiles, and General Knowledge in Art.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                )
+                            },
+                            { 
+                                title: "General Agriculture", 
+                                desc: "General Agriculture, Crop Husbandry, Animal Husbandry, Chemistry, and Physics foundations.",
+                                icon: (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                    </svg>
+                                )
+                            }
                         ].map((dept, idx) => (
-                            <div key={idx} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-xl transition-shadow border-b-4 border-transparent hover:border-school-green-500 group">
-                                <div className="text-4xl mb-6 bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <div 
+                                key={idx} 
+                                className="bg-white p-6 rounded-md border border-gray-200 shadow-sm hover:border-school-green-600 transition-colors"
+                            >
+                                <div className="w-10 h-10 rounded-sm bg-school-green-50 border border-school-green-200 text-school-green-800 flex items-center justify-center mb-4">
                                     {dept.icon}
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">{dept.title}</h3>
-                                <p className="text-gray-600 leading-relaxed mb-4">{dept.desc}</p>
-                                <a href="#" className="text-school-green-600 font-bold text-sm hover:text-school-green-800 inline-flex items-center">
-                                    Learn More
-                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
+                                <h3 className="text-base font-bold text-gray-900 mb-2">{dept.title}</h3>
+                                <p className="text-gray-600 text-xs leading-relaxed">{dept.desc}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Student Life Gallery */}
-            <section className="py-20 bg-white">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="text-center mb-16">
-                        <span className="text-school-green-600 font-bold tracking-wider uppercase text-sm mb-2 block">Campus Life</span>
-                        <h2 className="text-4xl font-bold text-gray-900 font-serif">Student Life at ASASHS</h2>
-                        <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-                            A vibrant community where students learn, grow, and build lifelong friendships.
-                        </p>
+            {/* Campus Life Visual Gallery */}
+            <section className="py-16 px-4 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-100 text-[10px] uppercase font-bold text-school-green-800 mb-2">
+                            <span>Campus Experience</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                            Life at Akim Asafo Senior High
+                        </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div className="rounded-2xl overflow-hidden shadow-lg h-96 group">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
                             <img
                                 src="/student_portrait.jpg"
-                                alt="Student Portrait"
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                alt="ASASHS Student Leader"
+                                className="w-full h-full object-cover"
                             />
                         </div>
-                        <div className="rounded-2xl overflow-hidden shadow-lg h-96 group">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
                             <img
                                 src="/student_group_1.jpg"
-                                alt="Student Group with Teacher"
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                alt="Academic Discussion on Campus"
+                                className="w-full h-full object-cover"
                             />
                         </div>
-                        <div className="rounded-2xl overflow-hidden shadow-lg h-96 group">
+                        <div className="rounded-md border border-gray-200 overflow-hidden shadow-sm h-72">
                             <img
                                 src="/student_group_2.jpg"
-                                alt="Students in Corridor"
-                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                alt="Students in Quadrangle"
+                                className="w-full h-full object-cover"
                             />
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Stats - User Provided */}
-            <section className="py-16 bg-school-green-800 text-white">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
-                        <div>
-                            <p className="text-4xl font-bold mb-1">1991</p>
-                            <p className="text-xs uppercase tracking-widest text-school-green-200">Year Founded</p>
+            {/* Institutional Telemetry & Key Facts */}
+            <section className="py-12 bg-school-green-900 text-white border-b border-school-green-950">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-3xl sm:text-4xl font-extrabold tabular-nums mb-1">1991</p>
+                            <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">Year Founded</p>
                         </div>
-                        <div>
-                            <p className="text-4xl font-bold mb-1">Day/Boarding</p>
-                            <p className="text-xs uppercase tracking-widest text-school-green-200">Accommodation</p>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-2xl sm:text-3xl font-extrabold mb-1">Day & Boarding</p>
+                            <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">Accommodation</p>
                         </div>
-                        <div>
-                            <p className="text-4xl font-bold mb-1">Public</p>
-                            <p className="text-xs uppercase tracking-widest text-school-green-200">School Type</p>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-2xl sm:text-3xl font-extrabold mb-1">Public (GES)</p>
+                            <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">School Category</p>
                         </div>
-                        <div>
-                            <p className="text-4xl font-bold mb-1">0021306</p>
-                            <p className="text-xs uppercase tracking-widest text-school-green-200">School Code</p>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-3xl sm:text-4xl font-extrabold font-mono tabular-nums mb-1">0021306</p>
+                            <p className="text-[10px] uppercase tracking-widest text-school-green-200 font-semibold">GES School Code</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Admissions Section */}
-            <section className="py-24 px-4 bg-gray-900 relative overflow-hidden" id="admissions">
-                <div className="absolute inset-0 opacity-20">
-                    <img src="/akim-asafo-senior-high.png" className="w-full h-full object-cover grayscale" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-school-green-900/90 to-gray-900/80"></div>
-
-                <div className="max-w-4xl mx-auto text-center relative z-10 text-white">
-                    <h2 className="text-4xl md:text-5xl font-bold mb-8 font-serif">Open for 2025/2026 Admissions</h2>
-                    <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-                        Join the "Best Performing Senior High School" in the municipality. Experience discipline, academic excellence, and cultural vibrancy.
+            {/* Admissions Banner */}
+            <section className="py-20 px-4 sm:px-6 bg-gray-950 text-white relative" id="admissions">
+                <div className="max-w-4xl mx-auto text-center">
+                    <div className="inline-flex items-center space-x-2 py-1 px-3 rounded-sm bg-white/10 text-[10px] uppercase tracking-wider font-bold mb-4 border border-white/15">
+                        <span>Admissions 2025/2026</span>
+                    </div>
+                    <h2 className="text-2xl sm:text-4xl font-extrabold mb-4 tracking-tight">
+                        Enroll at Akim Asafo Senior High
+                    </h2>
+                    <p className="text-sm sm:text-base text-gray-300 mb-8 max-w-xl mx-auto leading-relaxed font-normal">
+                        Join the municipality's Best Performing Senior High School. Prepare for high academic attainment in a disciplined, supportive environment.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-6">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3">
                         <button
                             onClick={() => window.open('https://www.myshsadmission.net/site/schools/ASASHS/', '_blank')}
-                            className="px-10 py-4 bg-white text-school-green-800 rounded-full font-bold text-lg hover:bg-school-cream-50 transition-colors shadow-lg"
+                            className="px-6 py-3 bg-school-green-700 hover:bg-school-green-800 text-white rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-school-green-600 shadow-sm min-h-[44px]"
                         >
-                            Apply Now
+                            Apply via Online Portal
                         </button>
-                        <button onClick={onLoginClick} className="px-10 py-4 border-2 border-white/30 backdrop-blur-sm text-white rounded-full font-bold text-lg hover:bg-white/10 transition-colors">
-                            Access Student Portal
+                        <button 
+                            onClick={onLoginClick} 
+                            className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-sm font-bold text-xs uppercase tracking-wider transition-colors border border-gray-700 min-h-[44px]"
+                        >
+                            Student & Staff Login
                         </button>
                     </div>
-
                 </div>
             </section>
 
-            {/* Contact Section Placeholder (using footer for now but adding ID) */}
-            <div id="contact"></div>
-
+            {/* Institutional Footer */}
             <LandingFooter 
                 onLoginClick={onLoginClick} 
-                onNewsClick={onNewsClick}
-                onStaffClick={onStaffClick}
-                onCalendarClick={onCalendarClick}
+                onNewsClick={onNewsClick} 
+                onStaffClick={onStaffClick} 
+                onCalendarClick={onCalendarClick} 
             />
         </div>
     );

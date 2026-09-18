@@ -15,91 +15,87 @@ function QuizDetailModal({ quiz, onClose }: { quiz: any; onClose: () => void }) 
   const statusLabel = status === 'unscheduled' ? 'Always Available' : status === 'upcoming' ? `Starts ${startTime?.toLocaleString()}` : status === 'ended' ? 'Ended' : 'Active';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
-        <div className="p-6 border-b flex justify-between items-center bg-school-green-600 text-white">
-          <h2 className="text-xl font-bold">Quiz Details</h2>
-          <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <PortalCard className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <h2 className="text-base font-bold text-gray-900">Quiz Specifications</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         <div className="flex-1 overflow-auto p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
-              <p className="text-gray-900 font-medium">{quiz.title}</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Title</label>
+              <p className="text-gray-900 font-bold text-sm">{quiz.title}</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Subject</label>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Subject</label>
               <p className="text-gray-900 font-medium">{quiz.subject_name}</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Class</label>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Class</label>
               <p className="text-gray-900 font-medium">{quiz.class_name}</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
-              <p className={`font-medium ${status === 'active' ? 'text-green-600' : status === 'ended' ? 'text-red-600' : 'text-gray-900'}`}>{statusLabel}</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Status</label>
+              <p className={`font-semibold ${status === 'active' ? 'text-school-green-700' : status === 'ended' ? 'text-red-600' : 'text-gray-900'}`}>{statusLabel}</p>
             </div>
             {startTime && (
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Scheduled Start</label>
-                <p className="text-gray-900 font-medium">{startTime.toLocaleString()}</p>
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Scheduled Start</label>
+                <p className="text-gray-900 font-medium tabular-nums">{startTime.toLocaleString()}</p>
               </div>
             )}
             {endTime && (
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Scheduled End</label>
-                <p className="text-gray-900 font-medium">{endTime.toLocaleString()}</p>
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Scheduled End</label>
+                <p className="text-gray-900 font-medium tabular-nums">{endTime.toLocaleString()}</p>
               </div>
             )}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Duration</label>
-              <p className="text-gray-900 font-medium">{quiz.duration_minutes || quiz.time_limit || 'N/A'} mins</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Duration</label>
+              <p className="text-gray-900 font-medium tabular-nums">{quiz.duration_minutes || quiz.time_limit || 'N/A'} mins</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Total Points</label>
-              <p className="text-gray-900 font-medium">{quiz.total_points || 'N/A'} marks</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Total Points</label>
+              <p className="text-gray-900 font-medium tabular-nums">{quiz.total_points || 'N/A'} marks</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Passing Score</label>
-              <p className="text-gray-900 font-medium">{quiz.passing_score != null ? quiz.passing_score : 'N/A'}%</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Passing Score</label>
+              <p className="text-gray-900 font-medium tabular-nums">{quiz.passing_score != null ? quiz.passing_score : 'N/A'}%</p>
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Display Mode</label>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-0.5">Display Mode</label>
               <p className="text-gray-900 font-medium capitalize">{quiz.display_mode?.replace(/_/g, ' ') || 'All at once'}</p>
             </div>
           </div>
           {quiz.description && (
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{quiz.description}</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Description</label>
+              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded-sm border border-gray-200">{quiz.description}</p>
             </div>
           )}
           {quiz.instructions && (
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">Instructions</label>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{quiz.instructions}</p>
+              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">Instructions</label>
+              <p className="text-xs text-gray-700 bg-gray-50 p-3 rounded-sm border border-gray-200 whitespace-pre-wrap">{quiz.instructions}</p>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
             <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_questions ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_questions ? 'bg-school-green-600' : 'bg-gray-300'}`} />
               <span>Shuffle Questions: {quiz.shuffle_questions ? 'Yes' : 'No'}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_options ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className={`w-2 h-2 rounded-full ${quiz.shuffle_options ? 'bg-school-green-600' : 'bg-gray-300'}`} />
               <span>Shuffle Options: {quiz.shuffle_options ? 'Yes' : 'No'}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className={`w-2 h-2 rounded-full ${quiz.show_results_immediately ? 'bg-green-500' : 'bg-gray-300'}`} />
-              <span>Show Results: {quiz.show_results_immediately ? 'Immediately' : 'After Review'}</span>
             </div>
           </div>
         </div>
-      </div>
+      </PortalCard>
     </div>
   );
 }
@@ -124,99 +120,92 @@ function QuizResultsModal({ quiz, onClose }: { quiz: any; onClose: () => void })
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-        <div className="p-6 border-b flex justify-between items-center bg-school-green-600 text-white">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <PortalCard className="w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
           <div>
-            <h2 className="text-xl font-bold">{quiz.title} - Results</h2>
-            <p className="text-school-green-100 text-sm">{quiz.class_name} | {quiz.subject_name}</p>
+            <h2 className="text-base font-bold text-gray-900">{quiz.title} — Assessment Results</h2>
+            <p className="text-xs text-gray-500">{quiz.class_name} • {quiz.subject_name}</p>
           </div>
-          <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-school-green-600 border-t-transparent"></div>
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-school-green-200 border-t-school-green-600"></div>
             </div>
           ) : attempts.length > 0 ? (
-            <div className="overflow-x-auto border rounded-xl">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="overflow-x-auto rounded-sm border border-gray-200">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Student Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Admission #</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Score</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Percentage</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Proctoring</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Admission #</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Score</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Percentage</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Proctoring</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Completed</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200">
                   {attempts.map((attempt) => {
                     const submitted = attempt.attempt_id != null;
                     return (
-                    <tr key={attempt.student_id} className={`hover:bg-gray-50 transition-colors ${submitted ? '' : 'opacity-60'}`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {attempt.surname}, {attempt.other_names}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                        {attempt.student_admission_number}
-                      </td>
-                      {submitted ? (
-                        <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                            {attempt.score} marks
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <span className={`text-sm font-bold ${attempt.percentage >= 50 ? 'text-school-green-600' : 'text-red-600'}`}>
+                      <tr key={attempt.student_id} className={`hover:bg-gray-50/60 transition-colors ${submitted ? '' : 'opacity-60'}`}>
+                        <td className="px-4 py-3 text-xs font-bold text-gray-900">
+                          {attempt.surname}, {attempt.other_names}
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono tabular-nums text-gray-500">
+                          {attempt.student_admission_number}
+                        </td>
+                        {submitted ? (
+                          <>
+                            <td className="px-4 py-3 text-xs font-mono font-bold text-gray-900 text-right tabular-nums">
+                              {attempt.score} marks
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className={`text-xs font-bold font-mono tabular-nums ${attempt.percentage >= 50 ? 'text-school-green-700' : 'text-red-600'}`}>
                                 {Math.round(attempt.percentage)}%
                               </span>
-                              <div className="ml-2 w-16 bg-gray-200 rounded-full h-1.5 hidden md:block">
-                                <div className={`h-1.5 rounded-full ${attempt.percentage >= 50 ? 'bg-school-green-600' : 'bg-red-600'}`} style={{ width: `${attempt.percentage}%` }}></div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {attempt.tab_switches > 0 ? (
-                              <span className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold flex items-center w-fit">
-                                {attempt.tab_switches} Switches
-                              </span>
-                            ) : (
-                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold flex items-center w-fit">
-                                Clean
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                            {attempt.end_time ? new Date(attempt.end_time).toLocaleString() : 'In progress'}
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 italic" colSpan={4}>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {attempt.tab_switches > 0 ? (
+                                <span className="inline-block px-1.5 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-sm text-[10px] font-bold tabular-nums">
+                                  {attempt.tab_switches} switch{attempt.tab_switches > 1 ? 'es' : ''}
+                                </span>
+                              ) : (
+                                <span className="inline-block px-1.5 py-0.5 bg-school-green-50 text-school-green-800 border border-school-green-200 rounded-sm text-[10px] font-bold">
+                                  Secure
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-[11px] text-gray-500 tabular-nums">
+                              {attempt.end_time ? new Date(attempt.end_time).toLocaleString() : 'In progress'}
+                            </td>
+                          </>
+                        ) : (
+                          <td className="px-4 py-3 text-xs text-gray-400 italic" colSpan={4}>
                             Not submitted
                           </td>
-                        </>
-                      )}
-                    </tr>
+                        )}
+                      </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed">
-              <p className="text-gray-500">No students found in this class.</p>
+            <div className="text-center py-16 text-xs text-gray-500">
+              No students found in this class section.
             </div>
           )}
         </div>
-      </div>
+      </PortalCard>
     </div>
   );
 }
@@ -261,128 +250,103 @@ export function TeacherELearning({ teacherId }: { teacherId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <PortalCard className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Quiz Management</h2>
-          <p className="text-gray-600">Create and manage your digital assessments</p>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">E-Learning Assessments</h2>
+          <p className="text-xs text-gray-500">Configure online quizzes, live tests, and instant-marking questions</p>
         </div>
         <PortalButton
           onClick={() => setShowBuilder(true)}
           variant="primary"
+          className="text-xs !min-h-[38px]"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Create New Quiz
         </PortalButton>
-      </div>
+      </PortalCard>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-school-green-200 border-t-school-green-600"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {quizzes.length > 0 ? (
             quizzes.map((quiz) => (
-              <PortalCard key={quiz.id} className="hover:shadow-md transition-shadow">
-                <div className="space-y-4">
+              <PortalCard key={quiz.id} className="p-5 flex flex-col justify-between hover:border-gray-300 transition">
+                <div className="space-y-3">
                   <div className="flex justify-between items-start">
-                    <span className="px-2 py-1 bg-school-green-100 text-school-green-700 text-xs font-semibold rounded uppercase">
+                    <span className="px-2 py-0.5 bg-school-green-50 text-school-green-800 border border-school-green-200 text-[10px] font-bold rounded-sm uppercase tracking-wider">
                       {quiz.subject_name}
                     </span>
-                    <span className="text-sm font-medium text-gray-500">
+                    <span className="text-xs font-medium text-gray-500">
                       {quiz.class_name}
                     </span>
                   </div>
                   
-                  <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{quiz.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{quiz.description}</p>
+                  <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{quiz.title}</h3>
+                  <p className="text-xs text-gray-500 line-clamp-2">{quiz.description || 'No description provided.'}</p>
                   
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {quiz.duration_minutes || quiz.time_limit || 'N/A'} mins
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 pt-2 border-t border-gray-100">
+                    <div className="tabular-nums font-medium">
+                      ⏱️ {quiz.duration_minutes || quiz.time_limit || '30'} mins
                     </div>
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {quiz.passing_score != null ? quiz.passing_score : 'N/A'}% pass
+                    <div className="tabular-nums font-medium">
+                      🎯 {quiz.passing_score != null ? quiz.passing_score : '50'}% pass
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-4 border-t border-gray-100 flex space-x-2">
-                    <button 
-                      onClick={() => setSelectedQuiz(quiz)}
-                      className="flex-1 px-3 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700 transition-colors text-sm font-medium"
-                    >
-                      View Results
-                    </button>
-                    <button 
-                      onClick={() => setDetailQuiz(quiz)}
-                      className="px-3 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
-                    >
-                      Details
-                    </button>
-                    <button
-                      onClick={() => setRadarQuiz(quiz)}
-                      className="px-3 py-2 bg-gray-900 hover:bg-black text-white rounded-lg transition-colors text-sm font-bold flex items-center justify-center gap-1.5 shadow"
-                      title="Live Invigilator Radar"
-                    >
-                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                      <span>Radar</span>
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm(`Delete "${quiz.title}"? This cannot be undone.`)) return;
-                        setDeletingId(quiz.id);
-                        try {
-                          await db.deleteQuiz(quiz.id);
-                          toast.success('Quiz deleted');
-                          fetchQuizzes();
-                        } catch (e) {
-                          toast.error('Failed to delete quiz');
-                        } finally {
-                          setDeletingId(null);
-                        }
-                      }}
-                      disabled={deletingId === quiz.id}
-                      className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-semibold disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      {deletingId === quiz.id ? (
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      )}
-                      <span>Delete</span>
-                    </button>
-                  </div>
+                <div className="pt-4 border-t border-gray-100 flex flex-wrap gap-1.5 mt-3">
+                  <button 
+                    onClick={() => setSelectedQuiz(quiz)}
+                    className="flex-1 min-h-[32px] px-2.5 py-1 bg-school-green-50 text-school-green-800 border border-school-green-200 rounded-sm hover:bg-school-green-100 text-xs font-semibold transition"
+                  >
+                    Results
+                  </button>
+                  <button 
+                    onClick={() => setDetailQuiz(quiz)}
+                    className="min-h-[32px] px-2.5 py-1 bg-gray-50 text-gray-700 border border-gray-200 rounded-sm hover:bg-gray-100 text-xs font-semibold transition"
+                  >
+                    Details
+                  </button>
+                  <button
+                    onClick={() => setRadarQuiz(quiz)}
+                    className="min-h-[32px] px-2.5 py-1 bg-gray-900 hover:bg-black text-white rounded-sm text-xs font-semibold flex items-center gap-1.5 transition"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-school-green-400 animate-pulse"></span>
+                    <span>Radar</span>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm(`Delete "${quiz.title}"? This cannot be undone.`)) return;
+                      setDeletingId(quiz.id);
+                      try {
+                        await db.deleteQuiz(quiz.id);
+                        toast.success('Quiz deleted');
+                        fetchQuizzes();
+                      } catch (e) {
+                        toast.error('Failed to delete quiz');
+                      } finally {
+                        setDeletingId(null);
+                      }
+                    }}
+                    disabled={deletingId === quiz.id}
+                    className="min-h-[32px] px-2 py-1 text-red-600 hover:bg-red-50 border border-red-200 rounded-sm text-xs font-semibold transition disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
                 </div>
               </PortalCard>
             ))
           ) : (
-            <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-              <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+            <div className="col-span-full py-16 text-center bg-white rounded-md border border-dashed border-gray-300">
+              <h3 className="text-sm font-bold text-gray-900">No quizzes configured</h3>
+              <p className="text-xs text-gray-500 mt-1">Create your first quiz to start digital e-learning assessments.</p>
+              <div className="mt-4">
+                <PortalButton onClick={() => setShowBuilder(true)} variant="primary" className="text-xs">
+                  Create Quiz
+                </PortalButton>
               </div>
-              <h3 className="text-lg font-medium text-gray-900">No quizzes found</h3>
-              <p className="text-gray-500">Create your first quiz to start digital assessments.</p>
-              <button
-                onClick={() => setShowBuilder(true)}
-                className="mt-4 text-school-green-600 font-semibold hover:text-school-green-700"
-              >
-                + Create Quiz
-              </button>
             </div>
           )}
         </div>

@@ -1,11 +1,14 @@
-import React from 'react';
-import { LandingNavbar } from '../components/LandingNavbar';
+import React, { useState } from 'react';
 import { LandingFooter } from '../components/LandingFooter';
 
 interface CalendarEvent {
     date: string;
+    day: string;
+    month: string;
+    year: string;
     title: string;
     category: 'Academic' | 'Holiday' | 'Event';
+    desc?: string;
 }
 
 interface AcademicCalendarPageProps {
@@ -21,64 +24,160 @@ export const AcademicCalendarPage: React.FC<AcademicCalendarPageProps> = ({
     onStaffClick,
     onHomeClick
 }) => {
+    const [filter, setFilter] = useState<'All' | 'Academic' | 'Holiday' | 'Event'>('All');
+
     const events: CalendarEvent[] = [
-        { date: "May 15, 2025", title: "First Semester Resumption", category: "Academic" },
-        { date: "June 10, 2025", title: "Mid-Term Break", category: "Academic" },
-        { date: "July 01, 2025", title: "Republic Day", category: "Holiday" },
-        { date: "August 12, 2025", title: "Final Examinations Begin", category: "Academic" },
-        { date: "August 28, 2025", title: "Vacation", category: "Holiday" }
+        { 
+            date: "May 15, 2025", 
+            day: "15", 
+            month: "MAY", 
+            year: "2025", 
+            title: "First Semester Resumption", 
+            category: "Academic",
+            desc: "Reporting of all boarding and day students for the start of the first academic term."
+        },
+        { 
+            date: "June 10, 2025", 
+            day: "10", 
+            month: "JUN", 
+            year: "2025", 
+            title: "Mid-Term Assessment & Break", 
+            category: "Academic",
+            desc: "Continuous Assessment Tests (CAT-1) conclude followed by a four-day mid-term recess."
+        },
+        { 
+            date: "July 01, 2025", 
+            day: "01", 
+            month: "JUL", 
+            year: "2025", 
+            title: "Republic Day", 
+            category: "Holiday",
+            desc: "Statutory national holiday observed across all academic departments."
+        },
+        { 
+            date: "August 12, 2025", 
+            day: "12", 
+            month: "AUG", 
+            year: "2025", 
+            title: "End of Semester Examinations Begin", 
+            category: "Academic",
+            desc: "Official hall-scheduled terminal examinations for SHS 1, 2, and 3 candidates."
+        },
+        { 
+            date: "August 28, 2025", 
+            day: "28", 
+            month: "AUG", 
+            year: "2025", 
+            title: "Official Vacation & Student Departure", 
+            category: "Holiday",
+            desc: "End-of-term closing assemblies, report card release, and boarding house closure."
+        }
     ];
 
+    const filteredEvents = filter === 'All' ? events : events.filter(e => e.category === filter);
+
     return (
-        <div className="min-h-screen bg-gray-50">
-            <section className="relative h-[300px] flex items-center justify-center overflow-hidden text-white">
-                <div className="absolute inset-0 bg-school-green-800">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                </div>
-                <div className="relative z-10 text-center px-4">
-                    <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase">Academic Calendar</h1>
-                    <p className="text-xl text-school-green-100">Plan ahead for the 2024/2025 academic year.</p>
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+            {/* Page Header */}
+            <section className="bg-gray-950 text-white pt-28 pb-16 border-b border-gray-800">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6">
+                    <div className="inline-flex items-center space-x-2 py-1 px-2.5 rounded-sm bg-school-green-950 border border-school-green-800 text-[10px] uppercase font-bold text-school-green-300 mb-3">
+                        <span>Official Schedule</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">
+                        Academic Calendar
+                    </h1>
+                    <p className="text-xs sm:text-sm text-gray-300">
+                        Official semester timeline, continuous assessment schedules, and statutory breaks for the 2024/2025 academic session.
+                    </p>
                 </div>
             </section>
 
-            <section className="py-20 px-4">
+            {/* Main Content */}
+            <main className="flex-grow py-12 px-4 sm:px-6">
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                        <div className="p-8 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Key Dates</h2>
-                            <span className="px-4 py-1.5 bg-school-green-100 text-school-green-800 rounded-full text-xs font-black uppercase">2024/2025 Session</span>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                            {events.map((event, index) => (
-                                <div key={index} className="p-8 flex items-center justify-between hover:bg-school-green-50 transition-colors">
-                                    <div className="flex items-center space-x-6">
-                                        <div className="bg-white w-16 h-16 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase">{event.date.split(' ')[0]}</span>
-                                            <span className="text-xl font-black text-gray-900">{event.date.split(' ')[1].replace(',', '')}</span>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                                event.category === 'Academic' ? 'text-blue-600' : 
-                                                event.category === 'Holiday' ? 'text-red-500' : 'text-amber-500'
-                                            }`}>{event.category}</span>
-                                        </div>
-                                    </div>
-                                    <div className="hidden md:block">
-                                        <span className="text-sm font-medium text-gray-400">{event.date.split(', ')[1]}</span>
-                                    </div>
-                                </div>
+                    {/* Control / Filter Bar */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div className="flex items-center space-x-1.5 p-1 bg-white border border-gray-200 rounded-md">
+                            {(['All', 'Academic', 'Holiday'] as const).map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setFilter(cat)}
+                                    className={`px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-wider transition-colors ${
+                                        filter === cat
+                                            ? 'bg-school-green-700 text-white shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
                             ))}
                         </div>
+
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Session: <span className="text-gray-900 font-bold tabular-nums">2024/2025</span>
+                        </span>
+                    </div>
+
+                    {/* Events Table Container */}
+                    <div className="bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-200">
+                        {filteredEvents.map((event, index) => (
+                            <div 
+                                key={index} 
+                                className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-gray-50/75 transition-colors"
+                            >
+                                <div className="flex items-start space-x-4">
+                                    {/* Date Stamp Tile */}
+                                    <div className="w-14 h-14 rounded-sm border border-gray-200 bg-gray-50 flex flex-col items-center justify-center shrink-0">
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">
+                                            {event.month}
+                                        </span>
+                                        <span className="text-xl font-extrabold text-gray-900 tabular-nums leading-tight mt-0.5">
+                                            {event.day}
+                                        </span>
+                                    </div>
+
+                                    {/* Event Details */}
+                                    <div>
+                                        <div className="flex items-center space-x-2.5 mb-1">
+                                            <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                                                {event.title}
+                                            </h3>
+                                            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${
+                                                event.category === 'Academic' 
+                                                    ? 'bg-blue-50 text-blue-800 border-blue-200' 
+                                                    : event.category === 'Holiday'
+                                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                            }`}>
+                                                {event.category}
+                                            </span>
+                                        </div>
+                                        {event.desc && (
+                                            <p className="text-xs text-gray-500 leading-relaxed max-w-xl">
+                                                {event.desc}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="sm:text-right shrink-0">
+                                    <span className="text-xs font-mono font-semibold text-gray-400 tabular-nums">
+                                        {event.year}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </section>
+            </main>
 
+            {/* Institutional Footer */}
             <LandingFooter 
                 onLoginClick={onLoginClick} 
-                onNewsClick={onNewsClick}
-                onStaffClick={onStaffClick}
-                onCalendarClick={() => {}} // Already on calendar page
+                onNewsClick={onNewsClick} 
+                onStaffClick={onStaffClick} 
+                onCalendarClick={() => {}} 
             />
         </div>
     );

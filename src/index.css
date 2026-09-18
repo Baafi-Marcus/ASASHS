@@ -2,25 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Design Tokens - Strict 2-Radius tokens */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  /* 8pt Spacing Scale Tokens */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Motion Curves (deliberate cubic-bezier, 150ms duration) */
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-900 bg-gray-50;
+    line-height: 1.5;
+  }
+
+  /* Keyboard focus states */
+  :focus-visible {
+    outline: 2px solid #15803d;
+    outline-offset: 2px;
+  }
+
+  /* Heading line-height consistency */
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+  }
+}
+
 @layer utilities {
+  /* Tabular numbers for non-wobbling data columns, grades, timers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
   .animate-slow-zoom {
     animation: slow-zoom 20s linear infinite alternate;
   }
   
   .animate-fade-in {
     opacity: 0;
-    animation: fadeIn 1s ease-out forwards;
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   
   .animate-slide-up {
     opacity: 0;
-    transform: translateY(30px);
-    animation: slideUp 0.8s ease-out forwards;
+    transform: translateY(12px);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes slow-zoom {
     0% { transform: scale(1); }
-    100% { transform: scale(1.15); }
+    100% { transform: scale(1.08); }
   }
 
   @keyframes fadeIn {
@@ -31,7 +71,7 @@
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(30px);
+      transform: translateY(12px);
     }
     to {
       opacity: 1;

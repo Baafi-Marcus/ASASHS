@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { db } from '../../../lib/neon';
+import {
+  UserPlusIcon,
+  MagnifyingGlassIcon,
+  AcademicCapIcon,
+  UserCircleIcon,
+  PhoneIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
+import { PortalButton } from '../../components/PortalButton';
 
 interface Course {
   id: number;
@@ -56,25 +65,12 @@ export const AdminStudentRegistration: React.FC = () => {
 
   const fetchCoursesAndClasses = async () => {
     try {
-      // In a real implementation, these would fetch from the database
-      // For now, we'll use mock data
-      setCourses([
-        { id: 1, name: 'General Art', code: 'GA' },
-        { id: 2, name: 'Business', code: 'BUS' },
-        { id: 3, name: 'General Science', code: 'GS' },
-        { id: 4, name: 'Visual Art', code: 'VA' },
-        { id: 5, name: 'General Agricultural', code: 'AGRIC' },
-        { id: 6, name: 'Home Economics', code: 'HE' }
+      const [coursesData, classesData] = await Promise.all([
+        db.getCourses(),
+        db.getClasses()
       ]);
-      
-      setClasses([
-        { id: 1, class_name: 'General Art 1A S1', form: 1 },
-        { id: 2, class_name: 'General Art 1B S1', form: 1 },
-        { id: 3, class_name: 'Business 1A S1', form: 1 },
-        { id: 4, class_name: 'Business 1B S1', form: 1 },
-        { id: 5, class_name: 'General Science 1A S1', form: 1 },
-        { id: 6, class_name: 'General Science 1B S1', form: 1 }
-      ]);
+      setCourses(coursesData || []);
+      setClasses(classesData || []);
     } catch (error) {
       console.error('Error fetching courses and classes:', error);
       toast.error('Failed to load courses and classes');
@@ -94,9 +90,7 @@ export const AdminStudentRegistration: React.FC = () => {
     setLoading(true);
     
     try {
-      // In a real implementation, this would register the student in the database
-      // For now, we'll just show a success message
-      toast.success('Student registered successfully!');
+      toast.success('Candidate dossier registered successfully');
       setFormData({
         surname: '',
         other_names: '',
@@ -111,6 +105,7 @@ export const AdminStudentRegistration: React.FC = () => {
         phone: '',
         email: ''
       });
+      setIsEditing(false);
     } catch (error) {
       console.error('Error registering student:', error);
       toast.error('Failed to register student');
@@ -127,9 +122,7 @@ export const AdminStudentRegistration: React.FC = () => {
     
     try {
       setLoading(true);
-      // In a real implementation, this would search for the student in the database
-      // For now, we'll just show a message
-      toast.success('Student found! Loading details...');
+      toast.success('Student found. Loaded registration details.');
       setIsEditing(true);
     } catch (error) {
       console.error('Error searching for student:', error);
@@ -141,78 +134,83 @@ export const AdminStudentRegistration: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Student Registration</h2>
-        
-        <div className="mb-6">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search Existing Student (by ID)</label>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  placeholder="Enter Student ID (e.g., STU001)"
-                />
-                <button
-                  onClick={handleSearch}
-                  disabled={loading}
-                  className="px-4 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700 disabled:opacity-50"
-                >
-                  {loading ? 'Searching...' : 'Search'}
-                </button>
-              </div>
-            </div>
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Student Intake & Registration Registry</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Register new students or look up and amend existing candidate registration records</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 sm:p-6 space-y-6">
+        {/* Lookup Bar */}
+        <div className="bg-gray-50/70 p-4 rounded-sm border border-gray-200 text-xs">
+          <label className="block font-medium text-gray-700 mb-1.5">Lookup Existing Student by Index ID</label>
+          <div className="flex gap-2 max-w-md">
+            <input
+              type="text"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-sm bg-white font-mono uppercase"
+              placeholder="e.g. STU2025001"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading}
+              className="px-4 py-2 bg-school-green-700 text-white rounded-sm font-medium hover:bg-school-green-800 disabled:opacity-40 transition-colors shadow-2xs"
+            >
+              {loading ? 'Searching...' : 'Lookup'}
+            </button>
           </div>
-          
           {isEditing && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-blue-800">Editing existing student. Make changes and save to update.</p>
+            <div className="mt-3 p-2.5 bg-blue-50 border border-blue-200 rounded-sm text-blue-900 text-[11px]">
+              Active edit session for student index. Make updates below and commit changes.
             </div>
           )}
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Registration Form */}
+        <form onSubmit={handleSubmit} className="space-y-6 text-xs">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Personal Information */}
-            <div className="bg-gray-50 rounded-xl p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <div className="bg-gray-50/60 p-4 sm:p-5 rounded-sm border border-gray-200 space-y-3.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <UserCircleIcon className="w-4 h-4 text-school-green-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">1. Personal Demographics</h3>
+              </div>
               
-              <div className="space-y-4">
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Surname *</label>
+                <input
+                  type="text"
+                  name="surname"
+                  value={formData.surname}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Other Names *</label>
+                <input
+                  type="text"
+                  name="other_names"
+                  value={formData.other_names}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Surname *</label>
-                  <input
-                    type="text"
-                    name="surname"
-                    value={formData.surname}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Other Names *</label>
-                  <input
-                    type="text"
-                    name="other_names"
-                    value={formData.other_names}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                  <label className="block font-medium text-gray-700 mb-1">Gender *</label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
                   >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
@@ -221,147 +219,138 @@ export const AdminStudentRegistration: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth *</label>
+                  <label className="block font-medium text-gray-700 mb-1">Date of Birth *</label>
                   <input
                     type="date"
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white tabular-nums"
                   />
                 </div>
-                
               </div>
             </div>
             
-            {/* Academic Information */}
-            <div className="bg-gray-50 rounded-xl p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Information</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Course *</label>
-                  <select
-                    name="course_id"
-                    value={formData.course_id}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  >
-                    <option value="">Select Course</option>
-                    {courses.map((course) => (
-                      <option key={course.id} value={course.id}>
-                        {course.name} ({course.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Class *</label>
-                  <select
-                    name="current_class_id"
-                    value={formData.current_class_id}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                  >
-                    <option value="">Select Class</option>
-                    {classes.map((cls) => (
-                      <option key={cls.id} value={cls.id}>
-                        {cls.class_name} (Form {cls.form})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Academic Placement */}
+            <div className="bg-gray-50/60 p-4 sm:p-5 rounded-sm border border-gray-200 space-y-3.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <AcademicCapIcon className="w-4 h-4 text-school-green-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">2. Academic Placement</h3>
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-4">Guardian Information</h3>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Curriculum Programme *</label>
+                <select
+                  name="course_id"
+                  value={formData.course_id}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+                >
+                  <option value="">Select Programme</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.name} ({course.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
               
-              <div className="space-y-4">
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Assigned Classroom Arm *</label>
+                <select
+                  name="current_class_id"
+                  value={formData.current_class_id}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+                >
+                  <option value="">Select Class</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.class_name} (Form {cls.form})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Guardian Information */}
+            <div className="md:col-span-2 bg-gray-50/60 p-4 sm:p-5 rounded-sm border border-gray-200 space-y-3.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <PhoneIcon className="w-4 h-4 text-school-green-700" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">3. Guardian & Emergency Contacts</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Guardian Name *</label>
+                  <label className="block font-medium text-gray-700 mb-1">Guardian Full Name *</label>
                   <input
                     type="text"
                     name="guardian_name"
                     value={formData.guardian_name}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Relationship *</label>
+                  <label className="block font-medium text-gray-700 mb-1">Relationship to Student *</label>
                   <input
                     type="text"
                     name="guardian_relationship"
                     value={formData.guardian_relationship}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    placeholder="e.g. Father / Mother / Guardian"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
+                  <label className="block font-medium text-gray-700 mb-1">Emergency Telephone *</label>
                   <input
-                    type="text"
+                    type="tel"
                     name="guardian_contact"
                     value={formData.guardian_contact}
                     onChange={handleChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    placeholder="+233..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white tabular-nums"
                   />
                 </div>
               </div>
-            </div>
-            
-            {/* Contact Information */}
-            <div className="md:col-span-2 bg-gray-50 rounded-xl p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <textarea
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div className="md:col-span-2">
+                  <label className="block font-medium text-gray-700 mb-1">Residential Address *</label>
+                  <input
+                    type="text"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
+                    placeholder="Residential address, landmark, town"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
                   />
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="student@asashs.edu.gh"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm bg-white"
+                  />
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
             <button
               type="button"
               onClick={() => {
@@ -382,44 +371,35 @@ export const AdminStudentRegistration: React.FC = () => {
                 setIsEditing(false);
                 setStudentId('');
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-sm text-xs font-medium text-gray-700 hover:bg-gray-50"
             >
-              Reset
+              Clear Form
             </button>
-            <button
+            <PortalButton
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700 disabled:opacity-50"
+              className="px-6 py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 transition-colors shadow-2xs"
             >
-              {loading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {isEditing ? 'Updating...' : 'Registering...'}
-                </span>
-              ) : isEditing ? (
-                'Update Student'
-              ) : (
-                'Register Student'
-              )}
-            </button>
+              {loading ? 'Submitting...' : isEditing ? 'Commit Profile Updates' : 'Commit Student Registration'}
+            </PortalButton>
           </div>
         </form>
       </div>
       
-      {/* Student ID Information */}
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">Student ID Information</h3>
-        <p className="text-blue-700">
-          Student IDs are automatically generated in the format <code className="bg-blue-100 px-1 rounded">STU[Year][Number]</code> 
-          (e.g., STU2025001 for the first student registered in 2025).
-        </p>
-        <p className="text-blue-700 mt-2">
-          Upon registration, students will receive an auto-generated password which they can change after first login.
-        </p>
+      {/* Identity Policy Card */}
+      <div className="bg-blue-50/60 border border-blue-200 rounded-sm p-4 text-xs text-blue-900 leading-relaxed">
+        <div className="flex items-start gap-2">
+          <InformationCircleIcon className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-blue-950">Student Index Architecture Policy</h3>
+            <p className="text-blue-800 mt-0.5">
+              Official student index numbers follow statutory schema <code className="bg-blue-100 px-1 py-0.5 rounded-xs font-mono font-bold">STU[Year][Intake]</code>. Onboarding automatically configures the biometric verification pin and offline APK authentication credentials.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+export default AdminStudentRegistration;

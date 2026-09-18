@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/neon';
 import toast from 'react-hot-toast';
+import {
+  AcademicCapIcon,
+  TrophyIcon,
+  UserGroupIcon,
+  BookOpenIcon,
+  ChartBarIcon,
+  FunnelIcon,
+} from '@heroicons/react/24/outline';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
+import { PortalButton } from '../../components/PortalButton';
 
 interface TopStudent {
   id: number;
@@ -71,7 +81,7 @@ export const AdminStudentPerformance: React.FC = () => {
         db.getCurrentAcademicYear(),
         db.getCurrentSemester()
       ]);
-      setCourses(courseData);
+      setCourses(courseData || []);
       
       const academicYear = ay || `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`;
       const semester = sem || 1;
@@ -89,22 +99,19 @@ export const AdminStudentPerformance: React.FC = () => {
 
   const fetchPerformanceData = async (academicYear: string, term: number) => {
     try {
-      // Fetch top students overall
-      const topStudentsData = await db.getTopStudents(10, academicYear, term);
-      setTopStudents(topStudentsData as TopStudent[]);
+      const [topStudentsData, topClassStudentsData, summaryData] = await Promise.all([
+        db.getTopStudents(10, academicYear, term),
+        db.getTopStudentsByClass(academicYear, term),
+        db.getStudentPerformanceSummary(academicYear, term),
+      ]);
+
+      setTopStudents((topStudentsData as TopStudent[]) || []);
+      setTopClassStudents((topClassStudentsData as TopClassStudent[]) || []);
+      setPerformanceSummary((summaryData as StudentPerformanceSummary[]) || []);
       
-      // Fetch top students by class
-      const topClassStudentsData = await db.getTopStudentsByClass(academicYear, term);
-      setTopClassStudents(topClassStudentsData as TopClassStudent[]);
-      
-      // Fetch performance summary
-      const summaryData = await db.getStudentPerformanceSummary(academicYear, term);
-      setPerformanceSummary(summaryData as StudentPerformanceSummary[]);
-      
-      // If a course is selected, fetch top students for that course
       if (selectedCourse > 0) {
         const topCourseStudentsData = await db.getTopStudentsByCourse(selectedCourse, 10, academicYear, term);
-        setTopCourseStudents(topCourseStudentsData as TopCourseStudent[]);
+        setTopCourseStudents((topCourseStudentsData as TopCourseStudent[]) || []);
       }
     } catch (error) {
       console.error('Failed to fetch performance data:', error);
@@ -132,7 +139,7 @@ export const AdminStudentPerformance: React.FC = () => {
       setLoading(true);
       try {
         const topCourseStudentsData = await db.getTopStudentsByCourse(courseId, 10, selectedAcademicYear, selectedTerm);
-        setTopCourseStudents(topCourseStudentsData as TopCourseStudent[]);
+        setTopCourseStudents((topCourseStudentsData as TopCourseStudent[]) || []);
       } catch (error) {
         console.error('Failed to fetch course data:', error);
         toast.error('Failed to load course data');
@@ -142,40 +149,53 @@ export const AdminStudentPerformance: React.FC = () => {
     }
   };
 
-  const getGradeColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-800';
-    if (score >= 70) return 'bg-blue-100 text-blue-800';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
-    if (score >= 50) return 'bg-orange-100 text-orange-800';
-    return 'bg-red-100 text-red-800';
+  const getGradeBadge = (score: number) => {
+    if (score >= 80) return 'bg-green-50 text-green-800 border-green-200';
+    if (score >= 70) return 'bg-blue-50 text-blue-800 border-blue-200';
+    if (score >= 60) return 'bg-yellow-50 text-yellow-800 border-yellow-200';
+    if (score >= 50) return 'bg-orange-50 text-orange-800 border-orange-200';
+    return 'bg-red-50 text-red-800 border-red-200';
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-school-green-200 border-t-school-green-600"></div>
+      <div className="space-y-6">
+        <LoadingSkeleton variant="card" rows={3} />
+        <LoadingSkeleton variant="table" rows={6} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Student Performance Analytics</h2>
-          <p className="text-gray-600">Overall student performance across the school</p>
+          <h2 className="text-base font-bold text-gray-900">Student Academic Performance Analytics</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Cohort rankings, class toppers, and academic standing across all curricula</p>
+        </div>
+        <div className="text-right">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Target Semester</span>
+          <span className="text-xs font-semibold text-gray-800 tabular-nums">
+            {selectedAcademicYear || 'Current'} • Semester {selectedTerm || 1}
+          </span>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filter Parameters Card */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs p-4 sm:p-5">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-gray-100">
+          <FunnelIcon className="w-4 h-4 text-school-green-700" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">Filter Diagnostic Criteria</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Academic Year</label>
             <select
               value={selectedAcademicYear}
               onChange={(e) => setSelectedAcademicYear(e.target.value)}
-              className="w-full px-4 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
             >
               <option value="">Select Academic Year</option>
               <option value="2025/2026">2025/2026</option>
@@ -185,11 +205,11 @@ export const AdminStudentPerformance: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Semester / Term</label>
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(parseInt(e.target.value))}
-              className="w-full px-4 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
             >
               <option value={0}>Select Semester</option>
               <option value={1}>Semester 1 (Sep–Feb)</option>
@@ -198,13 +218,13 @@ export const AdminStudentPerformance: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Course (Optional)</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Programme Filter (Optional)</label>
             <select
               value={selectedCourse}
               onChange={(e) => handleCourseChange(parseInt(e.target.value))}
-              className="w-full px-4 py-2 border border-school-cream-300 rounded-lg focus:ring-2 focus:ring-school-green-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-1 focus:ring-school-green-500 focus:border-school-green-500 bg-white"
             >
-              <option value={0}>All Courses</option>
+              <option value={0}>All Academic Programmes</option>
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.name}
@@ -214,77 +234,72 @@ export const AdminStudentPerformance: React.FC = () => {
           </div>
           
           <div className="flex items-end">
-            <button
+            <PortalButton
               onClick={handleFilterChange}
               disabled={!selectedAcademicYear || selectedTerm === 0}
-              className="w-full px-4 py-2 bg-school-green-600 text-white rounded-lg hover:bg-school-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2 bg-school-green-700 text-white rounded-sm text-xs font-medium hover:bg-school-green-800 disabled:opacity-40 transition-colors shadow-2xs"
             >
-              Apply Filters
-            </button>
+              Update Analytics
+            </PortalButton>
           </div>
         </div>
       </div>
 
-      {/* Overall Top Students */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-        <div className="bg-school-green-600 text-white p-6">
-          <h3 className="text-xl font-bold">Top 10 Students Overall</h3>
-          <p className="text-school-green-100">Best performing students across all classes</p>
+      {/* Top 10 Students Overall Table */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrophyIcon className="w-5 h-5 text-amber-600" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Honor Roll: Top 10 Students Overall</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Highest composite grade point averages across the entire school</p>
+            </div>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-school-cream-100">
+          <table className="w-full text-left text-xs divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Rank</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Average Score</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Subjects</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Rank</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Index / ID</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Class Arm</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Mean Average</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Subjects Graded</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-school-cream-200">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {topStudents.length > 0 ? (
                 topStudents.map((student, index) => (
-                  <tr key={student.id} className="hover:bg-school-cream-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {index === 0 && (
-                          <span className="mr-2 text-yellow-500">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          </span>
-                        )}
-                        <span className={`font-bold ${index === 0 ? 'text-yellow-600' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-amber-700' : 'text-gray-700'}`}>
-                          #{index + 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.student_id}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.surname}, {student.other_names}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{student.class_name}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(student.average_score)}`}>
-                        {student.average_score.toFixed(1)}
+                  <tr key={student.id || index} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center justify-center font-mono font-bold text-xs tabular-nums px-2 py-0.5 rounded-sm ${
+                        index === 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' :
+                        index === 1 ? 'bg-slate-100 text-slate-800 border border-slate-300' :
+                        index === 2 ? 'bg-orange-100 text-orange-900 border border-orange-300' :
+                        'text-gray-600'
+                      }`}>
+                        #{index + 1}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{student.subjects_count}</td>
+                    <td className="px-4 py-3 font-mono font-medium text-gray-700 tabular-nums">{student.student_id}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">
+                      {student.surname}, {student.other_names}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">{student.class_name}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-bold font-mono tabular-nums border ${getGradeBadge(student.average_score)}`}>
+                        {student.average_score.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{student.subjects_count}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-4">📊</div>
-                      <p className="text-lg font-medium">No performance data available</p>
-                      <p className="text-sm">Select filters to view student performance</p>
-                    </div>
+                  <td colSpan={6} className="px-4 py-10 text-center text-xs text-gray-400">
+                    No academic records available for the selected period.
                   </td>
                 </tr>
               )}
@@ -293,51 +308,50 @@ export const AdminStudentPerformance: React.FC = () => {
         </div>
       </div>
 
-      {/* Top Students by Class */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-        <div className="bg-blue-600 text-white p-6">
-          <h3 className="text-xl font-bold">Top Student in Each Class</h3>
-          <p className="text-blue-100">Best performing student from each class</p>
+      {/* Top Student in Each Class */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <UserGroupIcon className="w-5 h-5 text-blue-600" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Class Leadership: Highest Ranked by Class Arm</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Leading candidates in each respective classroom</p>
+            </div>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-blue-50">
+          <table className="w-full text-left text-xs divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Average Score</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Subjects</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Class Arm</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student ID</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Average Score</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Subjects</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-blue-100">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {topClassStudents.length > 0 ? (
                 topClassStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-blue-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.class_name}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.student_id}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.surname}, {student.other_names}
-                      </div>
+                  <tr key={student.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3 font-semibold text-gray-900">{student.class_name}</td>
+                    <td className="px-4 py-3 font-mono text-gray-600 tabular-nums">{student.student_id}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {student.surname}, {student.other_names}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(student.average_score)}`}>
-                        {student.average_score.toFixed(1)}
+                    <td className="px-4 py-3 text-right">
+                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-bold font-mono tabular-nums border ${getGradeBadge(student.average_score)}`}>
+                        {student.average_score.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{student.subjects_count}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{student.subjects_count}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-4">👥</div>
-                      <p className="text-lg font-medium">No class performance data available</p>
-                      <p className="text-sm">Select filters to view class performance</p>
-                    </div>
+                  <td colSpan={5} className="px-4 py-10 text-center text-xs text-gray-400">
+                    No class ranking data recorded for this period.
                   </td>
                 </tr>
               )}
@@ -346,58 +360,53 @@ export const AdminStudentPerformance: React.FC = () => {
         </div>
       </div>
 
-      {/* Top Students by Course */}
+      {/* Top Students by Programme (Conditional) */}
       {selectedCourse > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-          <div className="bg-purple-600 text-white p-6">
-            <h3 className="text-xl font-bold">Top 10 Students in {courses.find(c => c.id === selectedCourse)?.name}</h3>
-            <p className="text-purple-100">Best performing students in the selected course</p>
+        <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpenIcon className="w-5 h-5 text-purple-600" />
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">
+                  Top Candidates in {courses.find(c => c.id === selectedCourse)?.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">Departmental rankings for the selected curriculum</p>
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-purple-50">
+            <table className="w-full text-left text-xs divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Rank</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Average Score</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Subjects</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Rank</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student ID</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Class Arm</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Average Score</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Subjects</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-purple-100">
+              <tbody className="divide-y divide-gray-100 bg-white">
                 {topCourseStudents.length > 0 ? (
                   topCourseStudents.map((student, index) => (
-                    <tr key={student.id} className="hover:bg-purple-50">
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-gray-700">
-                          #{index + 1}
+                    <tr key={student.id || index} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-gray-700 tabular-nums">#{index + 1}</td>
+                      <td className="px-4 py-3 font-mono text-gray-600 tabular-nums">{student.student_id}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{student.surname}, {student.other_names}</td>
+                      <td className="px-4 py-3 text-gray-600">{student.class_name}</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className={`px-2 py-0.5 rounded-sm text-[11px] font-bold font-mono tabular-nums border ${getGradeBadge(student.average_score)}`}>
+                          {student.average_score.toFixed(1)}%
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.student_id}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {student.surname}, {student.other_names}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{student.class_name}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(student.average_score)}`}>
-                          {student.average_score.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{student.subjects_count}</td>
+                      <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{student.subjects_count}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        <div className="text-4xl mb-4">📚</div>
-                        <p className="text-lg font-medium">No course performance data available</p>
-                        <p className="text-sm">Select filters to view course performance</p>
-                      </div>
+                    <td colSpan={6} className="px-4 py-10 text-center text-xs text-gray-400">
+                      No programme rankings found for the selected department.
                     </td>
                   </tr>
                 )}
@@ -407,55 +416,52 @@ export const AdminStudentPerformance: React.FC = () => {
         </div>
       )}
 
-      {/* Performance Summary */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-        <div className="bg-amber-600 text-white p-6">
-          <h3 className="text-xl font-bold">Student Performance Summary</h3>
-          <p className="text-amber-100">Overall performance metrics</p>
+      {/* Cohort Performance Summary Ledger */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ChartBarIcon className="w-5 h-5 text-school-green-700" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Comprehensive Performance Ledger</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Summary pass/fail metrics and academic standing</p>
+            </div>
+          </div>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-amber-50">
+          <table className="w-full text-left text-xs divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Student ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Class</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Average Score</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Subjects</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Passed</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-800">Failed</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student ID</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Student Name</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider">Class Arm</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Average Score</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 uppercase tracking-wider text-right">Total Subjects</th>
+                <th className="px-4 py-3 font-semibold text-green-700 uppercase tracking-wider text-right">Passed</th>
+                <th className="px-4 py-3 font-semibold text-red-700 uppercase tracking-wider text-right">Failed</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-amber-100">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {performanceSummary.length > 0 ? (
                 performanceSummary.map((student) => (
-                  <tr key={student.id} className="hover:bg-amber-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.student_id}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.surname}, {student.other_names}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{student.class_name}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(student.average_score)}`}>
-                        {student.average_score.toFixed(1)}
+                  <tr key={student.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3 font-mono font-medium text-gray-700 tabular-nums">{student.student_id}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-900">{student.surname}, {student.other_names}</td>
+                    <td className="px-4 py-3 text-gray-600">{student.class_name}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-bold font-mono tabular-nums border ${getGradeBadge(student.average_score)}`}>
+                        {student.average_score.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{student.subjects_count}</td>
-                    <td className="px-6 py-4 text-sm text-green-600 font-medium">{student.passed_subjects}</td>
-                    <td className="px-6 py-4 text-sm text-red-600 font-medium">{student.failed_subjects}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{student.subjects_count}</td>
+                    <td className="px-4 py-3 text-right font-mono font-medium text-green-700 tabular-nums">{student.passed_subjects}</td>
+                    <td className="px-4 py-3 text-right font-mono font-medium text-red-600 tabular-nums">{student.failed_subjects}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
-                    <div className="text-gray-500">
-                      <div className="text-4xl mb-4">📈</div>
-                      <p className="text-lg font-medium">No performance summary data available</p>
-                      <p className="text-sm">Select filters to view performance summary</p>
-                    </div>
+                  <td colSpan={7} className="px-4 py-10 text-center text-xs text-gray-400">
+                    No summary data recorded for the selected period.
                   </td>
                 </tr>
               )}
